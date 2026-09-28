@@ -48,6 +48,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {CSS2DRenderer,CSS2DObject} from 'three/addons/renderers/CSS2DRenderer.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const app=document.getElementById('canvas'), scene=new THREE.Scene();
 scene.background=new THREE.Color(0x061321);
@@ -114,6 +115,60 @@ const SYNC_KEY = 'factory3dPositions';
 let apiAvailable=false;
 let syncing=false;
 const groups=new Map();let selected=null;let edit=true;let snap=true;let uid=0;let pressTimer=null;let activePointerId=null;let drag=null;
+
+const assetLoader=new GLTFLoader();
+const assetCache=new Map();
+const externalAssets={
+  washer700:'https://cdn.3dassets.dev/assets/25620/v1/model.glb',
+  washer900:'https://cdn.3dassets.dev/assets/25512/v1/model.glb',
+  washerRigid:'https://cdn.3dassets.dev/assets/25511/v1/model.glb',
+  dryer800:'https://cdn.3dassets.dev/assets/25628/v1/model.glb',
+  flatwork:'https://cdn.3dassets.dev/assets/25534/v1/model.glb'
+};
+
+function loadGLTF(url){
+  if(assetCache.has(url))return assetCache.get(url);
+  const p=new Promise((resolve,reject)=>{
+    assetLoader.load(url,gltf=>resolve(gltf),undefined,reject);
+  });
+  assetCache.set(url,p);
+  return p;
+}
+
+function externalAssetFor(name,kind){
+  if(kind==='washer' && ['30K','60K','80K'].includes(name))return {url:externalAssets.washer900,scale:{x:5.2,y:5.2,z:5.2},y:.18};
+  if(kind==='washer' && ['35kg','50kg'].includes(name))return {url:externalAssets.washer700,scale:{x:5.7,y:5.7,z:5.7},y:.18};
+  if(kind==='vertical')return {url:externalAssets.washerRigid,scale:{x:4.9,y:4.9,z:4.9},y:.18};
+  if(kind==='dryer')return {url:externalAssets.dryer800,scale:{x:5.5,y:5.5,z:5.5},y:.18};
+  if(kind==='longPress'||kind==='flat'||kind==='icc')return {url:externalAssets.flatwork,scale:{x:7.9,y:5.0,z:5.1},y:.18};
+  return null;
+}
+
+async function attachExternalAsset(root,name,kind,procedural){
+  const spec=externalAssetFor(name,kind);
+  if(!spec)return;
+  try{
+    const gltf=await loadGLTF(spec.url);
+    if(!groups.has(root.userData.id))return;
+    const asset=gltf.scene.clone(true);
+    asset.name='GLB-'+root.userData.id;
+    asset.position.set(0,spec.y,0);
+    asset.scale.set(spec.scale.x,spec.scale.y,spec.scale.z);
+    asset.traverse(o=>{
+      if(o.isMesh){
+        o.castShadow=true;
+        o.receiveShadow=true;
+        o.userData.root=root;
+        o.userData.interactive=true;
+      }
+    });
+    root.remove(procedural);
+    root.add(asset);
+    root.userData.assetSource=spec.url;
+  }catch(err){
+    console.warn('3D asset load failed, using procedural fallback:',name,err);
+  }
+}
 
 function mat(c,rough=.55,metal=.35,opacity=1){
   return new THREE.MeshStandardMaterial({
@@ -463,7 +518,8 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const stableExtra={'乾洗機':'DRYCLEAN-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const visualKind=(kind==='washer'&&['30K','60K','80K','35kg','50kg'].includes(name))?('washer-'+name):kind;
- const m=model(visualKind);m.position.y=.25;m.scale.setScalar(.88);root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
+ const m=model(visualKind);m.position.y=.25;m.scale.setScalar(.88);root.add(m);
+ void attachExternalAsset(root,name,kind,m);if(kind==='icc')root.rotation.y=Math.PI/2;
 
  const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
  const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
