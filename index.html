@@ -130,6 +130,7 @@ const instances=[
  ['直式洗衣機 #03','洗衣設備','vertical',72,0,16],
  ['N5','整燙設備','lineN5',30,0,10],
  ['IRT','整燙設備','lineIRT',58,0,10],
+ ['SMF','整燙設備','lineSMF',44,0,24],
  ['烘乾機 #01','烘乾設備','dryer',18,0,43],
  ['烘乾機 #02','烘乾設備','dryer',32,0,43],
  ['烘乾機 #03','烘乾設備','dryer',46,0,43],
@@ -144,7 +145,7 @@ const instances=[
  ['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],
  ['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
-const MODEL_REVISION='2026-09-28-reference-industrial-v8-touch-controls';
+const MODEL_REVISION='2026-09-29-c-style-real-equipment-v3';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
 const SYNC_KEY = 'factory3dPositions_C_STYLE_V2';
 let apiAvailable=false;
@@ -393,7 +394,7 @@ function detailCrane(g){
 }
 
 function detailLine(g,variant='lineN5'){
-  const L=15.5,W=5.2,H=3.2;
+  const L=16.2,W=5.5,H=3.35;
   addMachineBase(g,L+1.2,W+1.1,0x19bfff);
   panelBox(g,W,H,L,0x1c64a5,0,H/2+.35,0,.94);
   for(const z of [-L*.33,0,L*.33]) panelBox(g,W-.25,.55,2.5,0x2f87c6,0,2.25,z,.92);
@@ -482,12 +483,32 @@ function detailManganese(g){
 }
 
 function detailBoiler(g){
-  addMachineBase(g,9.4,7.3,0xe99434);
-  const body=cyl(2.15,7.5,0x66757d,.9);body.rotation.z=Math.PI/2;body.position.set(0,3.25,0);g.add(body);
-  panelBox(g,2.9,2.5,2.25,0x394d58,-2.0,1.7,0,.94);
-  panelBox(g,2.3,1.0,2.35,0x985a2d,2.15,1.45,0,.94);
-  const stack=cyl(.55,5.6,0x3f4950,.84);stack.position.set(0,8.7,0);g.add(stack);
-  pipe(g,[-2.8,2.4,0],[-2.15,3.1,0],.12,0x9b6a42);
+  const W=6.8,D=6.4,H=8.2;
+  addMachineBase(g,W+1.0,D+1.0,0xe58b32);
+  const body=cyl(2.15,H-1.2,0x77858b,.9);
+  body.position.set(0,3.9,0);g.add(body);
+  const shell=cyl(2.28,.22,0x9aa7ad,.94);
+  shell.position.set(0,7.65,0);g.add(shell);
+  const cap=cyl(1.55,.38,0x53636c,.9);
+  cap.position.set(0,8.05,0);g.add(cap);
+  const stack=cyl(.62,1.9,0x3d484e,.86);
+  stack.position.set(0,9.05,0);g.add(stack);
+  const topValve=cyl(.34,.5,0xa9b5ba,.9);
+  topValve.position.set(0,10.2,0);g.add(topValve);
+  // front control cabinet and gauge
+  panelBox(g,1.35,4.9,1.0,0x344651,-2.65,3.25,-2.18,.96);
+  panelBox(g,.88,2.5,.08,0x172833,-2.65,4.0,-2.72,.98);
+  for(let i=0;i<5;i++){
+    const led=box(.12,.12,.08,i%2?0x34d8ff:0xffb03a,.96);
+    led.material.emissive=new THREE.Color(i%2?0x34d8ff:0xffb03a);
+    led.material.emissiveIntensity=1.8;
+    led.position.set(-2.92+i*.14,5.0,-2.78);g.add(led);
+  }
+  const gauge=cyl(.36,.12,0xd6e0e4,.95);gauge.rotation.x=Math.PI/2;
+  gauge.position.set(0,5.9,-2.2);g.add(gauge);
+  pipe(g,[-2.0,2.2,-.4],[-2.0,6.8,-.4],.10,0x8fa0a8);
+  pipe(g,[2.0,2.5,.5],[2.0,6.9,.5],.10,0x8fa0a8);
+  addFeet(g,W,D);
 }
 
 function detailWater(g){
@@ -502,12 +523,19 @@ function detailWater(g){
 }
 
 function detailTank(g){
-  addMachineBase(g,7.2,7.2,0x2aa8ff);
-  const body=cyl(2.2,5.8,0xb9c5ca,.88);body.position.set(0,3.45,0);g.add(body);
-  const top=cyl(1.0,.22,0x75868e,.9);top.position.set(0,6.42,0);g.add(top);
-  panelBox(g,5.0,.35,5.0,0x53646e,0,.35,0,.84);
-  for(const x of [-1.6,1.6])pipe(g,[x,.45,0],[x,6.25,0],.12,0x53636b);
-  panelBox(g,4.3,.28,4.3,0xd5dde1,0,6.3,0,.68);
+  const W=5.8,D=5.8,H=8.2;
+  addMachineBase(g,W+1.0,D+1.0,0x2aa8ff);
+  const legs=[[-1.8,-1.8],[1.8,-1.8],[-1.8,1.8],[1.8,1.8]];
+  legs.forEach(([x,z])=>{const leg=box(.32,2.0,.32,0x66767d,.92);leg.position.set(x,1.15,z);g.add(leg);});
+  const body=cyl(2.15,H,0xbfc9cd,.9);
+  body.position.set(0,2.0+H/2,0);g.add(body);
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(2.15,32,16,0,Math.PI*2,0,Math.PI/2),mat(0xd5dde0,.35,.55,.92));
+  dome.position.set(0,2.0+H,0);g.add(dome);
+  const ring=cyl(2.24,.12,0x8b999f,.9);ring.position.set(0,5.0,0);g.add(ring);
+  pipe(g,[-1.8,1.3,0],[-1.8,2.8,0],.10,0x53636b);
+  pipe(g,[1.8,1.3,0],[1.8,2.8,0],.10,0x53636b);
+  pipe(g,[0,1.2,0],[0,0.5,0],.12,0x53636b);
+  addFeet(g,W,D);
 }
 
 function model(type){
