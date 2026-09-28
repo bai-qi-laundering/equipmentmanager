@@ -29,13 +29,13 @@ button{cursor:pointer}button.active{background:#087bc2;border-color:#36b9ff}.sea
 <div id="app"><div id="canvas"></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠 3D 設備地圖</div>
-  <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option></select>
+  <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
   <input class="search" id="search" placeholder="搜尋設備名稱…">
   <div class="mode"><button id="editBtn" class="active">編輯模式</button><button id="viewBtn">巡檢模式</button><button id="resetBtn">重置視角</button></div>
 </div>
-<div class="hint" id="hint">編輯模式：點設備後可拖曳；雙指旋轉／縮放地圖</div>
+<div class="hint" id="hint">編輯模式：短點查看；長按設備約 0.4 秒後拖曳；雙指操作地圖</div>
 <div class="side"><button>▧<br>地圖</button><button>⚙<br>設備</button><button>✓<br>清潔</button><button>◷<br>保養</button><button>⚒<br>維修</button></div>
-<div class="palette"><h3>設備庫　（點一下加入地圖，再拖曳到想要的位置）</h3><div class="items" id="items"></div></div>
+<div class="palette"><h3>設備庫　（點一下加入地圖，再長按拖曳到想要的位置）</h3><div class="items" id="items"></div></div><div style="position:fixed;z-index:19;right:18px;bottom:170px;display:flex;gap:8px"><button id="snapBtn">吸附：開</button><button id="saveBtn">💾 儲存</button></div>
 <div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card">
 <div class="row"><span>狀態</span><b class="ok">正常</b></div><div class="row"><span>上次清潔</span><b>尚未建立</b></div><div class="row"><span>清潔週期</span><b>30 天</b></div><div class="row"><span>上次保養</span><b>尚未建立</b></div><div class="row"><span>保養週期</span><b>180 天</b></div><div class="row"><span>維修紀錄</span><b>0 筆</b></div>
 </div><div class="card"><button style="width:100%;margin:4px 0">＋ 新增清潔紀錄</button><button style="width:100%;margin:4px 0">＋ 新增保養紀錄</button><button style="width:100%;margin:4px 0">＋ 新增維修紀錄</button></div>
@@ -68,13 +68,37 @@ const palette=[
  ['襯衫機','整燙設備','shirt','▣'],['平燙機','整燙設備','flat','▤'],['ICC','整燙設備','icc','▰'],['天車','周邊設備','crane','⚙']
 ];
 const instances=[
- ['30K','洗衣設備','washer',-52,0,-22],['60K','洗衣設備','washer',-52,0,-5],['80K','洗衣設備','washer',-52,0,12],
- ['襯衫機','整燙設備','shirt',-20,0,-20],['平燙機','整燙設備','flat',-20,0,-2],['ICC','整燙設備','icc',-38,0,25],
- ['N5','燙床設備','press',20,0,-10],['IRT','燙床設備','press',20,0,10],
- ['35kg','洗衣設備','washer',46,0,-25],['50kg','洗衣設備','washer',60,0,-25],
- ['直式洗衣機 #01','洗衣設備','vertical',64,0,0],['直式洗衣機 #02','洗衣設備','vertical',64,0,12],['直式洗衣機 #03','洗衣設備','vertical',64,0,24],
- ['烘乾機 #01','烘乾設備','dryer',20,0,28],['烘乾機 #02','烘乾設備','dryer',34,0,28],['烘乾機 #03','烘乾設備','dryer',48,0,28],
- ['天車 #01','周邊設備','crane',-12,10,-8],['天車 #02','周邊設備','crane',28,10,4]
+ // 倉庫1：左側 30K / 60K / 80K 縱向
+ ['30K','洗衣設備','washer',-58,-28],
+ ['60K','洗衣設備','washer',-58,-10],
+ ['80K','洗衣設備','washer',-58,8],
+
+ // 左上 L 型桌；中央整燙區；左下 ICC
+ ['L型桌','周邊設備','office',-58,-48],
+ ['襯衫機','整燙設備','shirt',-18,-20],
+ ['平燙機','整燙設備','flat',-18,0],
+ ['整燙區','整燙設備','flat',-18,20],
+ ['ICC','整燙設備','icc',-38,36],
+
+ // 倉庫2：上方 35kg / 50kg、小型洗衣機區；中間辦公室與直式洗衣機
+ ['35kg','洗衣設備','washer',34,-44],
+ ['50kg','洗衣設備','washer',50,-44],
+ ['兩層辦公室','周邊設備','office',45,-10],
+ ['直式洗衣機 #01','洗衣設備','vertical',72,-12],
+ ['直式洗衣機 #02','洗衣設備','vertical',72,2],
+ ['直式洗衣機 #03','洗衣設備','vertical',72,16],
+
+ // 辦公室左側 N5 / IRT；下方 3 台烘乾機
+ ['N5','燙床設備','press',34,12],
+ ['IRT','燙床設備','press',34,29],
+ ['烘乾機 #01','烘乾設備','dryer',18,43],
+ ['烘乾機 #02','烘乾設備','dryer',32,43],
+ ['烘乾機 #03','烘乾設備','dryer',46,43],
+
+ // 兩台天車 + 冷風區
+ ['天車 #01','周邊設備','crane',-26,-4],
+ ['天車 #02','周邊設備','crane',22,5],
+ ['冷風區','周邊設備','fan',-2,42]
 ];
 const groups=new Map();let selected=null;let edit=true;let uid=0;
 
@@ -82,57 +106,197 @@ function mat(c,rough=.55,metal=.35){return new THREE.MeshStandardMaterial({color
 function box(w,h,d,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
 function label(text,color='#8bd8ff'){const el=document.createElement('div');el.textContent=text;el.style.cssText=`padding:5px 9px;border:1px solid ${color};border-radius:9px;background:rgba(4,20,36,.88);color:#fff;font-weight:800;font-size:12px;white-space:nowrap;box-shadow:0 0 14px ${color}66`;return new CSS2DObject(el);}
 function model(type){
- const g=new THREE.Group(); let body,accent;
- if(type==='washer'||type==='vertical'){body=box(type==='vertical'?4:6,5,type==='vertical'?4:6,0xcbd6df);g.add(body);const ring=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.35,32),mat(0x12263b,.25,.6));ring.rotation.x=Math.PI/2;ring.position.set(0,.1,type==='vertical'?2.05:3.05);g.add(ring);accent=box(type==='vertical'?3.4:5,.35,type==='vertical'?3.4:5,0x187fd0);accent.position.y=2.65;g.add(accent);
- } else if(type==='dryer'){body=box(6,5,5,0xd7dee5);g.add(body);const drum=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.4,.3,32),mat(0x101d2d,.2,.6));drum.rotation.x=Math.PI/2;drum.position.z=2.55;g.add(drum);
- } else if(type==='press'||type==='flat'){g.add(box(4,2.2,12,0xd7e0e7));g.add(box(3,4,3,0x236ea6)).position.y=2.5;g.children[1].position.z=-3.5;g.add(box(3,4,3,0x236ea6));g.children[2].position.y=2.5;g.children[2].position.z=3.5;
- } else if(type==='shirt'){g.add(box(5,5,8,0xb8c7d4));g.add(box(2,7,2,0x246eaa)).position.y=5;
- } else if(type==='icc'){g.add(box(16,4,5,0xc8d5df));g.add(box(13,2.5,1.5,0x2d76aa)).position.y=3;
- } else if(type==='crane'){const beam=box(3,1,22,0x7b8794);beam.position.y=0;g.add(beam);const post1=box(1,8,1,0x4e5a68);post1.position.set(0,4,-9);g.add(post1);const post2=post1.clone();post2.position.z=9;g.add(post2);
- } else {g.add(box(5,4,5,0x93a6b5));}
+ const g=new THREE.Group();
+
+ if(type==='washer'||type==='vertical'){
+   const w=type==='vertical'?4.2:6.4,d=type==='vertical'?4.2:6;
+   g.add(box(w,5.2,d,0xcbd6df));
+   const ring=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.36,32),mat(0x12263b,.25,.6));
+   ring.rotation.x=Math.PI/2;ring.position.set(0,.1,d/2+.02);g.add(ring);
+   const top=box(w*.8,.35,d*.84,0x1f82cf);top.position.y=2.68;g.add(top);
+ }else if(type==='dryer'){
+   g.add(box(6.3,5.1,5.4,0xd7dee5));
+   const drum=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.4,.3,32),mat(0x101d2d,.2,.6));
+   drum.rotation.x=Math.PI/2;drum.position.z=2.72;g.add(drum);
+ }else if(type==='press'||type==='flat'){
+   g.add(box(4.5,2.4,12.5,0xd7e0e7));
+   const p1=box(3.2,4.2,3.2,0x246fa9);p1.position.set(0,2.8,-3.6);g.add(p1);
+   const p2=box(3.2,4.2,3.2,0x246fa9);p2.position.set(0,2.8,3.6);g.add(p2);
+ }else if(type==='shirt'){
+   g.add(box(5.4,5.1,8.2,0xb8c7d4));
+   const mast=box(2.1,7,2.1,0x246eaa);mast.position.y=5.2;g.add(mast);
+ }else if(type==='icc'){
+   g.add(box(17,4.2,5.3,0xc8d5df));
+   const top=box(14,2.4,1.5,0x2d76aa);top.position.y=3.1;g.add(top);
+ }else if(type==='crane'){
+   const beam=box(3,1,22,0x7b8794);g.add(beam);
+   const p1=box(1,8,1,0x4e5a68);p1.position.set(0,4,-9);g.add(p1);
+   const p2=box(1,8,1,0x4e5a68);p2.position.set(0,4,9);g.add(p2);
+ }else if(type==='office'){
+   const base=box(11,3.2,8.5,0xcaa878);base.position.y=1.6;g.add(base);
+   const floor=box(10.2,2.3,7.7,0xf0dfbf);floor.position.y=4.1;g.add(floor);
+   for(let i=-1;i<=1;i++){
+     const desk=box(2.5,.7,1.6,0x674c39);desk.position.set(i*3,5.6,0);g.add(desk);
+     const screen=box(.8,1,.15,0x18283a);screen.position.set(i*3,6.4,.65);g.add(screen);
+   }
+ }else if(type==='fan'){
+   const stand=box(2.2,1.3,2.2,0x74818e);stand.position.y=.65;g.add(stand);
+   const mast=box(.5,3,.5,0x7f8c99);mast.position.y=2.2;g.add(mast);
+   const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,.7,32),mat(0x7c8996,.35,.5));
+   hub.rotation.x=Math.PI/2;hub.position.y=3.7;g.add(hub);
+   for(let i=0;i<5;i++){
+     const blade=box(.32,.25,3.8,0xd5dde4);blade.position.set(0,3.7,1.8);blade.rotation.y=i*Math.PI*2/5;g.add(blade);
+   }
+ }else{
+   g.add(box(5,4,5,0x93a6b5));
+ }
  return g;
 }
-function addEquipment(name,type,kind,x,z,save=true){
- const root=new THREE.Group();root.userData={name,type,kind,id:`EQ-${++uid}`};
- const m=model(kind);root.add(m);m.position.y=1.5;
- const plate=box(kind==='icc'?18:8,.18,kind==='icc'?7:8, type==='洗衣設備'?0x0877d1:type==='烘乾設備'?0x1bd58d:type==='燙床設備'?0x9b63ff:0x2a79b9);plate.position.y=.05;root.add(plate);
- const l=label(name,type==='燙床設備'?'#a76cff':type==='烘乾設備'?'#46e0a6':'#35b8ff');l.position.set(0,7,0);root.add(l);
+function addEquipment(name,type,kind,x,z){
+ const root=new THREE.Group();
+ root.userData={name,type,kind,id:`EQ-${++uid}`};
+ const m=model(kind);m.position.y=1.5;root.add(m);
+
+ const plateW=kind==='icc'?18:kind==='crane'?4:kind==='fan'?7:kind==='office'?13:8;
+ const plateD=kind==='icc'?7:kind==='crane'?24:kind==='fan'?7:kind==='office'?10:8;
+ const plateColor=type==='洗衣設備'?0x0877d1:type==='烘乾設備'?0x1bd58d:type==='燙床設備'?0x9b63ff:kind==='fan'?0xf18cb9:0x2a79b9;
+ const plate=box(plateW,.18,plateD,plateColor);
+ plate.position.y=.05;root.add(plate);
+
+ const color=type==='燙床設備'?'#a76cff':type==='烘乾設備'?'#46e0a6':kind==='fan'?'#ff9ac8':'#35b8ff';
+ const l=label(name,color);l.position.set(0,7,0);root.add(l);
+
  root.position.set(x,0,z);scene.add(root);groups.set(root.userData.id,root);
  root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
  return root;
 }
 instances.forEach(v=>addEquipment(...v));
-addEquipment('冷風區','周邊設備','crane',-2,42); // visual fan replacement below
-const fan=groups.get([...groups.keys()].pop());fan.userData.name='冷風區';fan.children[0].visible=false;fan.children[1].visible=false;
-const blades=new THREE.Group();for(let i=0;i<5;i++){const b=box(.35,0.4,5,0xcfd8df);b.position.z=2; b.rotation.y=i*Math.PI*2/5;blades.add(b)}blades.position.y=3;fan.add(blades);const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,.8,32),mat(0x6b7785));hub.rotation.x=Math.PI/2;hub.position.y=3;fan.add(hub);
-fan.children.find(x=>x instanceof CSS2DObject)?.element && (fan.children.find(x=>x instanceof CSS2DObject).element.style.color='#ff9ac8');
 
 function addPalette(){
  const wrap=document.getElementById('items');wrap.innerHTML='';
- palette.forEach(([n,t,k,ic])=>{const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;b.innerHTML=`<div class="thumb">${ic}</div><span>${n}</span>`;b.onclick=()=>{const r=addEquipment(n,t,k,0,0,false);r.position.copy(controls.target);r.position.y=0;select(r);toast('已加入地圖，拖曳到想要的位置');};wrap.appendChild(b)});
+ palette.forEach(([n,t,k,ic])=>{const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;b.innerHTML=`<div class="thumb">${ic}</div><span>${n}</span>`;b.onclick=()=>{const r=addEquipment(n,t,k,controls.target.x,controls.target.z);toast('已加入地圖，長按設備拖曳到指定位置');savePositions();};wrap.appendChild(b)});
 }
 addPalette();
 
-const ray=new THREE.Raycaster(),ptr=new THREE.Vector2();let drag=null;
-function pointer(e){const r=renderer.domElement.getBoundingClientRect();ptr.x=((e.clientX-r.left)/r.width)*2-1;ptr.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(ptr,camera);}
-function select(root){selected=root;document.querySelectorAll('.device').forEach(x=>x?.classList?.remove('selected'));openPanel(root);}
-function openPanel(r){document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('panel').classList.add('open');}
+const ray=new THREE.Raycaster();
+function pointerNDC(e){
+ const r=renderer.domElement.getBoundingClientRect();
+ return {x:((e.clientX-r.left)/r.width)*2-1,y:-((e.clientY-r.top)/r.height)*2+1};
+}
+function hitEquipment(e){
+ const p=pointerNDC(e);
+ ray.setFromCamera(new THREE.Vector2(p.x,p.y),camera);
+ return ray.intersectObjects(scene.children,true)
+   .find(h=>h.object.userData?.interactive)?.object.userData.root||null;
+}
+function groundPoint(e){
+ const p=pointerNDC(e);
+ ray.setFromCamera(new THREE.Vector2(p.x,p.y),camera);
+ const plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),out=new THREE.Vector3();
+ return ray.ray.intersectPlane(plane,out)?out:null;
+}
+function select(root){selected=root;if(root)openPanel(root);}
+function openPanel(r){
+ document.getElementById('pn').textContent=r.userData.name;
+ document.getElementById('pt').textContent=r.userData.type;
+ document.getElementById('panel').classList.add('open');
+}
+function closePanel(){document.getElementById('panel').classList.remove('open');}
+function toast(s){
+ const t=document.getElementById('toast');
+ t.textContent=s;t.classList.add('show');
+ setTimeout(()=>t.classList.remove('show'),1500);
+}
+function savePositions(){
+ localStorage.setItem('factory3dPositions',JSON.stringify([...groups.values()].map(r=>({
+   id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,
+   x:r.position.x,z:r.position.z,rotationY:r.rotation.y
+ }))));
+}
+function snapValue(v){return snap?Math.round(v/2)*2:v;}
+
 renderer.domElement.addEventListener('pointerdown',e=>{
- if(!edit)return;pointer(e);const hits=ray.intersectObjects(scene.children,true).filter(h=>h.object.userData?.interactive);
- if(hits.length){let r=hits[0].object.userData.root;select(r);drag={root:r,startX:e.clientX,startY:e.clientY,moved:false};controls.enabled=false;}
+ if(!edit||activePointerId!==null)return;
+ const r=hitEquipment(e);
+ if(!r)return;
+ activePointerId=e.pointerId;
+ renderer.domElement.setPointerCapture?.(e.pointerId);
+
+ drag={root:r,longPressed:false,moved:false};
+ pressTimer=setTimeout(()=>{
+   if(!drag)return;
+   drag.longPressed=true;
+   controls.enabled=false;
+   renderer.domElement.style.cursor='grabbing';
+   toast('拖曳中：移動到你要的位置');
+ },380);
 });
+
 renderer.domElement.addEventListener('pointermove',e=>{
- if(!drag)return;const dx=(e.clientX-drag.startX)/4,dz=(e.clientY-drag.startY)/4;if(Math.abs(dx)+Math.abs(dz)>4)drag.moved=true;drag.root.position.x+=dx*.035;drag.root.position.z+=dz*.035;drag.startX=e.clientX;drag.startY=e.clientY;
+ if(!drag||!drag.longPressed)return;
+ const world=groundPoint(e);
+ if(!world)return;
+ drag.root.position.x=snapValue(world.x);
+ drag.root.position.z=snapValue(world.z);
+ drag.moved=true;
 });
-renderer.domElement.addEventListener('pointerup',()=>{if(drag){controls.enabled=true;localStorage.setItem('factory3dPositions',JSON.stringify([...groups.values()].map(r=>({id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,x:r.position.x,z:r.position.z}))));drag=null;}});
-document.getElementById('close').onclick=()=>document.getElementById('panel').classList.remove('open');
-document.getElementById('editBtn').onclick=()=>{edit=true;document.getElementById('editBtn').classList.add('active');document.getElementById('viewBtn').classList.remove('active');document.getElementById('hint').textContent='編輯模式：點設備後可拖曳；雙指旋轉／縮放地圖'};
-document.getElementById('viewBtn').onclick=()=>{edit=false;document.getElementById('viewBtn').classList.add('active');document.getElementById('editBtn').classList.remove('active');document.getElementById('hint').textContent='巡檢模式：點設備查看清潔、保養、維修資料'};
-document.getElementById('resetBtn').onclick=()=>{camera.position.set(0,70,105);controls.target.set(0,0,0);controls.update()};
-document.getElementById('search').oninput=e=>{const q=e.target.value.trim().toLowerCase();groups.forEach(r=>r.visible=!q||r.userData.name.toLowerCase().includes(q));};
-document.getElementById('filter').onchange=e=>{const f=e.target.value;groups.forEach(r=>r.visible=f==='全部設備'||r.userData.type===f);};
-function toast(s){const t=document.getElementById('toast');t.textContent=s;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500)}
-function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);labels.setSize(innerWidth,innerHeight)}addEventListener('resize',resize);
-function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);labels.render(scene,camera)}animate();
+
+renderer.domElement.addEventListener('pointerup',e=>{
+ if(!drag)return;
+ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
+ const r=drag.root;
+ const wasDrag=drag.longPressed||drag.moved;
+ drag=null;
+ controls.enabled=true;
+ renderer.domElement.style.cursor='';
+ if(!wasDrag)select(r);
+ else{savePositions();toast('位置已更新');}
+ activePointerId=null;
+});
+renderer.domElement.addEventListener('pointercancel',()=>{
+ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
+ drag=null;controls.enabled=true;activePointerId=null;
+ renderer.domElement.style.cursor='';
+});
+
+document.getElementById('close').onclick=closePanel;
+document.getElementById('editBtn').onclick=()=>{
+ edit=true;closePanel();
+ document.getElementById('editBtn').classList.add('active');
+ document.getElementById('viewBtn').classList.remove('active');
+ document.getElementById('hint').textContent='編輯模式：短點查看；長按設備約 0.4 秒後拖曳；雙指操作地圖';
+};
+document.getElementById('viewBtn').onclick=()=>{
+ edit=false;closePanel();
+ document.getElementById('viewBtn').classList.add('active');
+ document.getElementById('editBtn').classList.remove('active');
+ document.getElementById('hint').textContent='巡檢模式：點設備查看清潔、保養、維修資料';
+};
+document.getElementById('resetBtn').onclick=()=>{
+ camera.position.set(0,70,105);controls.target.set(0,0,0);controls.update();
+};
+document.getElementById('snapBtn').onclick=()=>{
+ snap=!snap;
+ document.getElementById('snapBtn').textContent=`吸附：${snap?'開':'關'}`;
+};
+document.getElementById('saveBtn').onclick=()=>{savePositions();toast('位置已儲存到此裝置');};
+document.getElementById('search').oninput=e=>{
+ const q=e.target.value.trim().toLowerCase();
+ groups.forEach(r=>r.visible=!q||r.userData.name.toLowerCase().includes(q));
+};
+document.getElementById('filter').onchange=e=>{
+ const f=e.target.value;
+ groups.forEach(r=>r.visible=f==='全部設備'||r.userData.type===f);
+};
+function resize(){
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);labels.setSize(innerWidth,innerHeight);
+}
+addEventListener('resize',resize);
+function animate(){
+ requestAnimationFrame(animate);controls.update();
+ renderer.render(scene,camera);labels.render(scene,camera);
+}
+animate();
 </script></div>
 </body></html>
