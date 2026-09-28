@@ -114,41 +114,39 @@ const palette=[
  ['襯衫機','整燙設備','shirt','▣'],['平燙機','整燙設備','flat','▤'],['ICC','整燙設備','lineICC','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯'],['打包機','周邊設備','packer','▣']
 ];
 const instances=[
- // 倉庫1：左側 30K / 60K / 80K 縱向
- ['30K','洗衣設備','washer',-58,-28],
- ['60K','洗衣設備','washer',-58,-10],
- ['80K','洗衣設備','washer',-58,8],
-
- // 左上 L 型桌；中央整燙區；左下 ICC
- ['L型桌','周邊設備','office',-58,-48],
- ['襯衫機','整燙設備','shirt',-18,-20],
- ['平燙機','整燙設備','longPress',-18,0],
- ['整燙區','整燙設備','longPress',-18,20],
- ['ICC','整燙設備','lineICC',-38,36],
-
- // 倉庫2：上方 35kg / 50kg、小型洗衣機區；中間辦公室與直式洗衣機
- ['35kg','洗衣設備','washer',34,-44],
- ['50kg','洗衣設備','washer',50,-44],
- ['兩層辦公室','周邊設備','office',45,-10],
- ['直式洗衣機 #01','洗衣設備','vertical',72,-12],
- ['直式洗衣機 #02','洗衣設備','vertical',72,2],
- ['直式洗衣機 #03','洗衣設備','vertical',72,16],
-
- // 辦公室左側 N5 / IRT；下方 3 台烘乾機
- ['N5','整燙設備','lineN5',30,10],
- ['IRT','整燙設備','lineIRT',58,10],
- ['烘乾機 #01','烘乾設備','dryer',18,43],
- ['烘乾機 #02','烘乾設備','dryer',32,43],
- ['烘乾機 #03','烘乾設備','dryer',46,43],
-
- // 兩台天車 + 冷風區
- ['天車 #01','周邊設備','crane',-26,-4],
- ['天車 #02','周邊設備','crane',22,5],
- ['冷風區','周邊設備','fan',-2,42],['鍋爐','周邊設備','boiler',-46,45],['乾洗機','洗衣設備','dryclean',62,30],['打包機','周邊設備','packer',-34,30],['水設備','周邊設備','water',-28,45],['水塔','周邊設備','tank',-42,48],['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
+ ['30K','洗衣設備','folding',-58,0,-28],
+ ['60K','洗衣設備','folding',-58,0,-10],
+ ['80K','洗衣設備','folding',-58,0,8],
+ ['L型桌','周邊設備','office',-58,0,-48],
+ ['襯衫機','整燙設備','shirt',-18,0,-20],
+ ['平燙機','整燙設備','longPress',-18,0,0],
+ ['整燙區','整燙設備','longPress',-18,0,20],
+ ['ICC','整燙設備','lineICC',-38,0,36],
+ ['35kg','洗衣設備','washer',34,0,-44],
+ ['50kg','洗衣設備','washer',50,0,-44],
+ ['兩層辦公室','周邊設備','office',45,0,-10],
+ ['直式洗衣機 #01','洗衣設備','vertical',72,0,-12],
+ ['直式洗衣機 #02','洗衣設備','vertical',72,0,2],
+ ['直式洗衣機 #03','洗衣設備','vertical',72,0,16],
+ ['N5','整燙設備','lineN5',30,0,10],
+ ['IRT','整燙設備','lineIRT',58,0,10],
+ ['烘乾機 #01','烘乾設備','dryer',18,0,43],
+ ['烘乾機 #02','烘乾設備','dryer',32,0,43],
+ ['烘乾機 #03','烘乾設備','dryer',46,0,43],
+ ['天車 #01','周邊設備','crane',-26,0,-4],
+ ['天車 #02','周邊設備','crane',22,0,5],
+ ['冷風區','周邊設備','fan',-2,0,42],
+ ['鍋爐','周邊設備','boiler',-46,0,45],
+ ['乾洗機','洗衣設備','dryclean',62,0,30],
+ ['打包機','周邊設備','packer',-34,0,30],
+ ['水設備','周邊設備','water',-28,0,45],
+ ['水塔','周邊設備','tank',-42,0,48],
+ ['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],
+ ['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
 const MODEL_REVISION='2026-09-28-reference-industrial-v8-touch-controls';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
-const SYNC_KEY = 'factory3dPositions';
+const SYNC_KEY = 'factory3dPositions_C_STYLE_V2';
 let apiAvailable=false;
 let syncing=false;
 const groups=new Map();let selected=null;let edit=true;let snap=true;let uid=0;let pressTimer=null;let activePointerId=null;let drag=null;
@@ -183,6 +181,35 @@ function addMachineBase(g,w,d,c=0x118fff){const p=glowPlate(w,d,c);p.position.y=
 function addFeet(g,w,d){for(const x of [-w*.38,w*.38])for(const z of [-d*.38,d*.38]){const f=box(.32,.42,.32,0x263744,.92);f.position.set(x,.2,z);g.add(f);}}
 function addControl(g,w,y,z){panelBox(g,w,.48,.24,0x173c52,0,y,z,.98);panelBox(g,w*.38,.26,.12,0x07121b,-w*.25,y+.03,z-.14,.98);for(let i=0;i<4;i++){const led=box(.12,.12,.08,0x7ce8ff,.95);led.position.set(-w*.05+i*.25,y+.05,z-.16);led.material.emissive=new THREE.Color(0x28b9ff);led.material.emissiveIntensity=2.3;g.add(led);}}
 function machineNamePlate(g,text,w,y,z){const p=panelBox(g,w,.28,.08,0x163b50,0,y,z,.98);p.material.emissive=new THREE.Color(0x0877d1);p.material.emissiveIntensity=.55;return p;}
+function detailFolding(g){
+  const L=10.8,W=5.4,H=3.7;
+  addMachineBase(g,L+1.0,W+1.0,0x19cfff);
+  const main=rbox(L,H,W,0x176fc0,.98,.18);main.position.y=H/2+.45;g.add(main);
+  // white central frame and blue side housings
+  panelBox(g,2.2,H+.35,W+.25,0xe8eef0,-2.1,H/2+.58,0,.98);
+  panelBox(g,2.7,H+.2,W+.15,0x2a86ce,3.65,H/2+.52,0,.98);
+  panelBox(g,1.9,.45,W+.18,0xf1f4f5,-2.3,H+.58,0,.98);
+  // upper folding rollers
+  for(let i=0;i<7;i++){
+    const roller=cyl(.28, W-1.0,0xe7ecee,.98);
+    roller.rotation.z=Math.PI/2;
+    roller.position.set(-L/2+1.0+i*.72,3.25,0);
+    g.add(roller);
+  }
+  // lower conveyor
+  const belt=box(L-1.0,.18,W-.9,0xd8e0e3,.96);belt.position.set(.55,1.35,0);g.add(belt);
+  for(let i=0;i<8;i++){
+    const r=cyl(.18,W-.65,0x9aa8ae,.98);r.rotation.z=Math.PI/2;r.position.set(-L/2+.7+i*.78,1.52,0);g.add(r);
+  }
+  // output conveyor extension
+  const out=box(3.6,.25,3.1,0xdde4e7,.96);out.position.set(L/2+1.4,1.1,0);g.add(out);
+  for(let i=0;i<6;i++){const r=cyl(.16,3.0,0x8e9ca3,.98);r.rotation.z=Math.PI/2;r.position.set(L/2+.1+i*.52,1.3,0);g.add(r);}
+  // control screen
+  const screen=panelBox(g,1.25,1.05,.22,0x172d3a,2.9,4.1,-W/2-.15,.98);
+  screen.material.emissive=new THREE.Color(0x16c8ff);screen.material.emissiveIntensity=.45;
+  panelBox(g,.72,.18,.08,0xffffff,2.9,4.25,-W/2-.29,.98);
+  addFeet(g,L,W);
+}
 function detailWasher(g,variant='standard'){
   const specs={
     '30K':{w:5.9,d:5.4,h:5.2,accent:0x197fc2},
@@ -485,7 +512,8 @@ function detailTank(g){
 
 function model(type){
   const g=new THREE.Group();
-  if(type.startsWith('washer-')) detailWasher(g,type.slice(7));
+  if(type==='folding') detailFolding(g);
+  else if(type.startsWith('washer-')) detailWasher(g,type.slice(7));
   else if(type==='washer') detailWasher(g,'standard');
   else if(type==='vertical') detailVertical(g);
   else if(type==='dryer') detailDryer(g);
@@ -540,17 +568,17 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
  const stableExtra={'乾洗機':'DRYCLEAN-01','打包機':'PACK-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
- const visualKind=(kind==='washer'&&['30K','60K','80K','35kg','50kg'].includes(name))?('washer-'+name):kind;
+ const visualKind=kind==='washer'&&['35kg','50kg'].includes(name)?('washer-'+name):kind;
  const m=model(visualKind);m.position.y=.25;m.scale.setScalar(.88);root.add(m);
  if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
 
- const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
- const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
+ const plateW=((kind==='icc'||kind==='longPress')?17:kind==='folding'?11.8:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
+ const plateD=((kind==='icc'||kind==='longPress')?7:kind==='folding'?6.4:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
  const plateColor=type==='洗衣設備'?0x0877d1:type==='烘乾設備'?0x1bd58d:type==='燙床設備'?0x9b63ff:kind==='fan'?0xf18cb9:0x2a79b9;
  const plate=glowPlate(plateW,plateD,plateColor);plate.position.y=.05;root.add(plate);
 
  const color=type==='燙床設備'?'#b879ff':type==='烘乾設備'?'#55e7bb':kind==='fan'?'#ff9ac8':'#45c4ff';
- const labelHeight=(kind==='longPress'||kind==='icc')?7.1:kind==='crane'?6.5:kind==='office'?7.2:kind==='vertical'?9.2:6.7;const l=label(name,color);l.position.set(0,labelHeight,0);root.add(l);
+ const labelHeight=(kind==='longPress'||kind==='icc'||kind==='folding')?7.1:kind==='crane'?6.5:kind==='office'?7.2:kind==='vertical'?9.2:6.7;const l=label(name,color);l.position.set(0,labelHeight,0);root.add(l);
 
  root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);
  root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
@@ -582,7 +610,7 @@ function frameFactory(){
   const spanZ=Math.max(1,maxZ-minZ);
   const aspect=innerWidth/innerHeight;
   const portrait=aspect<0.82;
-  const fit=Math.max(spanX,spanZ)*(portrait?1.88:1.18)+22;
+  const fit=Math.max(spanX,spanZ)*(portrait?1.30:1.08)+18;
   const base=100;
   camera.left=-base*aspect;
   camera.right=base*aspect;
