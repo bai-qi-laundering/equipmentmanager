@@ -22,7 +22,7 @@ button{cursor:pointer}button.active{background:linear-gradient(180deg,#148ed3,#0
 .item[data-kind="dryer"] .thumb:before{border-color:#55e7bb;box-shadow:0 0 10px rgba(27,213,141,.28)}
 .item[data-kind="press"] .thumb:before,.item[data-kind="longPress"] .thumb:before,.item[data-kind="icc"] .thumb:before,.item[data-kind="shirt"] .thumb:before{border-color:#b879ff;box-shadow:0 0 10px rgba(155,99,255,.28)}
 .item[data-kind="compressor"] .thumb:before,.item[data-kind="manganese"] .thumb:before{border-color:#8bd8ff}.item span{font-size:12px;font-weight:800}
-.panel{position:fixed;z-index:40;right:12px;top:76px;width:min(380px,calc(100% - 24px));max-height:calc(100% - 160px);height:auto;padding:18px;background:rgba(5,19,35,.95);border:1px solid rgba(43,132,192,.56);border-radius:18px;transform:translateX(115%);transition:.22s;overflow:auto;box-shadow:0 22px 50px rgba(0,0,0,.38);backdrop-filter:blur(18px).panel.open{transform:none}
+.panel{position:fixed;z-index:40;right:12px;top:76px;width:min(380px,calc(100% - 24px));max-height:calc(100% - 160px);height:auto;padding:18px;background:rgba(5,19,35,.95);border:1px solid rgba(43,132,192,.56);border-radius:18px;transform:translateX(115%);transition:.22s;overflow:auto;box-shadow:0 22px 50px rgba(0,0,0,.38);backdrop-filter:blur(18px)}.panel.open{transform:none}
 .close{position:absolute;right:14px;top:14px;border-radius:50%;width:40px;height:40px;padding:0;font-size:22px}
 .panel h2{margin:18px 44px 4px 2px;font-size:22px}.muted{color:#91abc2}.card{margin-top:16px;padding:14px;border:1px solid #1b496e;border-radius:14px;background:#0a2037}.row{display:flex;justify-content:space-between;margin:10px 0}.ok{color:#55e5bd}.warn{color:#ffd166}.panel label{display:block;margin:10px 0 5px;color:#9ec4dc;font-size:12px}.panel input,.panel select,.panel textarea{background:#071a2d;border:1px solid #245b88;border-radius:9px;color:#fff;padding:9px 10px}
 .hint{position:fixed;z-index:31;left:50%;top:76px;transform:translateX(-50%);padding:5px 11px;border:1px solid rgba(43,124,180,.34);border-radius:999px;background:rgba(4,18,32,.46);color:#a7c4d8;font-size:11px;pointer-events:none;letter-spacing:.15px;backdrop-filter:blur(10px)}
@@ -110,8 +110,8 @@ raisedDeckFrame(24,11,32,43,0xa15dff);
 const palette=[
  ['30K','洗衣設備','washer','🧺'],['60K','洗衣設備','washer','🧺'],['80K','洗衣設備','washer','🧺'],
  ['35kg','洗衣設備','washer','🧺'],['50kg','洗衣設備','washer','🧺'],['直式洗衣機','洗衣設備','vertical','🧺'],
- ['烘乾機','烘乾設備','dryer','◉'],['乾洗機','洗衣設備','dryclean','◉'],['N5','燙床設備','press','▤'],['IRT','燙床設備','press','▤'],['SMF','整燙設備','smf','▤'],
- ['襯衫機','整燙設備','shirt','▣'],['平燙機','整燙設備','flat','▤'],['ICC','整燙設備','icc','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯']
+ ['烘乾機','烘乾設備','dryer','◉'],['乾洗機','洗衣設備','dryclean','◉'],['N5','整燙設備','lineN5','▤'],['IRT','整燙設備','lineIRT','▤'],['SMF','整燙設備','lineSMF','▤'],
+ ['襯衫機','整燙設備','shirt','▣'],['平燙機','整燙設備','flat','▤'],['ICC','整燙設備','lineICC','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯'],['打包機','周邊設備','packer','▣']
 ];
 const instances=[
  // 倉庫1：左側 30K / 60K / 80K 縱向
@@ -124,7 +124,7 @@ const instances=[
  ['襯衫機','整燙設備','shirt',-18,-20],
  ['平燙機','整燙設備','longPress',-18,0],
  ['整燙區','整燙設備','longPress',-18,20],
- ['ICC','整燙設備','icc',-38,36],
+ ['ICC','整燙設備','lineICC',-38,36],
 
  // 倉庫2：上方 35kg / 50kg、小型洗衣機區；中間辦公室與直式洗衣機
  ['35kg','洗衣設備','washer',34,-44],
@@ -135,8 +135,8 @@ const instances=[
  ['直式洗衣機 #03','洗衣設備','vertical',72,16],
 
  // 辦公室左側 N5 / IRT；下方 3 台烘乾機
- ['N5','燙床設備','longPress',30,10],
- ['IRT','燙床設備','longPress',58,10],
+ ['N5','整燙設備','lineN5',30,10],
+ ['IRT','整燙設備','lineIRT',58,10],
  ['烘乾機 #01','烘乾設備','dryer',18,43],
  ['烘乾機 #02','烘乾設備','dryer',32,43],
  ['烘乾機 #03','烘乾設備','dryer',46,43],
@@ -144,7 +144,7 @@ const instances=[
  // 兩台天車 + 冷風區
  ['天車 #01','周邊設備','crane',-26,-4],
  ['天車 #02','周邊設備','crane',22,5],
- ['冷風區','周邊設備','fan',-2,42],['鍋爐','周邊設備','boiler',-46,45],['乾洗機','洗衣設備','dryclean',62,30],['水設備','周邊設備','water',-28,45],['水塔','周邊設備','tank',-42,48],['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
+ ['冷風區','周邊設備','fan',-2,42],['鍋爐','周邊設備','boiler',-46,45],['乾洗機','洗衣設備','dryclean',62,30],['打包機','周邊設備','packer',-34,30],['水設備','周邊設備','water',-28,45],['水塔','周邊設備','tank',-42,48],['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
 const MODEL_REVISION='2026-09-28-reference-industrial-v8-touch-controls';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
@@ -153,69 +153,7 @@ let apiAvailable=false;
 let syncing=false;
 const groups=new Map();let selected=null;let edit=true;let snap=true;let uid=0;let pressTimer=null;let activePointerId=null;let drag=null;
 
-const assetLoader=new GLTFLoader();
-const assetCache=new Map();
-const externalAssets={
-  washer700:'https://cdn.3dassets.dev/assets/25509/v1/model.glb',
-  washer900:'https://cdn.3dassets.dev/assets/25512/v1/model.glb',
-  washerRigid:'https://cdn.3dassets.dev/assets/25511/v1/model.glb',
-  dryer800:'https://cdn.3dassets.dev/assets/25514/v1/model.glb',
-  flatwork:'https://cdn.3dassets.dev/assets/25534/v1/model.glb',
-  garmentPress:'https://cdn.3dassets.dev/assets/25535/v1/model.glb',
-  steamer:'https://cdn.3dassets.dev/assets/25536/v1/model.glb',
-  dryclean:'https://cdn.3dassets.dev/assets/25556/v1/model.glb',
-  boiler:'https://cdn.3dassets.dev/assets/34954/v1/model.glb'
-};
-
-function loadGLTF(url){
-  if(assetCache.has(url))return assetCache.get(url);
-  const p=new Promise((resolve,reject)=>{
-    assetLoader.load(url,gltf=>resolve(gltf),undefined,reject);
-  });
-  assetCache.set(url,p);
-  return p;
-}
-
-function externalAssetFor(name,kind){
-  if(kind==='washer' && ['30K','60K','80K'].includes(name))return {url:externalAssets.washer900,scale:{x:4.75,y:4.75,z:4.75},y:.12};
-  if(kind==='washer' && ['35kg','50kg'].includes(name))return {url:externalAssets.washer700,scale:{x:4.9,y:4.9,z:4.9},y:.12};
-  if(kind==='vertical')return {url:externalAssets.washerRigid,scale:{x:4.25,y:4.25,z:4.25},y:.12};
-  if(kind==='dryer')return {url:externalAssets.dryer800,scale:{x:4.7,y:4.7,z:4.7},y:.12};
-  if(kind==='longPress')return {url:externalAssets.garmentPress,scale:{x:6.3,y:6.0,z:6.0},y:.12};
-  if(kind==='flat'||kind==='icc')return {url:externalAssets.flatwork,scale:{x:6.2,y:4.8,z:4.8},y:.12};
-  if(kind==='shirt')return {url:externalAssets.steamer,scale:{x:4.8,y:4.8,z:4.8},y:.12};
-  if(kind==='dryclean')return {url:externalAssets.dryclean,scale:{x:4.6,y:4.6,z:4.6},y:.12};
-  if(kind==='boiler')return {url:externalAssets.boiler,scale:{x:5.0,y:5.0,z:5.0},y:.12};
-  return null;
-}
-
-async function attachExternalAsset(root,name,kind,procedural){
-  const spec=externalAssetFor(name,kind);
-  if(!spec)return;
-  try{
-    const gltf=await loadGLTF(spec.url);
-    if(!groups.has(root.userData.id))return;
-    const asset=gltf.scene.clone(true);
-    asset.name='GLB-'+root.userData.id;
-    asset.position.set(0,spec.y,0);
-    asset.scale.set(spec.scale.x,spec.scale.y,spec.scale.z);
-    asset.traverse(o=>{
-      if(o.isMesh){
-        o.castShadow=true;
-        o.receiveShadow=true;
-        o.userData.root=root;
-        o.userData.interactive=true;
-      }
-    });
-    root.remove(procedural);
-    root.add(asset);
-    root.userData.assetSource=spec.url;
-  }catch(err){
-    console.warn('3D asset load failed, using procedural fallback:',name,err);
-  }
-}
-
-function mat(c,rough=.55,metal=.35,opacity=1){
+// C-style procedural industrial showroom models; external GLB overrides disabled.\nfunction mat(c,rough=.55,metal=.35,opacity=1){
   return new THREE.MeshStandardMaterial({
     color:c,roughness:rough,metalness:metal,
     transparent:opacity<1,opacity,depthWrite:opacity>=1
@@ -397,28 +335,56 @@ function detailPress(g,variant='press'){
 }
 
 function detailShirt(g){
-  addMachineBase(g,7.2,6.8,0x985cff);
-  panelBox(g,5.9,5.4,6.0,0xd2dbe0,0,2.8,0,.92);
-  panelBox(g,4.9,.5,.25,0x3e7f9d,0,5.35,-3.12,.95);
-  panelBox(g,2.0,6.8,1.55,0x3d7c97,0,7.1,0,.72);
-  panelBox(g,4.8,.35,1.25,0x9ecbdc,0,10.35,0,.76);
-  for(const x of [-1.75,1.75]){
-    pipe(g,[x,5.2,-3.05],[x,8.8,-3.05],.09,0x6d808b);
-    const valve=cyl(.22,.18,0xb5c0c5,.95);valve.rotation.x=Math.PI/2;valve.position.set(x,7.1,-3.15);g.add(valve);
+  const W=6.6,D=5.6,H=8.8;
+  addMachineBase(g,W+1.2,D+1.0,0x14d8ff);
+  panelBox(g,W,5.6,D,0xe4eaec,0,3.1,0,.98);
+  panelBox(g,2.0,7.2,1.65,0x253c48,0,7.0,0,.96);
+  panelBox(g,4.3,.28,1.0,0xffffff,0,8.6,0,.9);
+  const torso=rbox(3.7,2.8,1.45,0xf2f4f5,.97,.18);torso.position.set(0,5.4,.15);g.add(torso);
+  const neck=cyl(.42,.75,0xbfc8ce,.98);neck.position.set(0,7.0,.15);g.add(neck);
+  const head=cyl(.58,.78,0xd5dde2,.98);head.position.set(0,7.72,.15);g.add(head);
+  for(const s of [-1,1]){
+    pipe(g,[s*1.45,6.1,.15],[s*2.8,6.6,.15],.18,0xc8d2d7);
+    pipe(g,[s*2.8,6.6,.15],[s*3.1,5.7,.15],.16,0xc8d2d7);
+    panelBox(g,.75,1.35,1.05,0xcfd7da,s*3.0,5.55,.15,.96);
+    panelBox(g,.88,.22,.55,0xe24b4b,s*3.0,6.25,.15,.98);
   }
-  panelBox(g,1.3,.7,.22,0x1a3c4e,-2.0,4.9,-3.2,.96);
+  pipe(g,[-1.2,8.0,-.15],[-2.1,8.4,-.15],.07,0x26aee6);pipe(g,[1.2,8.0,-.15],[2.1,8.4,-.15],.07,0x26aee6);
+  panelBox(g,1.55,1.25,.68,0x182c39,-2.35,2.55,-2.82,.98);
+  addFeet(g,W,D);
 }
 
 function detailCrane(g){
-  addMachineBase(g,5.8,5.8,0xf0a329);
-  const frame=0x4e5d66;
-  panelBox(g,4.9,.42,4.9,frame,0,5.2,0,.96);
-  for(const x of [-2.1,2.1])for(const z of [-2.1,2.1])pipe(g,[x,0,z],[x,5.0,z],.12,frame);
-  panelBox(g,4.4,.28,.72,0xe2a12d,0,5.35,0,.98);
-  const motor=panelBox(g,1.25,.9,1.15,0x596872,0,5.85,0,.95);
-  pipe(g,[0,5.85,0],[0,2.3,0],.10,0x4b5960);
-  const hook=new THREE.Mesh(new THREE.TorusGeometry(.55,.12,12,24,Math.PI*1.7),mat(0xe7a12c,.3,.7,.95));
-  hook.rotation.x=Math.PI/2;hook.position.set(0,.1,0);g.add(hook);
+  addMachineBase(g,5.8,5.8,0x13bfff);
+  panelBox(g,5.1,.38,1.0,0x6a7880,0,4.7,0,.96);
+  panelBox(g,1.35,.72,1.1,0xe3423f,0,4.25,0,.98);
+  panelBox(g,.82,.95,.85,0xf2a629,0,3.45,0,.98);
+  pipe(g,[0,3.15,0],[0,1.0,0],.10,0x56646c);
+  const hook=new THREE.Mesh(new THREE.TorusGeometry(.48,.11,12,24,Math.PI*1.75),mat(0xf2a629,.28,.72,.98));hook.rotation.x=Math.PI/2;hook.position.set(0,.35,0);g.add(hook);
+  const chain=cyl(.12,.62,0xaeb8bc,.96);chain.position.set(0,1.0,0);g.add(chain);
+}
+
+function detailLine(g,variant='lineN5'){
+  const L=15.5,W=5.2,H=3.2;
+  addMachineBase(g,L+1.2,W+1.1,0x19bfff);
+  panelBox(g,W,H,L,0x1c64a5,0,H/2+.35,0,.94);
+  for(const z of [-L*.33,0,L*.33]) panelBox(g,W-.25,.55,2.5,0x2f87c6,0,2.25,z,.92);
+  panelBox(g,W-.2,.25,L-.35,0xcbd5da,0,3.95,0,.84);
+  for(let i=0;i<5;i++){const roller=cyl(.42,W-1.0,0xe5eaed,.95);roller.rotation.z=Math.PI/2;roller.position.set(0,2.0,-L/2+2+i*((L-4)/4));g.add(roller);}
+  const belt=box(W-.8,.18,L*.9,0x1ca7a0,.95);belt.position.y=1.25;g.add(belt);
+  const control=panelBox(g,1.45,1.15,.38,0x1d3544,-W/2-.15,2.4,-L/2+.9,.98);control.material.emissive=new THREE.Color(0x12aaf6);control.material.emissiveIntensity=.25;
+  for(const z of [-L*.28,0,L*.28]) pipe(g,[-W*.42,3.1,z],[W*.42,3.1,z],.075,0x8fb4c3);
+  addFeet(g,L,W);
+}
+function detailPacker(g){
+  addMachineBase(g,6.8,6.0,0x14c5ff);
+  const body=rbox(2.2,4.8,2.2,0xd6dde0,.98,.16);body.position.y=2.8;g.add(body);
+  const arch=new THREE.Mesh(new THREE.TorusGeometry(2.05,.18,14,42,Math.PI),mat(0xd9dfe2,.3,.55,.98));arch.rotation.z=Math.PI/2;arch.position.set(0,5.0,0);g.add(arch);
+  panelBox(g,4.6,.24,.24,0x9aa9b1,0,1.1,0,.95);
+  const table=box(4.3,.18,3.0,0xe5ebee,.95);table.position.set(0,2.3,.1);g.add(table);
+  const reel=cyl(.85,.6,0xf4f6f7,.95);reel.rotation.z=Math.PI/2;reel.position.set(1.55,3.0,0);g.add(reel);
+  const ctrl=panelBox(g,.65,1.35,.55,0x263844,-1.45,4.0,-1.0,.98);ctrl.material.emissive=new THREE.Color(0x12aaf6);ctrl.material.emissiveIntensity=.22;
+  for(const x of [-2.2,2.2]){const wheel=cyl(.30,.18,0x4e5960,.96);wheel.rotation.z=Math.PI/2;wheel.position.set(x,.38,0);g.add(wheel);}
 }
 
 function detailOffice(g){
@@ -524,18 +490,18 @@ function model(type){
   else if(type==='dryer') detailDryer(g);
   else if(type==='longPress') detailPress(g,'press');
   else if(type==='flat') detailPress(g,'flat');
-  else if(type==='icc') detailPress(g,'icc');
+  else if(type==='icc'||type==='lineICC'||type==='lineN5'||type==='lineIRT'||type==='lineSMF') detailLine(g,type);
   else if(type==='shirt') detailShirt(g);
   else if(type==='crane') detailCrane(g);
   else if(type==='office') detailOffice(g);
-  else if(type==='smf') detailSMF(g);
+  else if(type==='smf') detailLine(g,'lineSMF');
   else if(type==='dryclean') detailDryclean(g);
   else if(type==='compressor') detailCompressor(g);
   else if(type==='manganese') detailManganese(g);
   else if(type==='boiler') detailBoiler(g);
   else if(type==='water') detailWater(g);
   else if(type==='tank') detailTank(g);
-  else {addMachineBase(g,6,6,0x118fff);g.add(rbox(5,4,5,0xaab7bf,.75,.22));}
+  else if(type==='packer') detailPacker(g); else {addMachineBase(g,6,6,0x118fff);g.add(rbox(5,4,5,0xaab7bf,.75,.22));}
   return g;
 }
 function setSyncBadge(text,ok=false){
@@ -571,11 +537,11 @@ async function saveRemoteLayout(){
 function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const root=new THREE.Group();
  const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
- const stableExtra={'乾洗機':'DRYCLEAN-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
+ const stableExtra={'乾洗機':'DRYCLEAN-01','打包機':'PACK-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const visualKind=(kind==='washer'&&['30K','60K','80K','35kg','50kg'].includes(name))?('washer-'+name):kind;
  const m=model(visualKind);m.position.y=.25;m.scale.setScalar(.88);root.add(m);
- void attachExternalAsset(root,name,kind,m);if(kind==='icc')root.rotation.y=Math.PI/2;
+ void attachExternalAsset(root,name,kind,m);if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
 
  const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
  const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
@@ -731,6 +697,7 @@ function importLayout(file){
 function snapValue(v){return snap?Math.round(v/5)*5:v;}
 
 renderer.domElement.addEventListener('pointerdown',e=>{
+ if(e.pointerType!=='mouse' && e.isPrimary===false)return;
  if(!edit)return;
  const r=hitEquipment(e);
  if(!r)return;
@@ -829,7 +796,7 @@ document.getElementById('search').oninput=e=>{
 };
 document.getElementById('filter').onchange=e=>{
  const f=e.target.value;
- groups.forEach(r=>r.visible=f==='全部設備'||f===r.userData.level||r.userData.type===f);
+ groups.forEach(r=>r.visible=f==='全部設備'||r.userData.type===f);
 };
 setInterval(()=>{if(!apiAvailable&&!syncing)loadRemoteLayout();},15000);
 function resize(){
