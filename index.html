@@ -153,7 +153,8 @@ let apiAvailable=false;
 let syncing=false;
 const groups=new Map();let selected=null;let edit=true;let snap=true;let uid=0;let pressTimer=null;let activePointerId=null;let drag=null;
 
-// C-style procedural industrial showroom models; external GLB overrides disabled.\nfunction mat(c,rough=.55,metal=.35,opacity=1){
+// C-style procedural industrial showroom models; external GLB overrides disabled.
+function mat(c,rough=.55,metal=.35,opacity=1){
   return new THREE.MeshStandardMaterial({
     color:c,roughness:rough,metalness:metal,
     transparent:opacity<1,opacity,depthWrite:opacity>=1
