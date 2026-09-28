@@ -52,19 +52,19 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const app=document.getElementById('canvas'), scene=new THREE.Scene();
 scene.background=new THREE.Color(0x061321);
-scene.fog=new THREE.Fog(0x061321,150,360);
-const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,1000);
-camera.position.set(92,132,178);
+scene.fog=new THREE.Fog(0x061321,80,260);
+const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,1000);
+camera.position.set(92,150,178);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;app.appendChild(renderer.domElement);
 const labels=new CSS2DRenderer();labels.setSize(innerWidth,innerHeight);labels.domElement.style.position='absolute';labels.domElement.style.inset='0';labels.domElement.style.pointerEvents='none';app.appendChild(labels.domElement);
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=20;controls.maxDistance=240;controls.target.set(7,0,0);
 
 scene.add(new THREE.HemisphereLight(0xd8f1ff,0x07111c,2.45));
-const key=new THREE.DirectionalLight(0xffffff,4.6);key.position.set(28,120,38);key.castShadow=true;scene.add(key);
-const rim=new THREE.DirectionalLight(0x66c7ff,2.0);rim.position.set(-60,55,-40);scene.add(rim);
-const fill=new THREE.PointLight(0x26a9ff,190,280);fill.position.set(-35,48,30);scene.add(fill);
-const magenta=new THREE.PointLight(0xa65dff,95,210);magenta.position.set(48,24,44);scene.add(magenta);
+const key=new THREE.DirectionalLight(0xffffff,3.7);key.position.set(28,120,38);key.castShadow=true;scene.add(key);
+const rim=new THREE.DirectionalLight(0x4abfff,1.5);rim.position.set(-60,55,-40);scene.add(rim);
+const fill=new THREE.PointLight(0x26a9ff,150,240);fill.position.set(-35,48,30);scene.add(fill);
+const magenta=new THREE.PointLight(0xa65dff,65,170);magenta.position.set(48,24,44);scene.add(magenta);
 function floorZone(w,d,x,z,c,labelText,labelColor=0x2aa9ff){const g=new THREE.Group();const floor=box(w,.22,d,c,.82);floor.position.y=-.72;g.add(floor);const border=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.35,d)),new THREE.LineBasicMaterial({color:labelColor,transparent:true,opacity:.72}));border.position.y=-.55;g.add(border);for(let xx=-w/2+5;xx<w/2;xx+=5){const line=box(.035,.025,d-.8,0x2a4a60,.38);line.position.set(xx,-.55,0);g.add(line);}for(let zz=-d/2+5;zz<d/2;zz+=5){const line=box(w-.8,.025,.035,0x2a4a60,.38);line.position.set(0,-.55,zz);g.add(line);}const l=label(labelText,'#8bd8ff');l.position.set(0,.1,-d/2+2);g.add(l);g.position.set(x,0,z);scene.add(g);}const grid=new THREE.GridHelper(420,84,0x15547a,0x0b2d46);grid.position.y=-1;grid.material.transparent=true;grid.material.opacity=.42;scene.add(grid);
 const raisedDeckFrame=(w,d,x,z,c)=>{const g=new THREE.Group();const p=glowPlate(w,d,c);p.position.y=7.04;g.add(p);const edgeMat=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.42});const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.16,d)),edgeMat);edge.position.y=7.08;g.add(edge);g.position.set(x,0,z);scene.add(g);return g;};
 raisedDeckFrame(15,12,-2,42,0x2aa8ff);
@@ -109,7 +109,7 @@ const instances=[
  ['天車 #02','周邊設備','crane',22,5],
  ['冷風區','周邊設備','fan',-2,42],['鍋爐','周邊設備','boiler',-46,45],['乾洗機','洗衣設備','dryclean',62,30],['水設備','周邊設備','water',-28,45],['水塔','周邊設備','tank',-42,48],['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
-const MODEL_REVISION='2026-09-28-reference-visual-v4';
+const MODEL_REVISION='2026-09-28-small-model-layout-v3';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
 const SYNC_KEY = 'factory3dPositions';
 let apiAvailable=false;
@@ -170,13 +170,11 @@ async function attachExternalAsset(root,name,kind,procedural){
   }
 }
 
-function mat(c,rough=.46,metal=.52,opacity=1){
-  const m=new THREE.MeshStandardMaterial({
+function mat(c,rough=.55,metal=.35,opacity=1){
+  return new THREE.MeshStandardMaterial({
     color:c,roughness:rough,metalness:metal,
     transparent:opacity<1,opacity,depthWrite:opacity>=1
   });
-  m.envMapIntensity=1.15;
-  return m;
 }
 function box(w,h,d,c,opacity=1){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,.5,.32,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
 function glowPlate(w,d,c){const p=box(w,.12,d,c,.22);p.material.emissive=new THREE.Color(c);p.material.emissiveIntensity=1.05;return p;}
@@ -186,17 +184,91 @@ function cyl(radius,depth,c,opacity=1){const m=new THREE.Mesh(new THREE.Cylinder
 function panelBox(g,w,h,d,c,x,y,z,opacity=.9){const m=rbox(w,h,d,c,opacity,.12);m.position.set(x,y,z);g.add(m);return m;}
 function washerDoor(g,r,z){const frame=cyl(r,.22,0x566671,.96);frame.rotation.x=Math.PI/2;frame.position.set(0,.15,z);g.add(frame);const ring=cyl(r*.84,.25,0x172d3d,.95);ring.rotation.x=Math.PI/2;ring.position.set(0,.15,z+.12);g.add(ring);const pane=new THREE.Mesh(new THREE.CircleGeometry(r*.69,40),mat(0x58c9f4,.08,.42,.4));pane.position.set(0,.15,z+.26);pane.rotation.x=Math.PI/2;g.add(pane);}
 function pipe(g,a,b,r=.08,c=0x90a4b0){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),v=B.clone().sub(A),m=cyl(r,v.length(),c,.9);m.position.copy(A.clone().add(B).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());g.add(m);return m;}
-function addMachineBase(g,w,d,c=0x118fff){
-  const p=glowPlate(w,d,c);p.position.y=.04;g.add(p);
-  const edge=box(w+.18,.12,d+.18,0x9deaff,.72);edge.position.y=.12;g.add(edge);
-  const inner=box(Math.max(1,w-.55),.08,Math.max(1,d-.55),c,.18);inner.position.y=.16;
-  inner.material.emissive=new THREE.Color(c);inner.material.emissiveIntensity=2.3;g.add(inner);
-  const shadow=box(Math.max(1,w*.82),.025,Math.max(1,d*.82),0x06111d,.22);shadow.position.y=.19;g.add(shadow);
+function addMachineBase(g,w,d,c=0x118fff){const p=glowPlate(w,d,c);p.position.y=.04;g.add(p);const edge=box(w+.18,.12,d+.18,0x9deaff,.62);edge.position.y=.12;g.add(edge);const inner=box(Math.max(1,w-.55),.08,Math.max(1,d-.55),c,.22);inner.position.y=.16;inner.material.emissive=new THREE.Color(c);inner.material.emissiveIntensity=1.7;g.add(inner);}
+function addFeet(g,w,d){for(const x of [-w*.38,w*.38])for(const z of [-d*.38,d*.38]){const f=box(.32,.42,.32,0x263744,.92);f.position.set(x,.2,z);g.add(f);}}
+function addControl(g,w,y,z){panelBox(g,w,.48,.24,0x173c52,0,y,z,.98);panelBox(g,w*.38,.26,.12,0x07121b,-w*.25,y+.03,z-.14,.98);for(let i=0;i<4;i++){const led=box(.12,.12,.08,0x7ce8ff,.95);led.position.set(-w*.05+i*.25,y+.05,z-.16);led.material.emissive=new THREE.Color(0x28b9ff);led.material.emissiveIntensity=2.3;g.add(led);}}
+function machineNamePlate(g,text,w,y,z){const p=panelBox(g,w,.28,.08,0x163b50,0,y,z,.98);p.material.emissive=new THREE.Color(0x0877d1);p.material.emissiveIntensity=.55;return p;}
+function detailWasher(g,variant='standard'){
+  const specs={
+    '30K':{w:5.9,d:5.4,h:5.2,accent:0x197fc2},
+    '60K':{w:6.5,d:5.8,h:5.7,accent:0x197fc2},
+    '80K':{w:7.1,d:6.2,h:6.0,accent:0x197fc2},
+    '35kg':{w:5.4,d:5.2,h:5.0,accent:0x197fc2},
+    '50kg':{w:5.8,d:5.5,h:5.35,accent:0x197fc2},
+    'standard':{w:6.4,d:5.6,h:5.5,accent:0x197fc2}
+  };
+  const s=specs[variant]||specs.standard;
+  addMachineBase(g,s.w+1,s.d+1,s.accent);
+
+  const body=rbox(s.w,s.h,s.d,0xe2e7ea,.98,.22);
+  body.position.y=s.h/2+.35;g.add(body);
+
+  const lower=panelBox(g,s.w-.38,.42,s.d-.34,0xb9c4ca,0,.62,0,.98);
+  lower.material.emissive=new THREE.Color(0x24495e);lower.material.emissiveIntensity=.12;
+
+  const top=rbox(s.w-.22,.28,s.d-.25,0xf7f8f8,.99,.10);
+  top.position.y=s.h+.52;g.add(top);
+
+  // Front control fascia
+  const fascia=panelBox(g,s.w-.42,.72,.30,0x294958,0,s.h-.48,-s.d/2-.08,.98);
+  fascia.material.emissive=new THREE.Color(s.accent);fascia.material.emissiveIntensity=.16;
+
+  const display=panelBox(g,1.18,.32,.09,0x07131d,-s.w*.23,s.h-.43,-s.d/2-.27,.98);
+  display.material.emissive=new THREE.Color(0x43d9ff);display.material.emissiveIntensity=1.5;
+
+  const dial=cyl(.34,.14,0x9ba8af,.98);
+  dial.rotation.x=Math.PI/2;dial.position.set(s.w*.17,s.h-.43,-s.d/2-.28);g.add(dial);
+  const dialInner=cyl(.20,.16,0x263b48,.98);
+  dialInner.rotation.x=Math.PI/2;dialInner.position.set(s.w*.17,s.h-.43,-s.d/2-.38);g.add(dialInner);
+
+  for(let i=0;i<5;i++){
+    const led=box(.10,.10,.08,0x54ddff,.95);
+    led.position.set(-s.w*.05+i*.24,s.h-.43,-s.d/2-.29);
+    led.material.emissive=new THREE.Color(0x2dcaff);led.material.emissiveIntensity=2;
+    g.add(led);
+  }
+
+  // Large industrial door with layered metal rings
+  const outer=cyl(Math.min(s.w,s.d)*.285,.22,0x8e9ba2,.98);
+  outer.rotation.x=Math.PI/2;outer.position.set(0,2.55,s.d/2+.12);g.add(outer);
+
+  const trim=cyl(Math.min(s.w,s.d)*.255,.24,0xd8dee1,.99);
+  trim.rotation.x=Math.PI/2;trim.position.set(0,2.55,s.d/2+.24);g.add(trim);
+
+  const black=cyl(Math.min(s.w,s.d)*.222,.26,0x142a38,.98);
+  black.rotation.x=Math.PI/2;black.position.set(0,2.55,s.d/2+.36);g.add(black);
+
+  const glass=new THREE.Mesh(new THREE.CircleGeometry(Math.min(s.w,s.d)*.185,48),mat(0x3f8fae,.08,.48,.52));
+  glass.position.set(0,2.55,s.d/2+.50);glass.rotation.x=Math.PI/2;g.add(glass);
+
+  const glassGlow=new THREE.Mesh(new THREE.RingGeometry(Math.min(s.w,s.d)*.19,Math.min(s.w,s.d)*.205,48),new THREE.MeshBasicMaterial({color:0x62d9ff,transparent:true,opacity:.48}));
+  glassGlow.position.set(0,2.55,s.d/2+.52);glassGlow.rotation.x=Math.PI/2;g.add(glassGlow);
+
+  // Door hinges / handle
+  for(const y of [2.05,3.05]){
+    const bolt=cyl(.08,.10,0x46555d,.98);bolt.rotation.x=Math.PI/2;bolt.position.set(-Math.min(s.w,s.d)*.25,y,s.d/2+.43);g.add(bolt);
+  }
+  const handle=box(.16,.72,.16,0x58666d,.98);
+  handle.position.set(Math.min(s.w,s.d)*.25,2.55,s.d/2+.43);g.add(handle);
+
+  // Side seams and ventilation
+  for(const z of [-s.d*.30,-s.d*.08,s.d*.14,s.d*.36]){
+    const seam=box(.025,s.h-.7,.035,0x9aa7ad,.52);
+    seam.position.set(s.w/2+.02,3.0,z);g.add(seam);
+  }
+  for(let i=0;i<7;i++){
+    const vent=box(.10,.08,.52,0x61747d,.85);
+    vent.position.set(-s.w/2-.03,1.2+i*.27,s.d*.22);g.add(vent);
+  }
+
+  addFeet(g,s.w,s.d);
+  for(const x of [-s.w*.34,s.w*.34]){
+    const foot=box(.42,.18,.52,0x33434c,.96);
+    foot.position.set(x,.18,s.d*.36);g.add(foot);
+  }
 }
 
 function detailDryer(g){
-  // reference-style white stainless industrial casing
-
   const w=6.9,d=5.9,h=5.8;
   addMachineBase(g,w+.9,d+.9,0x8d4cff);
   const body=rbox(w,h,d,0xdfe5e8,.98,.22);body.position.y=3.25;g.add(body);
@@ -452,10 +524,10 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
  const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
  const plateColor=type==='洗衣設備'?0x0877d1:type==='烘乾設備'?0x1bd58d:type==='燙床設備'?0x9b63ff:kind==='fan'?0xf18cb9:0x2a79b9;
- const plate=glowPlate(plateW*1.06,plateD*1.06,plateColor);plate.position.y=.05;root.add(plate);
+ const plate=glowPlate(plateW,plateD,plateColor);plate.position.y=.05;root.add(plate);
 
  const color=type==='燙床設備'?'#b879ff':type==='烘乾設備'?'#55e7bb':kind==='fan'?'#ff9ac8':'#45c4ff';
- const labelHeight=(kind==='longPress'||kind==='icc')?6.7:kind==='crane'?6.1:kind==='office'?6.8:kind==='vertical'?8.6:6.2;const l=label(name,color);l.position.set(0,labelHeight,0);root.add(l);
+ const labelHeight=(kind==='longPress'||kind==='icc')?7.1:kind==='crane'?6.5:kind==='office'?7.2:kind==='vertical'?9.2:6.7;const l=label(name,color);l.position.set(0,labelHeight,0);root.add(l);
 
  root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);
  root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
@@ -487,9 +559,9 @@ function frameFactory(){
   const spanZ=Math.max(1,maxZ-minZ);
   const portrait=innerWidth/innerHeight<0.82;
   const distance=portrait
-    ? Math.max(215,Math.max(spanX,spanZ)*1.75)
-    : Math.max(175,Math.max(spanX,spanZ)*1.30);
-  const dir=new THREE.Vector3(.48,.82,.58).normalize();
+    ? Math.max(250,Math.max(spanX,spanZ)*2.05)
+    : Math.max(190,Math.max(spanX,spanZ)*1.55);
+  const dir=new THREE.Vector3(.48,.72,.58).normalize();
   camera.position.copy(new THREE.Vector3(cx,0,cz).addScaledVector(dir,distance));
   controls.target.set(cx,0,cz);
   controls.update();
