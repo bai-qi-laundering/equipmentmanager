@@ -157,7 +157,7 @@ async function loadRemoteLayout(){
   setSyncBadge('連線中');const res=await fetch(API_BASE+'/api/layout',{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);
   const payload=await res.json();const positions=Array.isArray(payload.positions)?payload.positions:[];
   if(positions.length){const byId=new Map(positions.map(v=>[v.id,v]));const byName=new Map(positions.map(v=>[v.name,v]));
-   groups.forEach(r=>{const v=byId.get(r.userData.id)||byName.get(r.userData.name);if(v){if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.level!=null)r.userData.level=v.level;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(v.notes!=null)r.userData.notes=v.notes;}});
+   groups.forEach(r=>{const v=byId.get(r.userData.id)||byName.get(r.userData.name);if(v){if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(r.userData.level==='架高二層')r.position.y=7;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.level!=null)r.userData.level=v.level;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(v.notes!=null)r.userData.notes=v.notes;}});
    localStorage.setItem(SYNC_KEY,JSON.stringify(getPositionData()));
   }
   apiAvailable=true;setSyncBadge('NAS 已連線',true);return true;
@@ -202,7 +202,7 @@ setTimeout(()=>loadRemoteLayout(),0);
 
 function addPalette(){
  const wrap=document.getElementById('items');wrap.innerHTML='';
- palette.forEach(([n,t,k,ic])=>{const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;b.innerHTML=`<div class="thumb">${ic}</div><span>${n}</span>`;b.onclick=()=>{if(!edit){toast('目前是巡檢模式，請先切換到編輯模式');return;}const r=addEquipment(n,t,k,controls.target.x,controls.target.z);savePositions();toast('已加入地圖，可直接拖曳');};wrap.appendChild(b)});
+ palette.forEach(([n,t,k,ic])=>{const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;b.innerHTML=`<div class="thumb">${ic}</div><span>${n}</span>`;b.onclick=()=>{if(!edit){toast('目前是巡檢模式，請先切換到編輯模式');return;}const r=addEquipment(n,t,k,controls.target.x,0,controls.target.z,'一樓');savePositions();toast('已加入地圖，可直接拖曳');};wrap.appendChild(b)});
 }
 addPalette();
 
@@ -224,10 +224,10 @@ function hitEquipment(e){
  }
  return null;
 }
-function groundPoint(e){
+function groundPoint(e,yLevel=0){
  const p=pointerNDC(e);
  ray.setFromCamera(new THREE.Vector2(p.x,p.y),camera);
- const plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),out=new THREE.Vector3();
+ const plane=new THREE.Plane(new THREE.Vector3(0,1,0),-yLevel),out=new THREE.Vector3();
  return ray.ray.intersectPlane(plane,out)?out:null;
 }
 function select(root){selected=root;if(root)openPanel(root);}
@@ -264,7 +264,7 @@ function restoreSavedPositions(){
    const byId=new Map(saved.map(v=>[v.id,v]));
    groups.forEach(r=>{
      const v=byId.get(r.userData.id);
-     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=typeof v.rotationY==='number'?v.rotationY:0;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;Object.assign(r.userData,{name:v.name||r.userData.name,status:v.status||r.userData.status,cleaningLastDate:v.cleaningLastDate||'',cleaningCycleDays:Number(v.cleaningCycleDays||r.userData.cleaningCycleDays),maintenanceLastDate:v.maintenanceLastDate||'',maintenanceCycleDays:Number(v.maintenanceCycleDays||r.userData.maintenanceCycleDays),notes:v.notes||''});}
+     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=typeof v.rotationY==='number'?v.rotationY:0;if(r.userData.level==='架高二層')r.position.y=7;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;Object.assign(r.userData,{name:v.name||r.userData.name,status:v.status||r.userData.status,cleaningLastDate:v.cleaningLastDate||'',cleaningCycleDays:Number(v.cleaningCycleDays||r.userData.cleaningCycleDays),maintenanceLastDate:v.maintenanceLastDate||'',maintenanceCycleDays:Number(v.maintenanceCycleDays||r.userData.maintenanceCycleDays),notes:v.notes||''});}
    });
    return true;
  }catch(err){return false;}
@@ -324,7 +324,7 @@ renderer.domElement.addEventListener('pointermove',e=>{
  // 滑鼠：按住就拖。觸控：長按後才拖。
  if(!drag.longPressed)return;
 
- const world=groundPoint(e);
+ const world=groundPoint(e,drag.root.position.y);
  if(!world)return;
 
  drag.root.position.x=snapValue(world.x);
