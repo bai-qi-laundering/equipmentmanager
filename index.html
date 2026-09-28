@@ -20,7 +20,7 @@ button{cursor:pointer}button.active{background:#087bc2;border-color:#36b9ff}.sea
 .panel{position:fixed;z-index:20;right:0;top:0;width:min(380px,92vw);height:100%;padding:24px;background:rgba(5,19,35,.96);border-left:1px solid #205d8e;transform:translateX(100%);transition:.22s;overflow:auto}.panel.open{transform:none}
 .close{position:absolute;right:14px;top:14px;border-radius:50%;width:40px;height:40px;padding:0;font-size:22px}
 .panel h2{margin:58px 0 4px}.muted{color:#91abc2}.card{margin-top:16px;padding:14px;border:1px solid #1b496e;border-radius:14px;background:#0a2037}.row{display:flex;justify-content:space-between;margin:10px 0}.ok{color:#55e5bd}.warn{color:#ffd166}.panel label{display:block;margin:10px 0 5px;color:#9ec4dc;font-size:12px}.panel input,.panel select,.panel textarea{background:#071a2d;border:1px solid #245b88;border-radius:9px;color:#fff;padding:9px 10px}
-.hint{position:fixed;z-index:11;left:50%;top:82px;transform:translateX(-50%);padding:7px 12px;border-radius:999px;background:rgba(5,20,38,.62);border:1px solid rgba(47,131,188,.32);color:#b5d5ea;font-size:12px;pointer-events:none;backdrop-filter:blur(10px)}
+.hint{position:fixed;z-index:11;left:50%;top:82px;transform:translateX(-50%);padding:7px 12px;border-radius:999px;background:rgba(5,20,38,.62);border:1px solid rgba(47,131,188,.32);color:#b5d5ea;font-size:12px;pointer-events:none;backdrop-filter:blur(10px)}.eq-label{transform:translateY(-2px);transition:opacity .15s}@media(max-width:700px){.top{left:8px;right:8px;top:8px;height:58px;padding:7px 9px;gap:6px}.logo{font-size:17px}.top .search{width:150px}.mode{display:none}.side{top:76px;bottom:180px;width:72px;left:7px;padding:7px}.side button{padding:10px 3px}.hint{top:72px;left:92px;right:8px;transform:none;text-align:left;font-size:11px}.eq-label{font-size:9px}.palette{height:172px;padding:9px 12px 12px}.item{width:108px;height:98px}.thumb{width:64px;height:52px;font-size:34px}}
 #toast{position:fixed;z-index:50;left:50%;bottom:174px;transform:translate(-50%,20px);opacity:0;padding:10px 15px;border-radius:12px;background:#0c2b48;border:1px solid #2d83bc;transition:.2s}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -126,7 +126,7 @@ function glowPlate(w,d,c){
   p.material.emissiveIntensity=.95;
   return p;
 }
-function label(text,color='#8bd8ff'){const el=document.createElement('div');el.textContent=text;el.style.cssText=`padding:5px 9px;border:1px solid ${color};border-radius:9px;background:rgba(4,20,36,.88);color:#fff;font-weight:800;font-size:12px;white-space:nowrap;box-shadow:0 0 14px ${color}66`;return new CSS2DObject(el);}
+function label(text,color='#8bd8ff'){const el=document.createElement('div');el.className='eq-label';el.textContent=text;el.style.cssText='padding:4px 8px;border:1px solid '+color+';border-radius:999px;background:rgba(4,20,36,.82);color:#fff;font-weight:900;font-size:10px;letter-spacing:.15px;white-space:nowrap;box-shadow:0 0 12px '+color+'66;text-shadow:0 0 6px rgba(255,255,255,.28);backdrop-filter:blur(5px)';return new CSS2DObject(el);}
 function rbox(w,h,d,c,opacity=1,r=.18){const m=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,3,r),mat(c,.48,.32,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
 function cyl(radius,depth,c,opacity=1){const m=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,depth,32),mat(c,.28,.55,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
 function panelBox(g,w,h,d,c,x,y,z,opacity=.9){const m=rbox(w,h,d,c,opacity,.12);m.position.set(x,y,z);g.add(m);return m;}
@@ -189,15 +189,15 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
  const stableExtra={'乾洗機':'DRYCLEAN-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
- const m=model(kind);m.position.y=.25;m.scale.setScalar(.72);root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
+ const m=model(kind);m.position.y=.25;m.scale.setScalar(.88);root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
 
- const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.72;
- const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.72;
+ const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
+ const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
  const plateColor=type==='洗衣設備'?0x0877d1:type==='烘乾設備'?0x1bd58d:type==='燙床設備'?0x9b63ff:kind==='fan'?0xf18cb9:0x2a79b9;
  const plate=glowPlate(plateW,plateD,plateColor);plate.position.y=.05;root.add(plate);
 
  const color=type==='燙床設備'?'#b879ff':type==='烘乾設備'?'#55e7bb':kind==='fan'?'#ff9ac8':'#45c4ff';
- const l=label(name,color);l.position.set(0,6.2,0);root.add(l);
+ const labelHeight=(kind==='longPress'||kind==='icc')?7.1:kind==='crane'?6.5:kind==='office'?7.2:kind==='vertical'?9.2:6.7;const l=label(name,color);l.position.set(0,labelHeight,0);root.add(l);
 
  root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);
  root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
