@@ -63,7 +63,7 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.08;
 app.appendChild(renderer.domElement);
 const labels=new CSS2DRenderer();labels.setSize(innerWidth,innerHeight);labels.domElement.style.position='absolute';labels.domElement.style.inset='0';labels.domElement.style.pointerEvents='none';app.appendChild(labels.domElement);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=20;controls.maxDistance=240;controls.target.set(7,0,0);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=50;controls.maxDistance=600;controls.target.set(7,0,0);
 
 scene.add(new THREE.HemisphereLight(0xd8f1ff,0x07111c,2.45));
 const key=new THREE.DirectionalLight(0xffffff,3.7);key.position.set(28,120,38);key.castShadow=true;scene.add(key);
