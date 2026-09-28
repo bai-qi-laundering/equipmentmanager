@@ -16,7 +16,12 @@ button{cursor:pointer}button.active{background:#087bc2;border-color:#36b9ff}.sea
 .palette{position:fixed;z-index:12;left:0;right:0;bottom:0;height:176px;padding:10px 18px 14px;border-top:1px solid #1d6ca8;background:linear-gradient(180deg,rgba(4,17,32,.88),rgba(2,10,19,.97));backdrop-filter:blur(18px);overflow-x:auto;box-shadow:0 -18px 42px rgba(0,0,0,.22)}
 .palette h3{margin:0 0 7px;font-size:14px;color:#9edcff}.items{display:flex;gap:10px;min-width:max-content}
 .item{width:118px;height:105px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #245b88;border-radius:14px;background:linear-gradient(180deg,#0d2945,#08192c);box-shadow:inset 0 0 18px rgba(43,175,255,.04),0 8px 22px rgba(0,0,0,.16)}.item:active{transform:scale(.97)}
-.thumb{width:70px;height:58px;display:flex;align-items:center;justify-content:center;font-size:40px}.item span{font-size:13px;font-weight:800}
+.thumb{width:70px;height:58px;display:flex;align-items:center;justify-content:center;font-size:0;position:relative}
+.thumb:before{content:'';display:block;width:42px;height:32px;border-radius:6px;border:2px solid #8bd8ff;background:linear-gradient(145deg,#dfe7eb,#71808a);box-shadow:0 0 12px rgba(42,168,255,.32),inset 0 0 8px rgba(255,255,255,.25)}
+.thumb:after{content:'◉';position:absolute;font-size:18px;line-height:1;color:#132838;text-shadow:0 0 5px #75d9ff}
+.item[data-kind="dryer"] .thumb:before{border-color:#55e7bb;box-shadow:0 0 12px rgba(27,213,141,.28)}
+.item[data-kind="press"] .thumb:before,.item[data-kind="longPress"] .thumb:before,.item[data-kind="icc"] .thumb:before,.item[data-kind="shirt"] .thumb:before{border-color:#b879ff;box-shadow:0 0 12px rgba(155,99,255,.28)}
+.item[data-kind="compressor"] .thumb:before,.item[data-kind="manganese"] .thumb:before{border-color:#8bd8ff}.item span{font-size:13px;font-weight:800}
 .panel{position:fixed;z-index:20;right:0;top:0;width:min(380px,92vw);height:100%;padding:24px;background:rgba(5,19,35,.96);border-left:1px solid #205d8e;transform:translateX(100%);transition:.22s;overflow:auto}.panel.open{transform:none}
 .close{position:absolute;right:14px;top:14px;border-radius:50%;width:40px;height:40px;padding:0;font-size:22px}
 .panel h2{margin:58px 0 4px}.muted{color:#91abc2}.card{margin-top:16px;padding:14px;border:1px solid #1b496e;border-radius:14px;background:#0a2037}.row{display:flex;justify-content:space-between;margin:10px 0}.ok{color:#55e5bd}.warn{color:#ffd166}.panel label{display:block;margin:10px 0 5px;color:#9ec4dc;font-size:12px}.panel input,.panel select,.panel textarea{background:#071a2d;border:1px solid #245b88;border-radius:9px;color:#fff;padding:9px 10px}
@@ -48,11 +53,11 @@ const app=document.getElementById('canvas'), scene=new THREE.Scene();
 scene.background=new THREE.Color(0x061321);
 scene.fog=new THREE.Fog(0x061321,80,260);
 const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,1000);
-camera.position.set(7,78,112);
+camera.position.set(92,150,178);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;app.appendChild(renderer.domElement);
 const labels=new CSS2DRenderer();labels.setSize(innerWidth,innerHeight);labels.domElement.style.position='absolute';labels.domElement.style.inset='0';labels.domElement.style.pointerEvents='none';app.appendChild(labels.domElement);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=20;controls.maxDistance=240;controls.target.set(7,0,4);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=20;controls.maxDistance=240;controls.target.set(7,0,0);
 
 scene.add(new THREE.HemisphereLight(0xd8f1ff,0x07111c,2.45));
 const key=new THREE.DirectionalLight(0xffffff,3.7);key.position.set(28,120,38);key.castShadow=true;scene.add(key);
@@ -262,11 +267,40 @@ function enforceKnownLevels(){
 }
 restoreSavedPositions();
 enforceKnownLevels();
-setTimeout(async()=>{await loadRemoteLayout();enforceKnownLevels();},0);
+
+function frameFactory(){
+  if(!groups.size)return;
+  let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+  groups.forEach(r=>{
+    minX=Math.min(minX,r.position.x);
+    maxX=Math.max(maxX,r.position.x);
+    minZ=Math.min(minZ,r.position.z);
+    maxZ=Math.max(maxZ,r.position.z);
+  });
+  const cx=(minX+maxX)/2;
+  const cz=(minZ+maxZ)/2;
+  const spanX=Math.max(1,maxX-minX);
+  const spanZ=Math.max(1,maxZ-minZ);
+  const portrait=innerWidth/innerHeight<0.82;
+  const distance=portrait
+    ? Math.max(250,Math.max(spanX,spanZ)*2.05)
+    : Math.max(190,Math.max(spanX,spanZ)*1.55);
+  const dir=new THREE.Vector3(.48,.72,.58).normalize();
+  camera.position.copy(new THREE.Vector3(cx,0,cz).addScaledVector(dir,distance));
+  controls.target.set(cx,0,cz);
+  controls.update();
+}
+
+frameFactory();
+setTimeout(async()=>{
+  await loadRemoteLayout();
+  enforceKnownLevels();
+  frameFactory();
+},0);
 
 function addPalette(){
  const wrap=document.getElementById('items');wrap.innerHTML='';
- palette.forEach(([n,t,k,ic])=>{const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;b.innerHTML=`<div class="thumb">${ic}</div><span>${n}</span>`;b.onclick=()=>{if(!edit){toast('目前是巡檢模式，請先切換到編輯模式');return;}const r=addEquipment(n,t,k,controls.target.x,0,controls.target.z,'一樓');savePositions();toast('已加入地圖，可直接拖曳');};wrap.appendChild(b)});
+ palette.forEach(([n,t,k,ic])=>{const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;b.innerHTML=`<div class="thumb"></div><span>${n}</span>`;b.onclick=()=>{if(!edit){toast('目前是巡檢模式，請先切換到編輯模式');return;}const r=addEquipment(n,t,k,controls.target.x,0,controls.target.z,'一樓');savePositions();toast('已加入地圖，可直接拖曳');};wrap.appendChild(b)});
 }
 addPalette();
 
@@ -412,9 +446,7 @@ document.getElementById('viewBtn').onclick=()=>{
  document.getElementById('editBtn').classList.remove('active');
  document.getElementById('hint').textContent='巡檢模式：點設備查看清潔、保養、維修資料';
 };
-document.getElementById('resetBtn').onclick=()=>{
- camera.position.set(7,78,112);controls.target.set(7,0,4);controls.update();
-};
+document.getElementById('resetBtn').onclick=()=>frameFactory();
 document.getElementById('snapBtn').onclick=()=>{
  snap=!snap;
  document.getElementById('snapBtn').textContent=`吸附：${snap?'開':'關'}`;
@@ -437,8 +469,11 @@ document.getElementById('filter').onchange=e=>{
 };
 setInterval(()=>{if(!apiAvailable&&!syncing)loadRemoteLayout();},15000);
 function resize(){
- camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
- renderer.setSize(innerWidth,innerHeight);labels.setSize(innerWidth,innerHeight);
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+ labels.setSize(innerWidth,innerHeight);
+ frameFactory();
 }
 addEventListener('resize',resize);
 function animate(){
