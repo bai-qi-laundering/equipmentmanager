@@ -76,7 +76,17 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.08;
 app.appendChild(renderer.domElement);
 const labels=new CSS2DRenderer();labels.setSize(innerWidth,innerHeight);labels.domElement.style.position='absolute';labels.domElement.style.inset='0';labels.domElement.style.pointerEvents='none';app.appendChild(labels.domElement);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=50;controls.maxDistance=600;controls.target.set(7,0,0);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.dampingFactor=.045;
+controls.enablePan=true;
+controls.panSpeed=.24;
+controls.rotateSpeed=.28;
+controls.zoomSpeed=.45;
+controls.maxPolarAngle=Math.PI*.49;
+controls.minDistance=50;
+controls.maxDistance=600;
+controls.target.set(7,0,0);
 
 scene.add(new THREE.HemisphereLight(0xd8f1ff,0x07111c,2.45));
 const key=new THREE.DirectionalLight(0xffffff,3.7);key.position.set(28,120,38);key.castShadow=true;scene.add(key);
@@ -133,7 +143,7 @@ const instances=[
  ['天車 #02','周邊設備','crane',22,5],
  ['冷風區','周邊設備','fan',-2,42],['鍋爐','周邊設備','boiler',-46,45],['乾洗機','洗衣設備','dryclean',62,30],['水設備','周邊設備','water',-28,45],['水塔','周邊設備','tank',-42,48],['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
-const MODEL_REVISION='2026-09-28-reference-industrial-v7-presentation';
+const MODEL_REVISION='2026-09-28-reference-industrial-v7-presentation-mobile-sensitivity';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
 const SYNC_KEY = 'factory3dPositions';
 let apiAvailable=false;
