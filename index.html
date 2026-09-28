@@ -33,7 +33,7 @@ button{cursor:pointer}button.active{background:#087bc2;border-color:#36b9ff}.sea
   <input class="search" id="search" placeholder="搜尋設備名稱…">
   <div class="mode"><button id="editBtn" class="active">編輯模式</button><button id="viewBtn">巡檢模式</button><button id="resetBtn">重置視角</button></div>
 </div>
-<div class="hint" id="hint">編輯模式：短點查看；長按設備約 0.4 秒後拖曳；雙指操作地圖</div>
+<div class="hint" id="hint">編輯模式：短點查看；長按設備約 0.4 秒後拖曳；雙指操作地圖</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
 <div class="side"><button>▧<br>地圖</button><button>⚙<br>設備</button><button>✓<br>清潔</button><button>◷<br>保養</button><button>⚒<br>維修</button></div>
 <div class="palette"><h3>設備庫　（點一下加入地圖，再長按拖曳到想要的位置）</h3><div class="items" id="items"></div></div><div style="position:fixed;z-index:19;right:18px;bottom:170px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button id="snapBtn">吸附：開</button><button id="saveBtn">💾 儲存</button><button id="exportBtn">⬇️ 匯出版位</button><label style="padding:9px 12px;border:1px solid #245b88;background:#0a2744;border-radius:10px;cursor:pointer">⬆️ 匯入版位<input id="importInput" type="file" accept="application/json" style="display:none"></label></div>
 <div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card">
@@ -101,6 +101,10 @@ const instances=[
  ['冷風區','周邊設備','fan',-2,42]
 ];
 const MODEL_REVISION='2026-09-28-industrial-mini';
+const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
+const SYNC_KEY = 'factory3dPositions';
+let apiAvailable=false;
+let syncing=false;
 const groups=new Map();let selected=null;let edit=true;let snap=true;let uid=0;let pressTimer=null;let activePointerId=null;let drag=null;
 
 function mat(c,rough=.55,metal=.35,opacity=1){
@@ -185,9 +189,55 @@ function model(type){
  }
  return g;
 }
+
+function setSyncBadge(text,ok=false){
+ const el=document.getElementById('syncBadge');
+ el.textContent='資料同步：'+text;
+ el.style.borderColor=ok?'#1bd58d':'#245b88';
+ el.style.color=ok?'#8ff1c6':'#a9c9df';
+}
+async function loadRemoteLayout(){
+ try{
+  setSyncBadge('連線中');
+  const res=await fetch(API_BASE+'/api/layout',{cache:'no-store'});
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const payload=await res.json();
+  const positions=Array.isArray(payload.positions)?payload.positions:[];
+  if(positions.length){
+   const byId=new Map(positions.map(v=>[v.id,v]));
+   const byName=new Map(positions.map(v=>[v.name,v]));
+   groups.forEach(r=>{
+    const v=byId.get(r.userData.id)||byName.get(r.userData.name);
+    if(v){
+     if(typeof v.x==='number')r.position.x=v.x;
+     if(typeof v.z==='number')r.position.z=v.z;
+     if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;
+     else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;
+    }
+   });
+   localStorage.setItem(SYNC_KEY,JSON.stringify(getPositionData()));
+  }
+  apiAvailable=true; setSyncBadge('NAS 已連線',true); return true;
+ }catch(err){ apiAvailable=false; setSyncBadge('NAS 暫離線'); return false; }
+}
+async function saveRemoteLayout(){
+ if(syncing||!apiAvailable)return false;
+ syncing=true;
+ try{
+  const res=await fetch(API_BASE+'/api/layout',{
+   method:'PUT',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({positions:getPositionData()})
+  });
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  setSyncBadge('NAS 已同步',true); return true;
+ }catch(err){apiAvailable=false;setSyncBadge('本機暫存');return false;}
+ finally{syncing=false;}
+}
 function addEquipment(name,type,kind,x,z){
  const root=new THREE.Group();
- root.userData={name,type,kind,id:`EQ-${++uid}`};
+ const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
+ const id=stableIdMap[name] || ('EQ-' + (++uid));
+ root.userData={name,type,kind,id};
  const m=model(kind);m.position.y=1.5;root.add(m);
 
  const plateW=(kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8;
@@ -205,6 +255,7 @@ function addEquipment(name,type,kind,x,z){
 }
 instances.forEach(v=>addEquipment(...v));
 restoreSavedPositions();
+setTimeout(()=>loadRemoteLayout(),0);
 
 function addPalette(){
  const wrap=document.getElementById('items');wrap.innerHTML='';
@@ -256,16 +307,17 @@ function getPositionData(){
 }
 function savePositions(){
  const data=JSON.stringify(getPositionData());
- localStorage.setItem('factory3dPositions',data);
+ localStorage.setItem(SYNC_KEY,data);
  try{
-   const req=indexedDB.open('factory3d-db',1);
-   req.onupgradeneeded=()=>req.result.createObjectStore('layout');
-   req.onsuccess=()=>{
-     const db=req.result;
-     const tx=db.transaction('layout','readwrite');
-     tx.objectStore('layout').put({id:'current',data});
-   };
+  const req=indexedDB.open('factory3d-db',1);
+  req.onupgradeneeded=()=>req.result.createObjectStore('layout');
+  req.onsuccess=()=>{
+   const db=req.result;
+   const tx=db.transaction('layout','readwrite');
+   tx.objectStore('layout').put({id:'current',data});
+  };
  }catch(err){}
+ void saveRemoteLayout();
 }
 function restoreSavedPositions(){
  try{
@@ -393,7 +445,12 @@ document.getElementById('snapBtn').onclick=()=>{
  snap=!snap;
  document.getElementById('snapBtn').textContent=`吸附：${snap?'開':'關'}`;
 };
-document.getElementById('saveBtn').onclick=()=>{savePositions();toast('位置已儲存');};
+document.getElementById('saveBtn').onclick=async()=>{
+ savePositions();
+ if(!apiAvailable)await loadRemoteLayout();
+ if(apiAvailable)await saveRemoteLayout();
+ toast(apiAvailable?'已同步至 NAS':'已儲存到本機，NAS 暫時離線');
+};
 document.getElementById('exportBtn').onclick=exportLayout;
 document.getElementById('importInput').onchange=e=>{if(e.target.files[0])importLayout(e.target.files[0]);};
 document.getElementById('search').oninput=e=>{
@@ -404,6 +461,7 @@ document.getElementById('filter').onchange=e=>{
  const f=e.target.value;
  groups.forEach(r=>r.visible=f==='全部設備'||r.userData.type===f);
 };
+setInterval(()=>{if(!apiAvailable&&!syncing)loadRemoteLayout();},15000);
 function resize(){
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  renderer.setSize(innerWidth,innerHeight);labels.setSize(innerWidth,innerHeight);
