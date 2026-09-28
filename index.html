@@ -48,11 +48,11 @@ const app=document.getElementById('canvas'), scene=new THREE.Scene();
 scene.background=new THREE.Color(0x061321);
 scene.fog=new THREE.Fog(0x061321,80,260);
 const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,1000);
-camera.position.set(0,86,122);
+camera.position.set(7,78,112);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;app.appendChild(renderer.domElement);
 const labels=new CSS2DRenderer();labels.setSize(innerWidth,innerHeight);labels.domElement.style.position='absolute';labels.domElement.style.inset='0';labels.domElement.style.pointerEvents='none';app.appendChild(labels.domElement);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=20;controls.maxDistance=240;controls.target.set(0,0,0);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=20;controls.maxDistance=240;controls.target.set(7,0,4);
 
 scene.add(new THREE.HemisphereLight(0xd8f1ff,0x07111c,2.45));
 const key=new THREE.DirectionalLight(0xffffff,3.7);key.position.set(28,120,38);key.castShadow=true;scene.add(key);
@@ -413,7 +413,7 @@ document.getElementById('viewBtn').onclick=()=>{
  document.getElementById('hint').textContent='巡檢模式：點設備查看清潔、保養、維修資料';
 };
 document.getElementById('resetBtn').onclick=()=>{
- camera.position.set(0,86,122);controls.target.set(0,0,12);controls.update();
+ camera.position.set(7,78,112);controls.target.set(7,0,4);controls.update();
 };
 document.getElementById('snapBtn').onclick=()=>{
  snap=!snap;
