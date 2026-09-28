@@ -133,81 +133,300 @@ function addMachineBase(g,w,d,c=0x118fff){const p=glowPlate(w,d,c);p.position.y=
 function addFeet(g,w,d){for(const x of [-w*.38,w*.38])for(const z of [-d*.38,d*.38]){const f=box(.32,.42,.32,0x263744,.92);f.position.set(x,.2,z);g.add(f);}}
 function addControl(g,w,y,z){panelBox(g,w,.48,.24,0x173c52,0,y,z,.98);panelBox(g,w*.38,.26,.12,0x07121b,-w*.25,y+.03,z-.14,.98);for(let i=0;i<4;i++){const led=box(.12,.12,.08,0x7ce8ff,.95);led.position.set(-w*.05+i*.25,y+.05,z-.16);led.material.emissive=new THREE.Color(0x28b9ff);led.material.emissiveIntensity=2.3;g.add(led);}}
 function machineNamePlate(g,text,w,y,z){const p=panelBox(g,w,.28,.08,0x163b50,0,y,z,.98);p.material.emissive=new THREE.Color(0x0877d1);p.material.emissiveIntensity=.55;return p;}
-function model(type){
- const g=new THREE.Group();
- if(type==='washer'){
-   const w=7.1,d=6.1;addMachineBase(g,w+.7,d+.7,0x0877d1);
-   const body=rbox(w,5.9,d,0xd9e0e5,.98,.28);body.position.y=3.15;g.add(body);
-   const top=rbox(w-.35,.32,d-.4,0xf5f7f8,.98,.12);top.position.y=6.15;g.add(top);
-   addFeet(g,w,d);addControl(g,5.7,5.48,-d/2-.18);washerDoor(g,1.78,d/2+.17);
-   machineNamePlate(g,'',2.3,5.2,-d/2-.31);
-   for(const x of [-2.65,2.65]){const handle=box(.18,.8,.18,0x667780,.9);handle.position.set(x,4.9,-d/2-.23);g.add(handle);}
- } else if(type==='vertical'){
-   const w=5.2,d=5.2;addMachineBase(g,w+.6,d+.6,0x0877d1);
-   const body=rbox(w,8.25,d,0xd7e0e5,.98,.28);body.position.y=4.15;g.add(body);
-   const cap=rbox(w-.45,.3,d-.45,0xf4f7f8,.98,.12);cap.position.y=8.35;g.add(cap);
-   addFeet(g,w,d);addControl(g,4.2,7.72,-d/2-.18);washerDoor(g,1.5,d/2+.17);
-   panelBox(g,.3,6.8,.55,0x7e909a,w/2-.16,3.8,d/2-.55,.65);
- } else if(type==='dryer'){
-   const w=6.9,d=5.8;addMachineBase(g,w+.7,d+.7,0x17c98b);
-   const body=rbox(w,5.9,d,0xe1e6e9,.98,.28);body.position.y=3.15;g.add(body);
-   const top=rbox(w-.4,.34,d-.45,0xf5f7f8,.98,.12);top.position.y=6.18;g.add(top);
-   addFeet(g,w,d);addControl(g,5.45,5.48,-d/2-.18);washerDoor(g,1.82,d/2+.17);
-   const lower=panelBox(g,w-.8,.5,.55,0xb8c5cb,0,.65,d/2-.32,.8);lower.material.emissive=new THREE.Color(0x0c8f6b);lower.material.emissiveIntensity=.28;
-   for(const x of [-2.65,2.65])pipe(g,[x,-.05,-d/2-.1],[x,.65,-d/2-.1],.1,0x5b6972);
- } else if(type==='longPress'||type==='icc'){
-   const L=15.5,W=5.9;addMachineBase(g,L+1,W+1,0x8e48ff);
-   panelBox(g,W,2.15,L,0xdde3e6,0,2.0,0,.96);panelBox(g,W-.5,.4,L-.65,0x536d7a,0,3.2,0,.95);
-   addControl(g,4.8,3.55,-L/2-.16);
-   for(let z=-6;z<=6;z+=6){panelBox(g,W-1.0,2.8,3.1,0xc7d0d5,0,4.0,z,.95);const roller=cyl(.64,W-1.1,0xd5dde1,.95);roller.rotation.z=Math.PI/2;roller.position.set(0,2.95,z);g.add(roller);}
-   panelBox(g,W-.7,.28,L,0x8fa3ad,0,6.35,0,.86);
-   for(const x of [-2.1,2.1])for(const z of [-5.8,5.8])pipe(g,[x,6.35,z],[x,7.1,z],.08,0x697c86);
- } else if(type==='shirt'){
-   addMachineBase(g,7,7,0x9b63ff);panelBox(g,5.8,5.2,7.8,0xcbd5da,0,2.7,0,.84);
-   panelBox(g,4.7,.42,.2,0x2e779a,0,5.2,-3.95,.92);panelBox(g,1.8,7,1.7,0x3b7e9d,0,7.2,0,.75);panelBox(g,4.8,.32,1.2,0x8fc6db,0,10.2,0,.72);
-   for(const x of [-1.8,1.8])pipe(g,[x,5.2,-3.9],[x,8.8,-3.9],.09,0x6d808b);
- } else if(type==='crane'){
-   addMachineBase(g,5.2,5.2,0x118fff);panelBox(g,4.7,.7,4.7,0x485963,0,5.2,0,.95);panelBox(g,3.8,.3,3.8,0xb8c5cb,0,4.75,0,.9);
-   panelBox(g,2.0,1.4,1.7,0xe77724,0,3.85,0,.96);panelBox(g,1.3,1,1.2,0xf0a12d,0,2.65,0,.96);pipe(g,[0,2.2,0],[0,.3,0],.09,0x202a30);
-   const hook=new THREE.Mesh(new THREE.TorusGeometry(.43,.1,12,24,Math.PI*1.7),mat(0xe7a12c,.3,.7,.95));hook.rotation.x=Math.PI/2;hook.position.set(0,.05,0);g.add(hook);
- } else if(type==='office'){
-   addMachineBase(g,13,10,0x607d8b);panelBox(g,12,.55,9,0x806247,0,.3,0,.9);
-   for(const x of [-5.5,5.5])panelBox(g,.22,5.8,8.4,0x8fa2aa,x,3.2,0,.34);
-   panelBox(g,10.8,.35,8.1,0xefe1c6,0,5.55,0,.72);
-   for(const x of [-3.6,0,3.6]){panelBox(g,2.5,.45,1.35,0x6d503d,x,6.15,-1,.92);panelBox(g,.55,.75,.55,0x4e6170,x,6.05,-2.05,.92);panelBox(g,.55,.75,.55,0x4e6170,x,6.05,.05,.92);panelBox(g,1.1,1,.1,0x6aa8c8,x,6.55,-1.05,.76);}
- } else if(type==='fan'){
-   addMachineBase(g,7,7,0xf18cb9);panelBox(g,2.4,1.1,2.4,0x788894,0,.55,0,.74);pipe(g,[0,.9,0],[0,3.9,0],.21,0x82939e);
-   const hub=cyl(1.15,.55,0x657581,.8);hub.rotation.x=Math.PI/2;hub.position.set(0,4.35,0);g.add(hub);
-   for(let i=0;i<5;i++){const blade=panelBox(g,.3,.18,2.9,0xdce3e6,0,4.35,1.35,.58);blade.rotation.y=i*Math.PI*2/5;g.add(blade);}
- } else if(type==='smf'){
-   addMachineBase(g,7.2,5.8,0x9b63ff);
-   for(const x of [-1.65,1.65]){const tank=cyl(1.25,5.6,0x75838d,.88);tank.position.set(x,3.1,0);g.add(tank);panelBox(g,1.9,.34,1.9,0x566a75,x,6.0,0,.9);pipe(g,[x-1.0,1.0,0],[x-1.0,6.0,0],.07,0x70a2bd);pipe(g,[x+1.0,1.0,0],[x+1.0,6.0,0],.07,0x70a2bd);}
-   pipe(g,[-2.8,5.6,-1.7],[2.8,5.6,-1.7],.09,0x9fb0b8);pipe(g,[-2.8,1.0,1.7],[2.8,1.0,1.7],.09,0x66808d);
- } else if(type==='dryclean'){
-   addMachineBase(g,7.2,6.6,0x16bfa0);panelBox(g,6.4,5.8,5.8,0xd3dce1,0,2.9,0,.86);panelBox(g,5.1,.55,.22,0x3c7fa3,0,5.65,-3,.92);washerDoor(g,1.5,3.05);panelBox(g,1.2,2.8,1.0,0x304e60,-2.05,3.05,-3.12,.8);panelBox(g,1.6,2.5,1.0,0x596e78,2.0,2.8,2.9,.72);pipe(g,[-2.1,1.2,-2.9],[-2.1,5.6,-2.9],.08,0x5b7e8c);
- } else if(type==='compressor'){
-   addMachineBase(g,8,6.5,0x2aa8ff);
-   const tank=cyl(1.7,6.2,0xc3ccd1,.88);tank.rotation.z=Math.PI/2;tank.position.set(0,2.5,0);g.add(tank);
-   for(const x of [-2.8,2.8]){panelBox(g,.35,1.6,.35,0x4d5b66,x,1.1,0,.9);pipe(g,[x,1.7,0],[x,2.5,0],.09,0x748994);}
-   for(const x of [-1.35,1.35]){panelBox(g,1.15,1.5,1.8,0x4e6877,x,4.0,0,.88);panelBox(g,.7,.42,.9,0x2d566c,x,4.95,0,.92);}
-   pipe(g,[-2.8,3.2,0],[-1.35,4.5,0],.11,0x8aa6b4);pipe(g,[1.35,4.5,0],[2.8,3.2,0],.11,0x8aa6b4);
- } else if(type==='manganese'){
-   addMachineBase(g,9,7,0xa15dff);
-   for(const x of [-2.4,0,2.4]){const vessel=cyl(1.28,5.8,0x7d8b94,.9);vessel.position.set(x,3.1,0);g.add(vessel);panelBox(g,1.9,.35,1.9,0x536671,x,6.1,0,.92);pipe(g,[x-1.0,.8,0],[x-1.0,6.0,0],.075,0x6f9bb0);pipe(g,[x+1.0,.8,0],[x+1.0,6.0,0],.075,0x6f9bb0);}
-   pipe(g,[-3.4,6.0,0],[3.4,6.0,0],.1,0x9baeb8);
- } else if(type==='boiler'){
-   addMachineBase(g,9,7,0xf18a35);const body=cyl(2.15,7.5,0x66747c,.88);body.rotation.z=Math.PI/2;body.position.set(0,3.2,0);g.add(body);
-   panelBox(g,2.8,2.5,2.2,0x384b57,-2.0,1.65,0,.92);panelBox(g,2.3,1.0,2.3,0x9b5b2e,2.15,1.4,0,.92);const stack=cyl(.55,5.5,0x3e4850,.82);stack.position.set(0,8.6,0);g.add(stack);pipe(g,[-2.8,2.4,0],[-2.15,3.1,0],.12,0x9b6a42);
- } else if(type==='water'){
-   addMachineBase(g,8,7,0x2aa8ff);for(const x of [-1.7,1.7]){const vessel=cyl(1.35,5.2,0x4f7180,.84);vessel.position.set(x,2.8,0);g.add(vessel);panelBox(g,1.8,.35,1.8,0x88b8c8,x,5.5,0,.75);pipe(g,[x-1.0,.8,0],[x-1.0,5.3,0],.07,0x6f9bb0);}
-   panelBox(g,5.5,.28,1.1,0x4a6672,0,1.2,0,.78);pipe(g,[-3.0,5.4,0],[3.0,5.4,0],.1,0x8fa6b1);
- } else if(type==='tank'){
-   addMachineBase(g,7,7,0x2aa8ff);const body=cyl(2.2,5.8,0xb7c3c8,.86);body.position.set(0,3.4,0);g.add(body);panelBox(g,5,.35,5,0x52636d,0,.3,0,.84);
-   for(const x of [-1.6,1.6])pipe(g,[x,.45,0],[x,6.2,0],.12,0x52636d);panelBox(g,4.2,.28,4.2,0xd5dde1,0,6.25,0,.65);
- } else {addMachineBase(g,6,6,0x118fff);g.add(rbox(5,4,5,0xaab7bf,.75,.22));}
- return g;
+function detailWasher(g,variant='standard'){
+  const specs={
+    '30K':{w:5.9,d:5.4,h:5.2,accent:0x197fc2},
+    '60K':{w:6.5,d:5.8,h:5.7,accent:0x197fc2},
+    '80K':{w:7.1,d:6.2,h:6.0,accent:0x197fc2},
+    '35kg':{w:5.4,d:5.2,h:5.0,accent:0x197fc2},
+    '50kg':{w:5.8,d:5.5,h:5.35,accent:0x197fc2},
+    'standard':{w:6.4,d:5.6,h:5.5,accent:0x197fc2}
+  };
+  const s=specs[variant]||specs.standard;
+  addMachineBase(g,s.w+1,s.d+1,s.accent);
+
+  const body=rbox(s.w,s.h,s.d,0xe2e7ea,.98,.22);
+  body.position.y=s.h/2+.35;g.add(body);
+
+  const lower=panelBox(g,s.w-.38,.42,s.d-.34,0xb9c4ca,0,.62,0,.98);
+  lower.material.emissive=new THREE.Color(0x24495e);lower.material.emissiveIntensity=.12;
+
+  const top=rbox(s.w-.22,.28,s.d-.25,0xf7f8f8,.99,.10);
+  top.position.y=s.h+.52;g.add(top);
+
+  // Front control fascia
+  const fascia=panelBox(g,s.w-.42,.72,.30,0x294958,0,s.h-.48,-s.d/2-.08,.98);
+  fascia.material.emissive=new THREE.Color(s.accent);fascia.material.emissiveIntensity=.16;
+
+  const display=panelBox(g,1.18,.32,.09,0x07131d,-s.w*.23,s.h-.43,-s.d/2-.27,.98);
+  display.material.emissive=new THREE.Color(0x43d9ff);display.material.emissiveIntensity=1.5;
+
+  const dial=cyl(.34,.14,0x9ba8af,.98);
+  dial.rotation.x=Math.PI/2;dial.position.set(s.w*.17,s.h-.43,-s.d/2-.28);g.add(dial);
+  const dialInner=cyl(.20,.16,0x263b48,.98);
+  dialInner.rotation.x=Math.PI/2;dialInner.position.set(s.w*.17,s.h-.43,-s.d/2-.38);g.add(dialInner);
+
+  for(let i=0;i<5;i++){
+    const led=box(.10,.10,.08,0x54ddff,.95);
+    led.position.set(-s.w*.05+i*.24,s.h-.43,-s.d/2-.29);
+    led.material.emissive=new THREE.Color(0x2dcaff);led.material.emissiveIntensity=2;
+    g.add(led);
+  }
+
+  // Large industrial door with layered metal rings
+  const outer=cyl(Math.min(s.w,s.d)*.285,.22,0x8e9ba2,.98);
+  outer.rotation.x=Math.PI/2;outer.position.set(0,2.55,s.d/2+.12);g.add(outer);
+
+  const trim=cyl(Math.min(s.w,s.d)*.255,.24,0xd8dee1,.99);
+  trim.rotation.x=Math.PI/2;trim.position.set(0,2.55,s.d/2+.24);g.add(trim);
+
+  const black=cyl(Math.min(s.w,s.d)*.222,.26,0x142a38,.98);
+  black.rotation.x=Math.PI/2;black.position.set(0,2.55,s.d/2+.36);g.add(black);
+
+  const glass=new THREE.Mesh(new THREE.CircleGeometry(Math.min(s.w,s.d)*.185,48),mat(0x3f8fae,.08,.48,.52));
+  glass.position.set(0,2.55,s.d/2+.50);glass.rotation.x=Math.PI/2;g.add(glass);
+
+  const glassGlow=new THREE.Mesh(new THREE.RingGeometry(Math.min(s.w,s.d)*.19,Math.min(s.w,s.d)*.205,48),new THREE.MeshBasicMaterial({color:0x62d9ff,transparent:true,opacity:.48}));
+  glassGlow.position.set(0,2.55,s.d/2+.52);glassGlow.rotation.x=Math.PI/2;g.add(glassGlow);
+
+  // Door hinges / handle
+  for(const y of [2.05,3.05]){
+    const bolt=cyl(.08,.10,0x46555d,.98);bolt.rotation.x=Math.PI/2;bolt.position.set(-Math.min(s.w,s.d)*.25,y,s.d/2+.43);g.add(bolt);
+  }
+  const handle=box(.16,.72,.16,0x58666d,.98);
+  handle.position.set(Math.min(s.w,s.d)*.25,2.55,s.d/2+.43);g.add(handle);
+
+  // Side seams and ventilation
+  for(const z of [-s.d*.30,-s.d*.08,s.d*.14,s.d*.36]){
+    const seam=box(.025,s.h-.7,.035,0x9aa7ad,.52);
+    seam.position.set(s.w/2+.02,3.0,z);g.add(seam);
+  }
+  for(let i=0;i<7;i++){
+    const vent=box(.10,.08,.52,0x61747d,.85);
+    vent.position.set(-s.w/2-.03,1.2+i*.27,s.d*.22);g.add(vent);
+  }
+
+  addFeet(g,s.w,s.d);
+  for(const x of [-s.w*.34,s.w*.34]){
+    const foot=box(.42,.18,.52,0x33434c,.96);
+    foot.position.set(x,.18,s.d*.36);g.add(foot);
+  }
 }
 
+function detailDryer(g){
+  const w=6.9,d=5.9,h=5.8;
+  addMachineBase(g,w+.9,d+.9,0x8d4cff);
+  const body=rbox(w,h,d,0xdfe5e8,.98,.22);body.position.y=3.25;g.add(body);
+  const top=rbox(w-.25,.3,d-.25,0xf7f8f8,.99,.1);top.position.y=6.28;g.add(top);
+
+  const fascia=panelBox(g,w-.42,.74,.30,0x314b59,0,5.55,-d/2-.08,.98);
+  fascia.material.emissive=new THREE.Color(0x8c4dff);fascia.material.emissiveIntensity=.16;
+  panelBox(g,1.15,.30,.10,0x07131d,-1.55,5.55,-d/2-.28,.98);
+  const dial=cyl(.34,.14,0x9ca8ae,.98);dial.rotation.x=Math.PI/2;dial.position.set(1.05,5.55,-d/2-.28);g.add(dial);
+
+  const outer=cyl(1.78,.24,0x7f8c94,.98);outer.rotation.x=Math.PI/2;outer.position.set(0,3.05,d/2+.13);g.add(outer);
+  const trim=cyl(1.56,.25,0xd4dadd,.99);trim.rotation.x=Math.PI/2;trim.position.set(0,3.05,d/2+.27);g.add(trim);
+  const dark=cyl(1.37,.27,0x172c39,.98);dark.rotation.x=Math.PI/2;dark.position.set(0,3.05,d/2+.39);g.add(dark);
+  const glass=new THREE.Mesh(new THREE.CircleGeometry(1.12,48),mat(0x4d93a9,.08,.46,.5));
+  glass.position.set(0,3.05,d/2+.52);glass.rotation.x=Math.PI/2;g.add(glass);
+
+  panelBox(g,w-.9,.58,.45,0xb9c5ca,0,.72,d/2-.2,.82);
+  for(const x of [-2.5,-1.7,1.7,2.5])pipe(g,[x,.2,-d/2-.12],[x,.72,-d/2-.12],.08,0x596871);
+  addFeet(g,w,d);
+}
+
+function detailVertical(g){
+  const w=5.0,d=5.0,h=8.4;
+  addMachineBase(g,w+.75,d+.75,0x168ed1);
+  const body=rbox(w,h,d,0xdce3e6,.98,.22);body.position.y=4.35;g.add(body);
+  const top=rbox(w-.25,.3,d-.25,0xf7f8f8,.99,.1);top.position.y=8.62;g.add(top);
+  const fascia=panelBox(g,w-.38,.72,.3,0x294958,0,7.95,-d/2-.08,.98);
+  fascia.material.emissive=new THREE.Color(0x197fc2);fascia.material.emissiveIntensity=.16;
+  panelBox(g,1.0,.30,.09,0x07131d,-1.2,7.95,-d/2-.27,.98);
+  const dial=cyl(.32,.14,0x9ca8ae,.98);dial.rotation.x=Math.PI/2;dial.position.set(1.05,7.95,-d/2-.28);g.add(dial);
+
+  const outer=cyl(1.48,.22,0x84939b,.98);outer.rotation.x=Math.PI/2;outer.position.set(0,4.45,d/2+.12);g.add(outer);
+  const trim=cyl(1.30,.24,0xd5dcdf,.99);trim.rotation.x=Math.PI/2;trim.position.set(0,4.45,d/2+.25);g.add(trim);
+  const dark=cyl(1.12,.26,0x152c3a,.98);dark.rotation.x=Math.PI/2;dark.position.set(0,4.45,d/2+.37);g.add(dark);
+  const glass=new THREE.Mesh(new THREE.CircleGeometry(.91,44),mat(0x4d93a9,.08,.46,.5));
+  glass.position.set(0,4.45,d/2+.5);glass.rotation.x=Math.PI/2;g.add(glass);
+  panelBox(g,.42,6.9,.62,0x6f8088,w/2-.15,3.9,d/2-.55,.62);
+  addFeet(g,w,d);
+}
+
+function detailPress(g,variant='press'){
+  const L=variant==='icc'?16.5:variant==='flat'?13.5:11.5;
+  const W=variant==='icc'?5.6:4.8;
+  addMachineBase(g,L+1,W+1,0x985cff);
+
+  // Long industrial body
+  panelBox(g,W,1.9,L,0xd7dee2,0,2.0,0,.97);
+  panelBox(g,W-.35,.38,L-.45,0x65767e,0,3.15,0,.92);
+  panelBox(g,W-.65,.24,L-.9,0xf1f4f5,0,3.48,0,.86);
+
+  // Rollers
+  const rollerCount=variant==='icc'?4:3;
+  for(let i=0;i<rollerCount;i++){
+    const z=-L/2+2.2+i*(L-4.4)/Math.max(1,rollerCount-1);
+    const roller=cyl(.66,W-1.0,0xd5dde1,.98);roller.rotation.z=Math.PI/2;roller.position.set(0,2.85,z);g.add(roller);
+    const end=cyl(.78,.18,0x596a73,.9);end.rotation.z=Math.PI/2;end.position.set(-W/2-.03,2.85,z);g.add(end);
+  }
+
+  const fascia=panelBox(g,W-.35,.48,.30,0x314c5b,0,3.75,-L/2-.08,.98);
+  fascia.material.emissive=new THREE.Color(0x985cff);fascia.material.emissiveIntensity=.2;
+  for(let i=0;i<5;i++){const led=box(.11,.11,.07,0x67dcff,.95);led.position.set(-1+i*.28,3.77,-L/2-.27);led.material.emissive=new THREE.Color(0x55dfff);led.material.emissiveIntensity=2;g.add(led);}
+
+  // Side frames / pipes
+  for(const x of [-W*.38,W*.38]){
+    pipe(g,[x,3.5,-L/2+1.2],[x,5.9,-L/2+1.2],.09,0x667982);
+    pipe(g,[x,5.9,-L/2+1.2],[x,5.9,L/2-1.2],.09,0x667982);
+    pipe(g,[x,5.9,L/2-1.2],[x,3.5,L/2-1.2],.09,0x667982);
+  }
+  addFeet(g,L,W);
+}
+
+function detailShirt(g){
+  addMachineBase(g,7.2,6.8,0x985cff);
+  panelBox(g,5.9,5.4,6.0,0xd2dbe0,0,2.8,0,.92);
+  panelBox(g,4.9,.5,.25,0x3e7f9d,0,5.35,-3.12,.95);
+  panelBox(g,2.0,6.8,1.55,0x3d7c97,0,7.1,0,.72);
+  panelBox(g,4.8,.35,1.25,0x9ecbdc,0,10.35,0,.76);
+  for(const x of [-1.75,1.75]){
+    pipe(g,[x,5.2,-3.05],[x,8.8,-3.05],.09,0x6d808b);
+    const valve=cyl(.22,.18,0xb5c0c5,.95);valve.rotation.x=Math.PI/2;valve.position.set(x,7.1,-3.15);g.add(valve);
+  }
+  panelBox(g,1.3,.7,.22,0x1a3c4e,-2.0,4.9,-3.2,.96);
+}
+
+function detailCrane(g){
+  addMachineBase(g,5.8,5.8,0xf0a329);
+  const frame=0x4e5d66;
+  panelBox(g,4.9,.42,4.9,frame,0,5.2,0,.96);
+  for(const x of [-2.1,2.1])for(const z of [-2.1,2.1])pipe(g,[x,0,z],[x,5.0,z],.12,frame);
+  panelBox(g,4.4,.28,.72,0xe2a12d,0,5.35,0,.98);
+  const motor=panelBox(g,1.25,.9,1.15,0x596872,0,5.85,0,.95);
+  pipe(g,[0,5.85,0],[0,2.3,0],.10,0x4b5960);
+  const hook=new THREE.Mesh(new THREE.TorusGeometry(.55,.12,12,24,Math.PI*1.7),mat(0xe7a12c,.3,.7,.95));
+  hook.rotation.x=Math.PI/2;hook.position.set(0,.1,0);g.add(hook);
+}
+
+function detailOffice(g){
+  addMachineBase(g,13.5,10.5,0x5d8294);
+  panelBox(g,12.2,.55,9.2,0x806247,0,.32,0,.92);
+  panelBox(g,11.8,.3,8.8,0xefe3cc,0,5.45,0,.74);
+  for(const x of [-4.3,0,4.3]){
+    panelBox(g,2.5,.42,1.45,0x6e503c,x,6.05,-1.2,.94);
+    panelBox(g,.48,.72,.48,0x536773,x,5.95,-2.25,.94);
+    panelBox(g,.48,.72,.48,0x536773,x,5.95,-.15,.94);
+    panelBox(g,1.0,.75,.10,0x6ea9c5,x,6.55,-1.2,.78);
+  }
+  for(const x of [-5.6,5.6])panelBox(g,.22,5.5,8.3,0x879aa3,x,3.1,0,.36);
+}
+
+function detailSMF(g){
+  addMachineBase(g,8.5,6.7,0x985cff);
+  for(const x of [-2.5,0,2.5]){
+    const tank=cyl(1.25,5.8,0x74858d,.9);tank.position.set(x,3.15,0);g.add(tank);
+    panelBox(g,1.85,.34,1.85,0x526670,x,6.12,0,.92);
+    const gauge=cyl(.24,.12,0xbed1d8,.95);gauge.rotation.x=Math.PI/2;gauge.position.set(x,5.3,-1.28);g.add(gauge);
+    pipe(g,[x-1.0,.8,0],[x-1.0,6.0,0],.075,0x6e9bb0);
+    pipe(g,[x+1.0,.8,0],[x+1.0,6.0,0],.075,0x6e9bb0);
+  }
+  pipe(g,[-3.5,6.0,0],[3.5,6.0,0],.10,0xa2b4bc);
+  pipe(g,[-3.5,1.0,0],[3.5,1.0,0],.10,0x607e8c);
+}
+
+function detailDryclean(g){
+  addMachineBase(g,7.4,6.7,0x15bda0);
+  panelBox(g,6.5,5.8,5.8,0xd3dce0,0,2.95,0,.9);
+  panelBox(g,5.2,.5,.25,0x3d7f99,0,5.7,-3.02,.96);
+  const outer=cyl(1.55,.22,0x84939a,.98);outer.rotation.x=Math.PI/2;outer.position.set(0,3.05,3.02);g.add(outer);
+  const trim=cyl(1.35,.23,0xd5dcdf,.98);trim.rotation.x=Math.PI/2;trim.position.set(0,3.05,3.15);g.add(trim);
+  const dark=cyl(1.15,.25,0x152d39,.98);dark.rotation.x=Math.PI/2;dark.position.set(0,3.05,3.28);g.add(dark);
+  panelBox(g,1.3,2.9,1.0,0x304f60,-2.1,3.0,-3.08,.82);
+  panelBox(g,1.6,2.6,1.0,0x596e78,2.0,2.85,3.0,.72);
+}
+
+function detailCompressor(g){
+  addMachineBase(g,8.6,6.8,0x2aa8ff);
+  const tank=cyl(1.72,6.2,0xc4cdd2,.9);tank.rotation.z=Math.PI/2;tank.position.set(0,2.6,0);g.add(tank);
+  for(const x of [-2.8,2.8]){
+    panelBox(g,.42,1.7,.42,0x4e5e68,x,1.1,0,.92);
+    pipe(g,[x,1.7,0],[x,2.5,0],.09,0x758b95);
+  }
+  for(const x of [-1.35,1.35]){
+    panelBox(g,1.2,1.55,1.8,0x466575,x,4.0,0,.9);
+    panelBox(g,.72,.42,.95,0x2b556b,x,4.98,0,.94);
+    const fan=cyl(.35,.08,0x8ea4ad,.9);fan.rotation.x=Math.PI/2;fan.position.set(x,4.05,-.93);g.add(fan);
+  }
+  pipe(g,[-2.8,3.3,0],[-1.35,4.55,0],.11,0x8aa6b4);
+  pipe(g,[1.35,4.55,0],[2.8,3.3,0],.11,0x8aa6b4);
+}
+
+function detailManganese(g){
+  addMachineBase(g,9.4,7.2,0xa15dff);
+  for(const x of [-2.45,0,2.45]){
+    const vessel=cyl(1.3,5.8,0x788890,.9);vessel.position.set(x,3.15,0);g.add(vessel);
+    panelBox(g,1.95,.35,1.95,0x536671,x,6.15,0,.92);
+    const gauge=cyl(.24,.12,0xd3e1e6,.95);gauge.rotation.x=Math.PI/2;gauge.position.set(x,5.25,-1.32);g.add(gauge);
+    pipe(g,[x-1.0,.8,0],[x-1.0,6.0,0],.075,0x6f9bb0);
+    pipe(g,[x+1.0,.8,0],[x+1.0,6.0,0],.075,0x6f9bb0);
+  }
+  pipe(g,[-3.5,6.0,0],[3.5,6.0,0],.10,0xa5b5bc);
+  pipe(g,[-3.5,1.0,0],[3.5,1.0,0],.10,0x647f8d);
+}
+
+function detailBoiler(g){
+  addMachineBase(g,9.4,7.3,0xe99434);
+  const body=cyl(2.15,7.5,0x66757d,.9);body.rotation.z=Math.PI/2;body.position.set(0,3.25,0);g.add(body);
+  panelBox(g,2.9,2.5,2.25,0x394d58,-2.0,1.7,0,.94);
+  panelBox(g,2.3,1.0,2.35,0x985a2d,2.15,1.45,0,.94);
+  const stack=cyl(.55,5.6,0x3f4950,.84);stack.position.set(0,8.7,0);g.add(stack);
+  pipe(g,[-2.8,2.4,0],[-2.15,3.1,0],.12,0x9b6a42);
+}
+
+function detailWater(g){
+  addMachineBase(g,8.2,7.1,0x2aa8ff);
+  for(const x of [-1.75,1.75]){
+    const vessel=cyl(1.36,5.2,0x557784,.86);vessel.position.set(x,2.8,0);g.add(vessel);
+    panelBox(g,1.85,.35,1.85,0x86b7c7,x,5.55,0,.76);
+    pipe(g,[x-1.0,.8,0],[x-1.0,5.3,0],.07,0x6f9bb0);
+  }
+  panelBox(g,5.7,.3,1.1,0x4a6672,0,1.2,0,.78);
+  pipe(g,[-3.0,5.4,0],[3.0,5.4,0],.1,0x8fa6b1);
+}
+
+function detailTank(g){
+  addMachineBase(g,7.2,7.2,0x2aa8ff);
+  const body=cyl(2.2,5.8,0xb9c5ca,.88);body.position.set(0,3.45,0);g.add(body);
+  const top=cyl(1.0,.22,0x75868e,.9);top.position.set(0,6.42,0);g.add(top);
+  panelBox(g,5.0,.35,5.0,0x53646e,0,.35,0,.84);
+  for(const x of [-1.6,1.6])pipe(g,[x,.45,0],[x,6.25,0],.12,0x53636b);
+  panelBox(g,4.3,.28,4.3,0xd5dde1,0,6.3,0,.68);
+}
+
+function model(type){
+  const g=new THREE.Group();
+  if(type.startsWith('washer-')) detailWasher(g,type.slice(7));
+  else if(type==='washer') detailWasher(g,'standard');
+  else if(type==='vertical') detailVertical(g);
+  else if(type==='dryer') detailDryer(g);
+  else if(type==='longPress') detailPress(g,'press');
+  else if(type==='flat') detailPress(g,'flat');
+  else if(type==='icc') detailPress(g,'icc');
+  else if(type==='shirt') detailShirt(g);
+  else if(type==='crane') detailCrane(g);
+  else if(type==='office') detailOffice(g);
+  else if(type==='smf') detailSMF(g);
+  else if(type==='dryclean') detailDryclean(g);
+  else if(type==='compressor') detailCompressor(g);
+  else if(type==='manganese') detailManganese(g);
+  else if(type==='boiler') detailBoiler(g);
+  else if(type==='water') detailWater(g);
+  else if(type==='tank') detailTank(g);
+  else {addMachineBase(g,6,6,0x118fff);g.add(rbox(5,4,5,0xaab7bf,.75,.22));}
+  return g;
+}
 function setSyncBadge(text,ok=false){
  const el=document.getElementById('syncBadge');
  el.textContent='資料同步：'+text;
@@ -243,7 +462,8 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
  const stableExtra={'乾洗機':'DRYCLEAN-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
- const m=model(kind);m.position.y=.25;m.scale.setScalar(.88);root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
+ const visualKind=(kind==='washer'&&['30K','60K','80K','35kg','50kg'].includes(name))?('washer-'+name):kind;
+ const m=model(visualKind);m.position.y=.25;m.scale.setScalar(.88);root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
 
  const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
  const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
