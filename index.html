@@ -33,7 +33,7 @@ button{cursor:pointer}button.active{background:#087bc2;border-color:#36b9ff}.sea
   <input class="search" id="search" placeholder="搜尋設備名稱…">
   <div class="mode"><button id="editBtn" class="active">編輯模式</button><button id="viewBtn">巡檢模式</button><button id="resetBtn">重置視角</button></div>
 </div>
-<div class="hint" id="hint">編輯模式：短點查看；長按設備約 0.4 秒後拖曳；雙指操作地圖</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
+<div class="hint" id="hint">編輯模式：短點查看資料；長按拖曳；右側可旋轉設備與編輯資料；雙指操作地圖</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
 <div class="side"><button>▧<br>地圖</button><button>⚙<br>設備</button><button>✓<br>清潔</button><button>◷<br>保養</button><button>⚒<br>維修</button></div>
 <div class="palette"><h3>設備庫　（點一下加入地圖，再長按拖曳到想要的位置）</h3><div class="items" id="items"></div></div><div style="position:fixed;z-index:19;right:18px;bottom:170px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button id="snapBtn">吸附：開</button><button id="saveBtn">💾 儲存</button><button id="exportBtn">⬇️ 匯出版位</button><label style="padding:9px 12px;border:1px solid #245b88;background:#0a2744;border-radius:10px;cursor:pointer">⬆️ 匯入版位<input id="importInput" type="file" accept="application/json" style="display:none"></label></div>
 <div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card"><div style="font-weight:800;margin-bottom:8px">設備方向</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="rotateLeftBtn">↶ 左轉 90°</button><button id="rotateRightBtn">↷ 右轉 90°</button></div><button id="resetRotationBtn" style="width:100%;margin-top:8px">⟳ 重設方向</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card"><button style="width:100%;margin:4px 0">＋ 新增清潔紀錄</button><button style="width:100%;margin:4px 0">＋ 新增保養紀錄</button><button style="width:100%;margin:4px 0">＋ 新增維修紀錄</button></div></div>
@@ -148,27 +148,14 @@ function setSyncBadge(text,ok=false){
 }
 async function loadRemoteLayout(){
  try{
-  setSyncBadge('連線中');
-  const res=await fetch(API_BASE+'/api/layout',{cache:'no-store'});
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  const payload=await res.json();
-  const positions=Array.isArray(payload.positions)?payload.positions:[];
-  if(positions.length){
-   const byId=new Map(positions.map(v=>[v.id,v]));
-   const byName=new Map(positions.map(v=>[v.name,v]));
-   groups.forEach(r=>{
-    const v=byId.get(r.userData.id)||byName.get(r.userData.name);
-    if(v){
-     if(typeof v.x==='number')r.position.x=v.x;
-     if(typeof v.z==='number')r.position.z=v.z;
-     if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;
-     else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;
-    }
-   });
+  setSyncBadge('連線中');const res=await fetch(API_BASE+'/api/layout',{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);
+  const payload=await res.json();const positions=Array.isArray(payload.positions)?payload.positions:[];
+  if(positions.length){const byId=new Map(positions.map(v=>[v.id,v]));const byName=new Map(positions.map(v=>[v.name,v]));
+   groups.forEach(r=>{const v=byId.get(r.userData.id)||byName.get(r.userData.name);if(v){if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(v.notes!=null)r.userData.notes=v.notes;}});
    localStorage.setItem(SYNC_KEY,JSON.stringify(getPositionData()));
   }
-  apiAvailable=true; setSyncBadge('NAS 已連線',true); return true;
- }catch(err){ apiAvailable=false; setSyncBadge('NAS 暫離線'); return false; }
+  apiAvailable=true;setSyncBadge('NAS 已連線',true);return true;
+ }catch(err){apiAvailable=false;setSyncBadge('NAS 暫離線');return false;}
 }
 async function saveRemoteLayout(){
  if(syncing||!apiAvailable)return false;
@@ -238,11 +225,8 @@ function groundPoint(e){
  return ray.ray.intersectPlane(plane,out)?out:null;
 }
 function select(root){selected=root;if(root)openPanel(root);}
-function openPanel(r){
- document.getElementById('pn').textContent=r.userData.name;
- document.getElementById('pt').textContent=r.userData.type;
- document.getElementById('panel').classList.add('open');
-}
+function setPanelEditable(canEdit){['eqName','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn','rotateLeftBtn','rotateRightBtn','resetRotationBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!canEdit;});}
+function openPanel(r){document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setPanelEditable(edit);document.getElementById('panel').classList.add('open');}
 function closePanel(){document.getElementById('panel').classList.remove('open');}
 function toast(s){
  const t=document.getElementById('toast');
@@ -250,10 +234,7 @@ function toast(s){
  setTimeout(()=>t.classList.remove('show'),1500);
 }
 function getPositionData(){
- return [...groups.values()].map(r=>({
-   id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,
-   x:r.position.x,z:r.position.z,rotationY:r.rotation.y
- }));
+ return [...groups.values()].map(r=>({id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,x:r.position.x,z:r.position.z,rotationY:r.rotation.y,status:r.userData.status||'正常',cleaningLastDate:r.userData.cleaningLastDate||'',cleaningCycleDays:Number(r.userData.cleaningCycleDays||30),maintenanceLastDate:r.userData.maintenanceLastDate||'',maintenanceCycleDays:Number(r.userData.maintenanceCycleDays||180),notes:r.userData.notes||''}));
 }
 function savePositions(){
  const data=JSON.stringify(getPositionData());
@@ -277,7 +258,7 @@ function restoreSavedPositions(){
    const byId=new Map(saved.map(v=>[v.id,v]));
    groups.forEach(r=>{
      const v=byId.get(r.userData.id);
-     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=v.rotationY||0;}
+     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=typeof v.rotationY==='number'?v.rotationY:0;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;Object.assign(r.userData,{name:v.name||r.userData.name,status:v.status||r.userData.status,cleaningLastDate:v.cleaningLastDate||'',cleaningCycleDays:Number(v.cleaningCycleDays||r.userData.cleaningCycleDays),maintenanceLastDate:v.maintenanceLastDate||'',maintenanceCycleDays:Number(v.maintenanceCycleDays||r.userData.maintenanceCycleDays),notes:v.notes||''});}
    });
    return true;
  }catch(err){return false;}
@@ -375,15 +356,19 @@ renderer.domElement.addEventListener('pointercancel',()=>{
  renderer.domElement.style.cursor='';
 });
 
+document.getElementById('saveEqBtn').onclick=async()=>{if(!selected)return;selected.userData.name=document.getElementById('eqName').value.trim()||selected.userData.name;selected.userData.status=document.getElementById('eqStatus').value;selected.userData.cleaningLastDate=document.getElementById('eqCleaningDate').value;selected.userData.cleaningCycleDays=Math.max(0,Number(document.getElementById('eqCleaningCycle').value||0));selected.userData.maintenanceLastDate=document.getElementById('eqMaintenanceDate').value;selected.userData.maintenanceCycleDays=Math.max(0,Number(document.getElementById('eqMaintenanceCycle').value||0));selected.userData.notes=document.getElementById('eqNotes').value;const lbl=selected.children.find(o=>o.isCSS2DObject);if(lbl)lbl.element.textContent=selected.userData.name;document.getElementById('pn').textContent=selected.userData.name;savePositions();if(apiAvailable)await saveRemoteLayout();toast('設備資料已同步至 NAS');};
+document.getElementById('rotateLeftBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;savePositions();toast('設備已左轉 90°');};
+document.getElementById('rotateRightBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;savePositions();toast('設備已右轉 90°');};
+document.getElementById('resetRotationBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;savePositions();toast('設備方向已重設');};
 document.getElementById('close').onclick=closePanel;
 document.getElementById('editBtn').onclick=()=>{
- edit=true;closePanel();
+ edit=true;closePanel();setPanelEditable(true);
  document.getElementById('editBtn').classList.add('active');
  document.getElementById('viewBtn').classList.remove('active');
  document.getElementById('hint').textContent='編輯模式：短點查看；長按設備約 0.4 秒後拖曳；雙指操作地圖';
 };
 document.getElementById('viewBtn').onclick=()=>{
- edit=false;closePanel();
+ edit=false;closePanel();setPanelEditable(false);
  document.getElementById('viewBtn').classList.add('active');
  document.getElementById('editBtn').classList.remove('active');
  document.getElementById('hint').textContent='巡檢模式：點設備查看清潔、保養、維修資料';
