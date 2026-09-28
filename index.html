@@ -100,7 +100,7 @@ const instances=[
  ['天車 #02','周邊設備','crane',22,5],
  ['冷風區','周邊設備','fan',-2,42]
 ];
-const groups=new Map();let selected=null;let edit=true;let uid=0;
+const groups=new Map();let selected=null;let edit=true;let snap=true;let uid=0;let pressTimer=null;let activePointerId=null;let drag=null;
 
 function mat(c,rough=.55,metal=.35){return new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});}
 function box(w,h,d,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
@@ -174,7 +174,7 @@ instances.forEach(v=>addEquipment(...v));
 
 function addPalette(){
  const wrap=document.getElementById('items');wrap.innerHTML='';
- palette.forEach(([n,t,k,ic])=>{const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;b.innerHTML=`<div class="thumb">${ic}</div><span>${n}</span>`;b.onclick=()=>{const r=addEquipment(n,t,k,controls.target.x,controls.target.z);toast('已加入地圖，長按設備拖曳到指定位置');savePositions();};wrap.appendChild(b)});
+ palette.forEach(([n,t,k,ic])=>{const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;b.innerHTML=`<div class="thumb">${ic}</div><span>${n}</span>`;b.onclick=()=>{if(!edit){toast('目前是巡檢模式，請先切換到編輯模式');return;}const r=addEquipment(n,t,k,controls.target.x,controls.target.z);savePositions();toast('已加入地圖，可直接拖曳');};wrap.appendChild(b)});
 }
 addPalette();
 
@@ -186,8 +186,15 @@ function pointerNDC(e){
 function hitEquipment(e){
  const p=pointerNDC(e);
  ray.setFromCamera(new THREE.Vector2(p.x,p.y),camera);
- return ray.intersectObjects(scene.children,true)
-   .find(h=>h.object.userData?.interactive)?.object.userData.root||null;
+ const hits=ray.intersectObjects(scene.children,true);
+ for(const h of hits){
+   let o=h.object;
+   while(o){
+     if(o.userData?.interactive && o.userData?.root) return o.userData.root;
+     o=o.parent;
+   }
+ }
+ return null;
 }
 function groundPoint(e){
  const p=pointerNDC(e);
@@ -219,23 +226,37 @@ renderer.domElement.addEventListener('pointerdown',e=>{
  if(!edit||activePointerId!==null)return;
  const r=hitEquipment(e);
  if(!r)return;
+
  activePointerId=e.pointerId;
  renderer.domElement.setPointerCapture?.(e.pointerId);
 
- drag={root:r,longPressed:false,moved:false};
- pressTimer=setTimeout(()=>{
-   if(!drag)return;
+ drag={root:r,longPressed:false,moved:false,startX:e.clientX,startY:e.clientY};
+
+ // 電腦：按下就可以拖；手機／平板：先短按看資料，長按進入拖曳。
+ if(e.pointerType==='mouse'){
    drag.longPressed=true;
    controls.enabled=false;
    renderer.domElement.style.cursor='grabbing';
-   toast('拖曳中：移動到你要的位置');
- },380);
+ }else{
+   pressTimer=setTimeout(()=>{
+     if(!drag)return;
+     drag.longPressed=true;
+     controls.enabled=false;
+     renderer.domElement.style.cursor='grabbing';
+     toast('拖曳中：移動到你要的位置');
+   },380);
+ }
 });
 
 renderer.domElement.addEventListener('pointermove',e=>{
- if(!drag||!drag.longPressed)return;
+ if(!drag)return;
+
+ // 滑鼠：按住就拖。觸控：長按後才拖。
+ if(!drag.longPressed)return;
+
  const world=groundPoint(e);
  if(!world)return;
+
  drag.root.position.x=snapValue(world.x);
  drag.root.position.z=snapValue(world.z);
  drag.moved=true;
@@ -243,19 +264,31 @@ renderer.domElement.addEventListener('pointermove',e=>{
 
 renderer.domElement.addEventListener('pointerup',e=>{
  if(!drag)return;
+
  if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
+
  const r=drag.root;
- const wasDrag=drag.longPressed||drag.moved;
+ const wasDrag=drag.longPressed && drag.moved;
+
  drag=null;
  controls.enabled=true;
  renderer.domElement.style.cursor='';
- if(!wasDrag)select(r);
- else{savePositions();toast('位置已更新');}
+
+ if(!wasDrag){
+   select(r);
+ }else{
+   savePositions();
+   toast('位置已更新');
+ }
+
  activePointerId=null;
 });
+
 renderer.domElement.addEventListener('pointercancel',()=>{
  if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
- drag=null;controls.enabled=true;activePointerId=null;
+ drag=null;
+ controls.enabled=true;
+ activePointerId=null;
  renderer.domElement.style.cursor='';
 });
 
