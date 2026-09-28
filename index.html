@@ -48,16 +48,16 @@ const app=document.getElementById('canvas'), scene=new THREE.Scene();
 scene.background=new THREE.Color(0x061321);
 scene.fog=new THREE.Fog(0x061321,80,260);
 const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,.1,1000);
-camera.position.set(0,132,118);
+camera.position.set(0,70,105);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;app.appendChild(renderer.domElement);
 const labels=new CSS2DRenderer();labels.setSize(innerWidth,innerHeight);labels.domElement.style.position='absolute';labels.domElement.style.inset='0';labels.domElement.style.pointerEvents='none';app.appendChild(labels.domElement);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=55;controls.maxDistance=210;controls.target.set(0,0,0);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=20;controls.maxDistance=240;controls.target.set(0,0,0);
 
 scene.add(new THREE.HemisphereLight(0xd8f1ff,0x102338,2.8));
 const key=new THREE.DirectionalLight(0xffffff,3.4);key.position.set(25,110,35);key.castShadow=true;scene.add(key);
 const fill=new THREE.PointLight(0x26a9ff,120,220);fill.position.set(-35,45,30);scene.add(fill);
-function floorZone(w,d,x,z,c,labelText,labelColor=0x2aa9ff){const g=new THREE.Group();const floor=box(w,.22,d,c,.82);floor.position.y=-.72;g.add(floor);const border=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.35,d)),new THREE.LineBasicMaterial({color:labelColor,transparent:true,opacity:.72}));border.position.y=-.55;g.add(border);for(let xx=-w/2+5;xx<w/2;xx+=5){const line=box(.035,.025,d-.8,0x2a4a60,.38);line.position.set(xx,-.55,0);g.add(line);}for(let zz=-d/2+5;zz<d/2;zz+=5){const line=box(w-.8,.025,.035,0x2a4a60,.38);line.position.set(0,-.55,zz);g.add(line);}const l=label(labelText,'#8bd8ff');l.position.set(0,.1,-d/2+2);g.add(l);g.position.set(x,0,z);scene.add(g);}const grid=new THREE.GridHelper(180,36,0x0b3551,0x09283e);grid.position.y=-.5;grid.material.opacity=.18;grid.material.transparent=true;scene.add(grid);floorZone(58,102,-38,-2,0x0a1e30,'倉庫1（原倉庫）',0x2a9fff);floorZone(72,102,39,-2,0x0b2032,'倉庫2',0x2a9fff);const upperDeck1=glowPlate(16,12,0x22a6ff);upperDeck1.position.set(-2,7.5,42);scene.add(upperDeck1);const upperDeck2=glowPlate(42,11,0x9b63ff);upperDeck2.position.set(32,7.5,43);scene.add(upperDeck2);
+function floorZone(w,d,x,z,c,labelText,labelColor=0x2aa9ff){const g=new THREE.Group();const floor=box(w,.22,d,c,.82);floor.position.y=-.72;g.add(floor);const border=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.35,d)),new THREE.LineBasicMaterial({color:labelColor,transparent:true,opacity:.72}));border.position.y=-.55;g.add(border);for(let xx=-w/2+5;xx<w/2;xx+=5){const line=box(.035,.025,d-.8,0x2a4a60,.38);line.position.set(xx,-.55,0);g.add(line);}for(let zz=-d/2+5;zz<d/2;zz+=5){const line=box(w-.8,.025,.035,0x2a4a60,.38);line.position.set(0,-.55,zz);g.add(line);}const l=label(labelText,'#8bd8ff');l.position.set(0,.1,-d/2+2);g.add(l);g.position.set(x,0,z);scene.add(g);}const grid=new THREE.GridHelper(180,36,0x15547a,0x0b2d46);grid.position.y=-1;scene.add(grid);const upperDeck1=glowPlate(16,12,0x22a6ff);upperDeck1.position.set(-2,7.5,42);scene.add(upperDeck1);const upperDeck2=glowPlate(42,11,0x9b63ff);upperDeck2.position.set(32,7.5,43);scene.add(upperDeck2);
 
 const palette=[
  ['30K','洗衣設備','washer','🧺'],['60K','洗衣設備','washer','🧺'],['80K','洗衣設備','washer','🧺'],
@@ -98,7 +98,7 @@ const instances=[
  ['天車 #02','周邊設備','crane',22,5],
  ['冷風區','周邊設備','fan',-2,42],['鍋爐','周邊設備','boiler',-46,45],['乾洗機','洗衣設備','dryclean',62,30],['水設備','周邊設備','water',-28,45],['水塔','周邊設備','tank',-42,48],['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
-const MODEL_REVISION='2026-09-28-reference-style-v2';
+const MODEL_REVISION='2026-09-28-small-model-layout-v3';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
 const SYNC_KEY = 'factory3dPositions';
 let apiAvailable=false;
@@ -184,10 +184,10 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
  const stableExtra={'乾洗機':'DRYCLEAN-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
- const m=model(kind);m.position.y=.25;root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
+ const m=model(kind);m.position.y=.25; m.scale.setScalar(.72);root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
 
- const plateW=(kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8;
- const plateD=(kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8;
+ const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.72;
+ const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.72;
  const plateColor=type==='洗衣設備'?0x0877d1:type==='烘乾設備'?0x1bd58d:type==='燙床設備'?0x9b63ff:kind==='fan'?0xf18cb9:0x2a79b9;
  const plate=glowPlate(plateW,plateD,plateColor);
  plate.position.y=.05;root.add(plate);
