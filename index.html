@@ -541,7 +541,7 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const visualKind=(kind==='washer'&&['30K','60K','80K','35kg','50kg'].includes(name))?('washer-'+name):kind;
  const m=model(visualKind);m.position.y=.25;m.scale.setScalar(.88);root.add(m);
- void attachExternalAsset(root,name,kind,m);if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
+ if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
 
  const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
  const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
