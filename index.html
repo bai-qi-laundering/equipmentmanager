@@ -78,11 +78,14 @@ app.appendChild(renderer.domElement);
 const labels=new CSS2DRenderer();labels.setSize(innerWidth,innerHeight);labels.domElement.style.position='absolute';labels.domElement.style.inset='0';labels.domElement.style.pointerEvents='none';app.appendChild(labels.domElement);
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true;
-controls.dampingFactor=.045;
+controls.dampingFactor=.07;
 controls.enablePan=true;
-controls.panSpeed=.24;
-controls.rotateSpeed=.28;
-controls.zoomSpeed=.45;
+controls.screenSpacePanning=true;
+controls.panSpeed=.55;
+controls.rotateSpeed=.34;
+controls.zoomSpeed=.5;
+controls.touches.ONE=THREE.TOUCH.PAN;
+controls.touches.TWO=THREE.TOUCH.DOLLY_ROTATE;
 controls.maxPolarAngle=Math.PI*.49;
 controls.minDistance=50;
 controls.maxDistance=600;
@@ -143,7 +146,7 @@ const instances=[
  ['天車 #02','周邊設備','crane',22,5],
  ['冷風區','周邊設備','fan',-2,42],['鍋爐','周邊設備','boiler',-46,45],['乾洗機','洗衣設備','dryclean',62,30],['水設備','周邊設備','water',-28,45],['水塔','周邊設備','tank',-42,48],['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
-const MODEL_REVISION='2026-09-28-reference-industrial-v7-presentation-mobile-sensitivity';
+const MODEL_REVISION='2026-09-28-reference-industrial-v8-touch-controls';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
 const SYNC_KEY = 'factory3dPositions';
 let apiAvailable=false;
@@ -731,22 +734,46 @@ renderer.domElement.addEventListener('pointerdown',e=>{
  if(!edit)return;
  const r=hitEquipment(e);
  if(!r)return;
+
+ // 一碰到設備就先把地圖手勢暫停，避免設備長按拖曳時 OrbitControls 搶走手勢。
+ controls.enabled=false;
  if(drag){drag=null;}
  if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
  activePointerId=e.pointerId;
  try{renderer.domElement.setPointerCapture?.(e.pointerId);}catch(err){}
  drag={root:r,longPressed:false,moved:false,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY};
+
  if(e.pointerType==='mouse'){
-   drag.longPressed=true;controls.enabled=false;renderer.domElement.style.cursor='grabbing';
+   drag.longPressed=true;
+   renderer.domElement.style.cursor='grabbing';
  }else{
    pressTimer=setTimeout(()=>{
      if(!drag||drag.pointerId!==e.pointerId)return;
-     drag.longPressed=true;controls.enabled=false;renderer.domElement.style.cursor='grabbing';toast('拖曳中：移動到你要的位置');
+     drag.longPressed=true;
+     renderer.domElement.style.cursor='grabbing';
+     toast('拖曳中：移動到你要的位置');
    },380);
  }
-});
+},true);
+
 renderer.domElement.addEventListener('pointermove',e=>{
- if(!drag||drag.pointerId!==e.pointerId||!drag.longPressed)return;
+ if(!drag||drag.pointerId!==e.pointerId)return;
+
+ // 尚未長按時允許很小的手指抖動，不會把設備拖走。
+ if(!drag.longPressed){
+   const dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
+   if(Math.hypot(dx,dy)>10){
+     if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
+     const id=drag.pointerId;
+     drag=null;
+     activePointerId=null;
+     controls.enabled=true;
+     try{renderer.domElement.releasePointerCapture?.(id);}catch(err){}
+     return;
+   }
+   return;
+ }
+
  const world=groundPoint(e,drag.root.position.y);
  if(!world)return;
  drag.root.position.x=snapValue(world.x);
