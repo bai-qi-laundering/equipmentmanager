@@ -145,7 +145,7 @@ const instances=[
  ['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],
  ['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
-const MODEL_REVISION='2026-09-29-c-style-real-equipment-v3';
+const MODEL_REVISION='2026-09-29-c-style-showcase-v4';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
 const SYNC_KEY = 'factory3dPositions_C_STYLE_V2';
 let apiAvailable=false;
@@ -170,7 +170,7 @@ function glowPlate(w,d,c){
 }
 function label(text,color='#8bd8ff'){
  const el=document.createElement('div');el.className='eq-label';el.textContent=text;
- el.style.cssText='--label-color:'+color+';padding:6px 10px;border:1px solid '+color+';border-radius:12px;background:linear-gradient(180deg,rgba(5,23,40,.96),rgba(3,13,25,.88));color:#fff;font-weight:900;font-size:12px;letter-spacing:.15px;white-space:nowrap;box-shadow:0 0 18px '+color+'66, inset 0 0 10px '+color+'22;text-shadow:0 0 7px rgba(255,255,255,.35);backdrop-filter:blur(6px)';
+ el.style.cssText='--label-color:'+color+';padding:6px 10px;border:1px solid '+color+';border-radius:12px;background:linear-gradient(180deg,rgba(5,23,40,.96),rgba(3,13,25,.88));color:#fff;font-weight:850;font-size:11px;letter-spacing:.12px;white-space:nowrap;box-shadow:0 0 18px '+color+'66, inset 0 0 10px '+color+'22;text-shadow:0 0 7px rgba(255,255,255,.35);backdrop-filter:blur(6px)';
  return new CSS2DObject(el);
 }
 function rbox(w,h,d,c,opacity=1,r=.18){const m=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,3,r),mat(c,.42,.3,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
@@ -183,18 +183,18 @@ function addFeet(g,w,d){for(const x of [-w*.38,w*.38])for(const z of [-d*.38,d*.
 function addControl(g,w,y,z){panelBox(g,w,.48,.24,0x173c52,0,y,z,.98);panelBox(g,w*.38,.26,.12,0x07121b,-w*.25,y+.03,z-.14,.98);for(let i=0;i<4;i++){const led=box(.12,.12,.08,0x7ce8ff,.95);led.position.set(-w*.05+i*.25,y+.05,z-.16);led.material.emissive=new THREE.Color(0x28b9ff);led.material.emissiveIntensity=2.3;g.add(led);}}
 function machineNamePlate(g,text,w,y,z){const p=panelBox(g,w,.28,.08,0x163b50,0,y,z,.98);p.material.emissive=new THREE.Color(0x0877d1);p.material.emissiveIntensity=.55;return p;}
 function detailFolding(g){
-  const L=10.8,W=5.4,H=3.7;
+  const L=13.8,W=5.8,H=3.9;
   addMachineBase(g,L+1.0,W+1.0,0x19cfff);
   const main=rbox(L,H,W,0x176fc0,.98,.18);main.position.y=H/2+.45;g.add(main);
   // white central frame and blue side housings
-  panelBox(g,2.2,H+.35,W+.25,0xe8eef0,-2.1,H/2+.58,0,.98);
-  panelBox(g,2.7,H+.2,W+.15,0x2a86ce,3.65,H/2+.52,0,.98);
+  panelBox(g,2.5,H+.35,W+.25,0xe8eef0,-2.8,H/2+.58,0,.98);
+  panelBox(g,3.2,H+.2,W+.15,0x2a86ce,4.0,H/2+.52,0,.98);
   panelBox(g,1.9,.45,W+.18,0xf1f4f5,-2.3,H+.58,0,.98);
   // upper folding rollers
-  for(let i=0;i<7;i++){
+  for(let i=0;i<9;i++){
     const roller=cyl(.28, W-1.0,0xe7ecee,.98);
     roller.rotation.z=Math.PI/2;
-    roller.position.set(-L/2+1.0+i*.72,3.25,0);
+    roller.position.set(-L/2+1.0+i*.78,3.25,0);
     g.add(roller);
   }
   // lower conveyor
@@ -397,6 +397,8 @@ function detailLine(g,variant='lineN5'){
   const L=16.2,W=5.5,H=3.35;
   addMachineBase(g,L+1.2,W+1.1,0x19bfff);
   panelBox(g,W,H,L,0x1c64a5,0,H/2+.35,0,.94);
+  panelBox(g,W+.15,H+.45,2.8,0x2a78ba,-L/2+1.45,H/2+.45,0,.96);
+  panelBox(g,W+.15,H+.45,2.8,0x2a78ba,L/2-1.45,H/2+.45,0,.96);
   for(const z of [-L*.33,0,L*.33]) panelBox(g,W-.25,.55,2.5,0x2f87c6,0,2.25,z,.92);
   panelBox(g,W-.2,.25,L-.35,0xcbd5da,0,3.95,0,.84);
   for(let i=0;i<5;i++){const roller=cyl(.42,W-1.0,0xe5eaed,.95);roller.rotation.z=Math.PI/2;roller.position.set(0,2.0,-L/2+2+i*((L-4)/4));g.add(roller);}
@@ -597,16 +599,16 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const stableExtra={'乾洗機':'DRYCLEAN-01','打包機':'PACK-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const visualKind=kind==='washer'&&['35kg','50kg'].includes(name)?('washer-'+name):kind;
- const m=model(visualKind);m.position.y=.25;m.scale.setScalar(.88);root.add(m);
+ const m=model(visualKind);m.position.y=.25;m.scale.setScalar(.96);root.add(m);void attachGLB(root,name,visualKind,m);
  if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
 
- const plateW=((kind==='icc'||kind==='longPress')?17:kind==='folding'?11.8:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
- const plateD=((kind==='icc'||kind==='longPress')?7:kind==='folding'?6.4:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
+ const plateW=((kind==='icc'||kind==='longPress')?17:kind==='folding'?14.8:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
+ const plateD=((kind==='icc'||kind==='longPress')?7:kind==='folding'?6.9:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
  const plateColor=type==='洗衣設備'?0x0877d1:type==='烘乾設備'?0x1bd58d:type==='燙床設備'?0x9b63ff:kind==='fan'?0xf18cb9:0x2a79b9;
  const plate=glowPlate(plateW,plateD,plateColor);plate.position.y=.05;root.add(plate);
 
  const color=type==='燙床設備'?'#b879ff':type==='烘乾設備'?'#55e7bb':kind==='fan'?'#ff9ac8':'#45c4ff';
- const labelHeight=(kind==='longPress'||kind==='icc'||kind==='folding')?7.1:kind==='crane'?6.5:kind==='office'?7.2:kind==='vertical'?9.2:6.7;const l=label(name,color);l.position.set(0,labelHeight,0);root.add(l);
+ const labelHeight=(kind==='folding'||kind==='longPress'||kind==='icc'||kind==='lineICC'||kind==='lineN5'||kind==='lineIRT'||kind==='lineSMF')?6.4:kind==='crane'?5.5:kind==='office'?6.5:kind==='vertical'?8.8:6.2;const l=label(name,color);l.position.set(0,labelHeight,0);root.add(l);
 
  root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);
  root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
@@ -638,7 +640,7 @@ function frameFactory(){
   const spanZ=Math.max(1,maxZ-minZ);
   const aspect=innerWidth/innerHeight;
   const portrait=aspect<0.82;
-  const fit=Math.max(spanX,spanZ)*(portrait?1.30:1.08)+18;
+  const fit=Math.max(spanX,spanZ)*(portrait?.92:1.02)+18;
   const base=100;
   camera.left=-base*aspect;
   camera.right=base*aspect;
