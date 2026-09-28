@@ -29,7 +29,7 @@ button{cursor:pointer}button.active{background:#087bc2;border-color:#36b9ff}.sea
 <div id="app"><div id="canvas"></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠 3D 設備地圖</div>
-  <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
+  <select id="filter"><option>全部設備</option><option>一樓</option><option>架高二層</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
   <input class="search" id="search" placeholder="搜尋設備名稱…">
   <div class="mode"><button id="editBtn" class="active">編輯模式</button><button id="viewBtn">巡檢模式</button><button id="resetBtn">重置視角</button></div>
 </div>
@@ -57,13 +57,13 @@ const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamp
 scene.add(new THREE.HemisphereLight(0xbfe8ff,0x13243b,2.2));
 const key=new THREE.DirectionalLight(0xffffff,2.5);key.position.set(30,70,40);key.castShadow=true;scene.add(key);
 const fill=new THREE.PointLight(0x26a9ff,80,180);fill.position.set(-45,35,25);scene.add(fill);
-const grid=new THREE.GridHelper(180,36,0x15547a,0x0b2d46);grid.position.y=-1;scene.add(grid);
+const grid=new THREE.GridHelper(180,36,0x15547a,0x0b2d46);grid.position.y=-1;scene.add(grid);const upperDeck1=glowPlate(16,12,0x22a6ff);upperDeck1.position.set(-2,7.5,42);scene.add(upperDeck1);const upperDeck2=glowPlate(42,11,0x9b63ff);upperDeck2.position.set(32,7.5,43);scene.add(upperDeck2);
 
 const palette=[
  ['30K','洗衣設備','washer','🧺'],['60K','洗衣設備','washer','🧺'],['80K','洗衣設備','washer','🧺'],
  ['35kg','洗衣設備','washer','🧺'],['50kg','洗衣設備','washer','🧺'],['直式洗衣機','洗衣設備','vertical','🧺'],
- ['烘乾機','烘乾設備','dryer','◉'],['N5','燙床設備','press','▤'],['IRT','燙床設備','press','▤'],
- ['襯衫機','整燙設備','shirt','▣'],['平燙機','整燙設備','flat','▤'],['ICC','整燙設備','icc','▰'],['天車','周邊設備','crane','⚙']
+ ['烘乾機','烘乾設備','dryer','◉'],['乾洗機','洗衣設備','dryclean','◉'],['N5','燙床設備','press','▤'],['IRT','燙床設備','press','▤'],['SMF','整燙設備','smf','▤'],
+ ['襯衫機','整燙設備','shirt','▣'],['平燙機','整燙設備','flat','▤'],['ICC','整燙設備','icc','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯']
 ];
 const instances=[
  // 倉庫1：左側 30K / 60K / 80K 縱向
@@ -96,7 +96,7 @@ const instances=[
  // 兩台天車 + 冷風區
  ['天車 #01','周邊設備','crane',-26,-4],
  ['天車 #02','周邊設備','crane',22,5],
- ['冷風區','周邊設備','fan',-2,42]
+ ['冷風區','周邊設備','fan',-2,42],['鍋爐','周邊設備','boiler',-46,45],['乾洗機','洗衣設備','dryclean',62,30],['水設備','周邊設備','water',-28,45],['水塔','周邊設備','tank',-42,48],['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
 const MODEL_REVISION='2026-09-28-industrial-mini';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
@@ -136,7 +136,13 @@ function model(type){
  else if(type==='crane'){panelBox(g,4.7,.75,4.7,0x4f5b66,0,5.2,0,.9);panelBox(g,3.7,.28,3.8,0xc2cbd1,0,4.72,0,.85);panelBox(g,2.1,1.45,1.8,0xe86d26,0,3.85,0,.95);panelBox(g,1.35,1,1.25,0xf2a12e,0,2.65,0,.95);panelBox(g,.12,2,.12,0x1e252a,0,1.15,0,.95);const hook=new THREE.Mesh(new THREE.TorusGeometry(.45,.11,12,24,Math.PI*1.7),mat(0xe7a12c,.3,.7,.95));hook.rotation.x=Math.PI/2;hook.position.set(0,.05,0);g.add(hook);}
  else if(type==='office'){panelBox(g,12,.55,9,0x8c6b4d,0,.3,0,.88);for(const x of [-5.5,5.5])panelBox(g,.22,5.8,8.4,0x8fa4ad,x,3.2,0,.32);panelBox(g,10.8,.35,8.1,0xf0e2c8,0,5.55,0,.7);for(const x of [-3.6,0,3.6]){panelBox(g,2.5,.45,1.35,0x6f513d,x,6.15,-1,.9);panelBox(g,.55,.75,.55,0x4e6170,x,6.05,-2.05,.9);panelBox(g,.55,.75,.55,0x4e6170,x,6.05,.05,.9);panelBox(g,1.1,1,.1,0x6aa8c8,x,6.55,-1.05,.75);}}
  else if(type==='fan'){panelBox(g,2.4,1.1,2.4,0x788894,0,.55,0,.7);panelBox(g,.42,3.8,.42,0x8796a1,0,2.9,0,.8);const hub=cyl(1.15,.55,0x657581,.78);hub.rotation.x=Math.PI/2;hub.position.set(0,4.35,0);g.add(hub);for(let i=0;i<5;i++){const blade=panelBox(g,.3,.18,2.9,0xdce3e6,0,4.35,1.35,.58);blade.rotation.y=i*Math.PI*2/5;g.add(blade);}}
- else{g.add(rbox(5,4,5,0xaab7bf,.68,.22));}
+ else if(type==='smf'){panelBox(g,6.2,5.4,4.8,0xd7dfe3,0,2.8,0,.8);panelBox(g,4.8,.48,.22,0x3b83a7,0,5.35,-2.5,.92);panelBox(g,2.1,3.8,1.15,0x2b5368,-1.45,3.1,-2.55,.82);panelBox(g,2.1,3.8,1.15,0x2b5368,1.45,3.1,-2.55,.82);panelBox(g,5.1,.32,3.8,0x8097a3,0,1.15,0,.72);}
+ else if(type==='dryclean'){panelBox(g,6.4,5.8,5.8,0xd6dee3,0,2.9,0,.82);panelBox(g,5.1,.55,.22,0x3c7fa3,0,5.65,-3,.92);washerDoor(g,1.5,3.05);panelBox(g,1.2,2.8,1.0,0x304e60,-2.05,3.05,-3.12,.78);panelBox(g,1.6,2.5,1.0,0x596e78,2.0,2.8,2.9,.7);}
+ else if(type==='compressor'){const tank=cyl(1.65,5.8,0xbfc9cf,.82);tank.rotation.z=Math.PI/2;tank.position.set(0,2.6,0);g.add(tank);for(const x of [-2.8,2.8])panelBox(g,.35,1.6,.35,0x4d5b66,x,1.1,0,.9);panelBox(g,1.6,1.5,2.2,0x5e7180,-1.3,3.8,0,.82);panelBox(g,1.1,.45,.7,0x2d566c,-1.3,4.85,0,.92);}
+ else if(type==='manganese'){for(const x of [-2.0,0,2.0]){const vessel=cyl(1.25,5.8,0x7b8991,.82);vessel.position.set(x,3.1,0);g.add(vessel);panelBox(g,1.9,.35,1.9,0x536671,x,6.1,0,.9);panelBox(g,.45,1.1,.45,0x2f6c82,x,6.75,0,.9);}}
+ else if(type==='boiler'){const body=cyl(2.15,7.5,0x65727b,.84);body.rotation.z=Math.PI/2;body.position.set(0,3.2,0);g.add(body);panelBox(g,2.8,2.5,2.2,0x384b57,-2.0,1.65,0,.9);panelBox(g,2.3,1.0,2.3,0x9b5b2e,2.15,1.4,0,.9);const stack=cyl(.55,5.5,0x3e4850,.8);stack.position.set(0,8.6,0);g.add(stack);}
+ else if(type==='water'){for(const x of [-1.7,1.7]){const vessel=cyl(1.35,5.2,0x4f7180,.78);vessel.position.set(x,2.8,0);g.add(vessel);panelBox(g,1.8,.35,1.8,0x88b8c8,x,5.5,0,.72);}panelBox(g,5.5,.28,1.1,0x4a6672,0,1.2,0,.75);}
+ else if(type==='tank'){const body=cyl(2.2,5.8,0xb7c3c8,.78);body.position.set(0,3.4,0);g.add(body);panelBox(g,5,.35,5,0x52636d,0,.3,0,.82);for(const x of [-1.6,1.6])panelBox(g,.3,2.2,.3,0x52636d,x,1.35,0,.85);} else{g.add(rbox(5,4,5,0xaab7bf,.68,.22));}
  return g;
 }
 
@@ -151,7 +157,7 @@ async function loadRemoteLayout(){
   setSyncBadge('連線中');const res=await fetch(API_BASE+'/api/layout',{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);
   const payload=await res.json();const positions=Array.isArray(payload.positions)?payload.positions:[];
   if(positions.length){const byId=new Map(positions.map(v=>[v.id,v]));const byName=new Map(positions.map(v=>[v.name,v]));
-   groups.forEach(r=>{const v=byId.get(r.userData.id)||byName.get(r.userData.name);if(v){if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(v.notes!=null)r.userData.notes=v.notes;}});
+   groups.forEach(r=>{const v=byId.get(r.userData.id)||byName.get(r.userData.name);if(v){if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.level!=null)r.userData.level=v.level;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(v.notes!=null)r.userData.notes=v.notes;}});
    localStorage.setItem(SYNC_KEY,JSON.stringify(getPositionData()));
   }
   apiAvailable=true;setSyncBadge('NAS 已連線',true);return true;
@@ -170,11 +176,11 @@ async function saveRemoteLayout(){
  }catch(err){apiAvailable=false;setSyncBadge('本機暫存');return false;}
  finally{syncing=false;}
 }
-function addEquipment(name,type,kind,x,z){
+function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const root=new THREE.Group();
  const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
- const id=stableIdMap[name] || ('EQ-' + (++uid));
- root.userData={name,type,kind,id,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
+ const stableExtra={'乾洗機':'DRYCLEAN-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
+ root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const m=model(kind);m.position.y=1.5;root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
 
  const plateW=(kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8;
@@ -186,7 +192,7 @@ function addEquipment(name,type,kind,x,z){
  const color=type==='燙床設備'?'#a76cff':type==='烘乾設備'?'#46e0a6':kind==='fan'?'#ff9ac8':'#35b8ff';
  const l=label(name,color);l.position.set(0,7,0);root.add(l);
 
- root.position.set(x,0,z);scene.add(root);groups.set(root.userData.id,root);
+ root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);
  root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
  return root;
 }
@@ -234,7 +240,7 @@ function toast(s){
  setTimeout(()=>t.classList.remove('show'),1500);
 }
 function getPositionData(){
- return [...groups.values()].map(r=>({id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,x:r.position.x,z:r.position.z,rotationY:r.rotation.y,status:r.userData.status||'正常',cleaningLastDate:r.userData.cleaningLastDate||'',cleaningCycleDays:Number(r.userData.cleaningCycleDays||30),maintenanceLastDate:r.userData.maintenanceLastDate||'',maintenanceCycleDays:Number(r.userData.maintenanceCycleDays||180),notes:r.userData.notes||''}));
+ return [...groups.values()].map(r=>({id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,x:r.position.x,z:r.position.z,rotationY:r.rotation.y,level:r.userData.level||'一樓',status:r.userData.status||'正常',cleaningLastDate:r.userData.cleaningLastDate||'',cleaningCycleDays:Number(r.userData.cleaningCycleDays||30),maintenanceLastDate:r.userData.maintenanceLastDate||'',maintenanceCycleDays:Number(r.userData.maintenanceCycleDays||180),notes:r.userData.notes||''}));
 }
 function savePositions(){
  const data=JSON.stringify(getPositionData());
@@ -277,7 +283,7 @@ function importLayout(file){
      const byName=new Map(list.map(v=>[v.name,v]));
      groups.forEach(r=>{
        const v=byName.get(r.userData.name);
-       if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=v.rotationY||0;}
+       if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=v.rotationY||0;r.userData.level=v.level||r.userData.level;}
      });
      savePositions();toast('版位已匯入');
    }catch(err){toast('匯入檔案格式不正確');}
@@ -394,7 +400,7 @@ document.getElementById('search').oninput=e=>{
 };
 document.getElementById('filter').onchange=e=>{
  const f=e.target.value;
- groups.forEach(r=>r.visible=f==='全部設備'||r.userData.type===f);
+ groups.forEach(r=>r.visible=f==='全部設備'||f===r.userData.level||r.userData.type===f);
 };
 setInterval(()=>{if(!apiAvailable&&!syncing)loadRemoteLayout();},15000);
 function resize(){
