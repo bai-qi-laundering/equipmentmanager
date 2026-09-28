@@ -184,16 +184,15 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
  const stableExtra={'乾洗機':'DRYCLEAN-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
- const m=model(kind);m.position.y=.25; m.scale.setScalar(.72);root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
+ const m=model(kind);m.position.y=.25;m.scale.setScalar(.72);root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
 
  const plateW=((kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.72;
  const plateD=((kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.72;
  const plateColor=type==='洗衣設備'?0x0877d1:type==='烘乾設備'?0x1bd58d:type==='燙床設備'?0x9b63ff:kind==='fan'?0xf18cb9:0x2a79b9;
- const plate=glowPlate(plateW,plateD,plateColor);
- plate.position.y=.05;root.add(plate);
+ const plate=glowPlate(plateW,plateD,plateColor);plate.position.y=.05;root.add(plate);
 
- const color=type==='燙床設備'?'#a76cff':type==='烘乾設備'?'#46e0a6':kind==='fan'?'#ff9ac8':'#35b8ff';
- const l=label(name,color);l.position.set(0,7,0);root.add(l);
+ const color=type==='燙床設備'?'#b879ff':type==='烘乾設備'?'#55e7bb':kind==='fan'?'#ff9ac8':'#45c4ff';
+ const l=label(name,color);l.position.set(0,6.2,0);root.add(l);
 
  root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);
  root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
