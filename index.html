@@ -29,7 +29,7 @@ button{cursor:pointer}button.active{background:#087bc2;border-color:#36b9ff}.sea
 <div id="app"><div id="canvas"></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠 3D 設備地圖</div>
-  <select id="filter"><option>全部設備</option><option>一樓</option><option>架高二層</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
+  <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
   <input class="search" id="search" placeholder="搜尋設備名稱…">
   <div class="mode"><button id="editBtn" class="active">編輯模式</button><button id="viewBtn">巡檢模式</button><button id="resetBtn">重置視角</button></div>
 </div>
@@ -157,7 +157,7 @@ async function loadRemoteLayout(){
   setSyncBadge('連線中');const res=await fetch(API_BASE+'/api/layout',{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);
   const payload=await res.json();const positions=Array.isArray(payload.positions)?payload.positions:[];
   if(positions.length){const byId=new Map(positions.map(v=>[v.id,v]));const byName=new Map(positions.map(v=>[v.name,v]));
-   groups.forEach(r=>{const v=byId.get(r.userData.id)||byName.get(r.userData.name);if(v){if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(r.userData.level==='架高二層')r.position.y=7;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.level!=null)r.userData.level=v.level;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(v.notes!=null)r.userData.notes=v.notes;}});
+   groups.forEach(r=>{const v=byId.get(r.userData.id)||byName.get(r.userData.name);if(v){if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.level!=null)r.userData.level=v.level;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(v.notes!=null)r.userData.notes=v.notes;}});
    localStorage.setItem(SYNC_KEY,JSON.stringify(getPositionData()));
   }
   apiAvailable=true;setSyncBadge('NAS 已連線',true);return true;
@@ -197,8 +197,16 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  return root;
 }
 instances.forEach(v=>addEquipment(...v));
+function enforceKnownLevels(){
+ const raised=new Set(['COMP-01','MANG-01']);
+ groups.forEach(r=>{
+   if(raised.has(r.userData.id)){r.userData.level='架高二層';r.position.y=7;if(r.userData.id==='COMP-01'){r.position.x=-2;r.position.z=42;}if(r.userData.id==='MANG-01'){r.position.x=32;r.position.z=43;}}
+   else {r.userData.level='一樓';r.position.y=0;}
+ });
+}
 restoreSavedPositions();
-setTimeout(()=>loadRemoteLayout(),0);
+enforceKnownLevels();
+setTimeout(async()=>{await loadRemoteLayout();enforceKnownLevels();},0);
 
 function addPalette(){
  const wrap=document.getElementById('items');wrap.innerHTML='';
@@ -264,7 +272,7 @@ function restoreSavedPositions(){
    const byId=new Map(saved.map(v=>[v.id,v]));
    groups.forEach(r=>{
      const v=byId.get(r.userData.id);
-     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=typeof v.rotationY==='number'?v.rotationY:0;if(r.userData.level==='架高二層')r.position.y=7;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;Object.assign(r.userData,{name:v.name||r.userData.name,status:v.status||r.userData.status,cleaningLastDate:v.cleaningLastDate||'',cleaningCycleDays:Number(v.cleaningCycleDays||r.userData.cleaningCycleDays),maintenanceLastDate:v.maintenanceLastDate||'',maintenanceCycleDays:Number(v.maintenanceCycleDays||r.userData.maintenanceCycleDays),notes:v.notes||''});}
+     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=typeof v.rotationY==='number'?v.rotationY:0;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;Object.assign(r.userData,{name:v.name||r.userData.name,status:v.status||r.userData.status,cleaningLastDate:v.cleaningLastDate||'',cleaningCycleDays:Number(v.cleaningCycleDays||r.userData.cleaningCycleDays),maintenanceLastDate:v.maintenanceLastDate||'',maintenanceCycleDays:Number(v.maintenanceCycleDays||r.userData.maintenanceCycleDays),notes:v.notes||''});}
    });
    return true;
  }catch(err){return false;}
@@ -293,74 +301,43 @@ function importLayout(file){
 function snapValue(v){return snap?Math.round(v/5)*5:v;}
 
 renderer.domElement.addEventListener('pointerdown',e=>{
- if(!edit||activePointerId!==null)return;
+ if(!edit)return;
  const r=hitEquipment(e);
  if(!r)return;
-
+ if(drag){drag=null;}
+ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
  activePointerId=e.pointerId;
- renderer.domElement.setPointerCapture?.(e.pointerId);
-
- drag={root:r,longPressed:false,moved:false,startX:e.clientX,startY:e.clientY};
-
- // 電腦：按下就可以拖；手機／平板：先短按看資料，長按進入拖曳。
+ try{renderer.domElement.setPointerCapture?.(e.pointerId);}catch(err){}
+ drag={root:r,longPressed:false,moved:false,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY};
  if(e.pointerType==='mouse'){
-   drag.longPressed=true;
-   controls.enabled=false;
-   renderer.domElement.style.cursor='grabbing';
+   drag.longPressed=true;controls.enabled=false;renderer.domElement.style.cursor='grabbing';
  }else{
    pressTimer=setTimeout(()=>{
-     if(!drag)return;
-     drag.longPressed=true;
-     controls.enabled=false;
-     renderer.domElement.style.cursor='grabbing';
-     toast('拖曳中：移動到你要的位置');
+     if(!drag||drag.pointerId!==e.pointerId)return;
+     drag.longPressed=true;controls.enabled=false;renderer.domElement.style.cursor='grabbing';toast('拖曳中：移動到你要的位置');
    },380);
  }
 });
-
 renderer.domElement.addEventListener('pointermove',e=>{
- if(!drag)return;
-
- // 滑鼠：按住就拖。觸控：長按後才拖。
- if(!drag.longPressed)return;
-
+ if(!drag||drag.pointerId!==e.pointerId||!drag.longPressed)return;
  const world=groundPoint(e,drag.root.position.y);
  if(!world)return;
-
  drag.root.position.x=snapValue(world.x);
  drag.root.position.z=snapValue(world.z);
  drag.moved=true;
 });
-
-renderer.domElement.addEventListener('pointerup',e=>{
+function finishPointer(e, cancelled=false){
  if(!drag)return;
-
+ if(drag.pointerId!==e.pointerId && !cancelled)return;
  if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
-
- const r=drag.root;
- const wasDrag=drag.longPressed && drag.moved;
-
- drag=null;
- controls.enabled=true;
- renderer.domElement.style.cursor='';
-
- if(!wasDrag){
-   select(r);
- }else{
-   savePositions();
-   toast('位置已更新');
- }
-
- activePointerId=null;
-});
-
-renderer.domElement.addEventListener('pointercancel',()=>{
- if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
- drag=null;
- controls.enabled=true;
- activePointerId=null;
- renderer.domElement.style.cursor='';
-});
+ const r=drag.root;const wasDrag=!cancelled&&drag.longPressed&&drag.moved;
+ try{if(renderer.domElement.hasPointerCapture?.(e.pointerId))renderer.domElement.releasePointerCapture(e.pointerId);}catch(err){}
+ drag=null;activePointerId=null;controls.enabled=true;renderer.domElement.style.cursor='';
+ if(!cancelled){if(!wasDrag)select(r);else{savePositions();toast('位置已更新');}}
+}
+renderer.domElement.addEventListener('pointerup',e=>finishPointer(e,false));
+renderer.domElement.addEventListener('pointercancel',e=>finishPointer(e,true));
+renderer.domElement.addEventListener('lostpointercapture',e=>{if(drag&&drag.pointerId===e.pointerId)finishPointer(e,true);});
 
 document.getElementById('saveEqBtn').onclick=async()=>{if(!selected)return;selected.userData.name=document.getElementById('eqName').value.trim()||selected.userData.name;selected.userData.status=document.getElementById('eqStatus').value;selected.userData.cleaningLastDate=document.getElementById('eqCleaningDate').value;selected.userData.cleaningCycleDays=Math.max(0,Number(document.getElementById('eqCleaningCycle').value||0));selected.userData.maintenanceLastDate=document.getElementById('eqMaintenanceDate').value;selected.userData.maintenanceCycleDays=Math.max(0,Number(document.getElementById('eqMaintenanceCycle').value||0));selected.userData.notes=document.getElementById('eqNotes').value;const lbl=selected.children.find(o=>o.isCSS2DObject);if(lbl)lbl.element.textContent=selected.userData.name;document.getElementById('pn').textContent=selected.userData.name;savePositions();if(apiAvailable)await saveRemoteLayout();toast('設備資料已同步至 NAS');};
 document.getElementById('rotateLeftBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;savePositions();toast('設備已左轉 90°');};
