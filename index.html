@@ -19,7 +19,7 @@ button{cursor:pointer}button.active{background:#087bc2;border-color:#36b9ff}.sea
 .thumb{width:70px;height:58px;display:flex;align-items:center;justify-content:center;font-size:40px}.item span{font-size:13px;font-weight:800}
 .panel{position:fixed;z-index:20;right:0;top:0;width:min(380px,92vw);height:100%;padding:24px;background:rgba(5,19,35,.96);border-left:1px solid #205d8e;transform:translateX(100%);transition:.22s;overflow:auto}.panel.open{transform:none}
 .close{position:absolute;right:14px;top:14px;border-radius:50%;width:40px;height:40px;padding:0;font-size:22px}
-.panel h2{margin:58px 0 4px}.muted{color:#91abc2}.card{margin-top:16px;padding:14px;border:1px solid #1b496e;border-radius:14px;background:#0a2037}.row{display:flex;justify-content:space-between;margin:10px 0}.ok{color:#55e5bd}.warn{color:#ffd166}
+.panel h2{margin:58px 0 4px}.muted{color:#91abc2}.card{margin-top:16px;padding:14px;border:1px solid #1b496e;border-radius:14px;background:#0a2037}.row{display:flex;justify-content:space-between;margin:10px 0}.ok{color:#55e5bd}.warn{color:#ffd166}.panel label{display:block;margin:10px 0 5px;color:#9ec4dc;font-size:12px}.panel input,.panel select,.panel textarea{background:#071a2d;border:1px solid #245b88;border-radius:9px;color:#fff;padding:9px 10px}
 .hint{position:fixed;z-index:11;left:50%;top:82px;transform:translateX(-50%);padding:7px 12px;border-radius:999px;background:rgba(5,20,38,.72);color:#a9c9df;font-size:12px;pointer-events:none}
 #toast{position:fixed;z-index:50;left:50%;bottom:174px;transform:translate(-50%,20px);opacity:0;padding:10px 15px;border-radius:12px;background:#0c2b48;border:1px solid #2d83bc;transition:.2s}
 #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -36,15 +36,13 @@ button{cursor:pointer}button.active{background:#087bc2;border-color:#36b9ff}.sea
 <div class="hint" id="hint">編輯模式：短點查看；長按設備約 0.4 秒後拖曳；雙指操作地圖</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
 <div class="side"><button>▧<br>地圖</button><button>⚙<br>設備</button><button>✓<br>清潔</button><button>◷<br>保養</button><button>⚒<br>維修</button></div>
 <div class="palette"><h3>設備庫　（點一下加入地圖，再長按拖曳到想要的位置）</h3><div class="items" id="items"></div></div><div style="position:fixed;z-index:19;right:18px;bottom:170px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button id="snapBtn">吸附：開</button><button id="saveBtn">💾 儲存</button><button id="exportBtn">⬇️ 匯出版位</button><label style="padding:9px 12px;border:1px solid #245b88;background:#0a2744;border-radius:10px;cursor:pointer">⬆️ 匯入版位<input id="importInput" type="file" accept="application/json" style="display:none"></label></div>
-<div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card">
-<div class="row"><span>狀態</span><b class="ok">正常</b></div><div class="row"><span>上次清潔</span><b>尚未建立</b></div><div class="row"><span>清潔週期</span><b>30 天</b></div><div class="row"><span>上次保養</span><b>尚未建立</b></div><div class="row"><span>保養週期</span><b>180 天</b></div><div class="row"><span>維修紀錄</span><b>0 筆</b></div>
-</div><div class="card"><button style="width:100%;margin:4px 0">＋ 新增清潔紀錄</button><button style="width:100%;margin:4px 0">＋ 新增保養紀錄</button><button style="width:100%;margin:4px 0">＋ 新增維修紀錄</button></div>
-</div><div id="toast"></div>
+<div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card"><div style="font-weight:800;margin-bottom:8px">設備方向</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="rotateLeftBtn">↶ 左轉 90°</button><button id="rotateRightBtn">↷ 右轉 90°</button></div><button id="resetRotationBtn" style="width:100%;margin-top:8px">⟳ 重設方向</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card"><button style="width:100%;margin:4px 0">＋ 新增清潔紀錄</button><button style="width:100%;margin:4px 0">＋ 新增保養紀錄</button><button style="width:100%;margin:4px 0">＋ 新增維修紀錄</button></div></div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {CSS2DRenderer,CSS2DObject} from 'three/addons/renderers/CSS2DRenderer.js';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 const app=document.getElementById('canvas'), scene=new THREE.Scene();
 scene.background=new THREE.Color(0x061321);
@@ -124,69 +122,21 @@ function glowPlate(w,d,c){
   return p;
 }
 function label(text,color='#8bd8ff'){const el=document.createElement('div');el.textContent=text;el.style.cssText=`padding:5px 9px;border:1px solid ${color};border-radius:9px;background:rgba(4,20,36,.88);color:#fff;font-weight:800;font-size:12px;white-space:nowrap;box-shadow:0 0 14px ${color}66`;return new CSS2DObject(el);}
+function rbox(w,h,d,c,opacity=1,r=.18){const m=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,3,r),mat(c,.48,.32,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
+function cyl(radius,depth,c,opacity=1){const m=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,depth,32),mat(c,.28,.55,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
+function panelBox(g,w,h,d,c,x,y,z,opacity=.9){const m=rbox(w,h,d,c,opacity,.12);m.position.set(x,y,z);g.add(m);return m;}
+function washerDoor(g,r,z){const frame=cyl(r,.22,0x5f6d78,.92);frame.rotation.x=Math.PI/2;frame.position.set(0,.15,z);g.add(frame);const inner=cyl(r*.78,.24,0x16344b,.9);inner.rotation.x=Math.PI/2;inner.position.set(0,.15,z+.13);g.add(inner);const pane=new THREE.Mesh(new THREE.CircleGeometry(r*.68,40),mat(0x65d4ff,.08,.55,.36));pane.position.set(0,.15,z+.26);pane.rotation.x=Math.PI/2;g.add(pane);}
 function model(type){
  const g=new THREE.Group();
- const shell=.68, metal=.82;
-
- if(type==='washer'||type==='vertical'){
-   const w=type==='vertical'?4.6:6.4,d=type==='vertical'?4.6:6;
-   g.add(box(w,5.2,d,0xbfd0dc,shell));
-   const inner=box(w*.78,3.9,d*.76,0x19334a,.34);inner.position.y=.35;g.add(inner);
-   const ring=new THREE.Mesh(new THREE.CylinderGeometry(1.35,1.35,.34,32),mat(0x142a40,.2,.72,.9));
-   ring.rotation.x=Math.PI/2;ring.position.set(0,.25,d/2+.04);g.add(ring);
-   const glass=new THREE.Mesh(new THREE.CircleGeometry(1.08,32),mat(0x67c8ff,.12,.6,.42));
-   glass.position.set(0,.25,d/2+.22);glass.rotation.x=Math.PI/2;g.add(glass);
-   const top=box(w*.82,.34,d*.84,0x2789cf,.72);top.position.y=2.72;g.add(top);
-   const panel=box(w*.58,.55,.12,0x0e2237,.9);panel.position.set(0,2.98,d/2+.08);g.add(panel);
-   for(let i=-2;i<=2;i++){const led=box(.16,.12,.08,0x78e5ff,.95);led.position.set(i*.55,3.02,d/2+.16);g.add(led);}
- }else if(type==='dryer'){
-   g.add(box(6.4,5.2,5.4,0xd1dce4,shell));
-   const inner=box(5.2,4.1,4.25,0x182c3d,.32);inner.position.y=.35;g.add(inner);
-   const drum=new THREE.Mesh(new THREE.CylinderGeometry(1.42,1.42,.34,32),mat(0x101d2d,.16,.72,.9));
-   drum.rotation.x=Math.PI/2;drum.position.z=2.73;g.add(drum);
-   const glass=new THREE.Mesh(new THREE.CircleGeometry(1.16,32),mat(0x5bc7ff,.1,.65,.38));
-   glass.position.z=2.94;glass.position.y=.15;glass.rotation.x=Math.PI/2;g.add(glass);
-   const top=box(5.3,.35,4.6,0x2b8fcb,.72);top.position.y=2.72;g.add(top);
- }else if(type==='longPress'||type==='icc'){
-   // Long industrial ironing/finishing line: about 3 visible grid cells.
-   const length=15.5;
-   g.add(box(5.5,2.2,length,0xd5e0e7,.58));
-   const belt=box(4.55,.42,length-1,0x6f8799,.82);belt.position.y=1.28;g.add(belt);
-   for(let z=-6;z<=6;z+=6){
-     const body=box(3.45,3.9,3.1,0x2b78ae,.62);body.position.set(0,2.7,z);g.add(body);
-     const window=new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.05,.12,32),mat(0x76d8ff,.12,.65,.5));
-     window.rotation.x=Math.PI/2;window.position.set(0,2.75,z+1.58);g.add(window);
-     const roller=new THREE.Mesh(new THREE.CylinderGeometry(.58,.58,3.9,24),mat(0xc7d2da,.25,.72,.8));
-     roller.rotation.z=Math.PI/2;roller.position.set(0,1.75,z);g.add(roller);
-   }
-   const rail=box(4.8,.25,length,0x89a8bb,.78);rail.position.y=4.55;g.add(rail);
- }else if(type==='shirt'){
-   g.add(box(5.4,5.1,8.2,0xb8c7d4,.62));
-   const window=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.2,32),mat(0x75d8ff,.12,.65,.45));
-   window.rotation.x=Math.PI/2;window.position.set(0,.4,4.18);g.add(window);
-   const mast=box(2.1,7,2.1,0x246eaa,.68);mast.position.y=5.2;g.add(mast);
-   const arm=box(4.5,.35,1.1,0x77bfe6,.72);arm.position.y=8.4;g.add(arm);
- }else if(type==='crane'){
-   // Compact overhead crane, deliberately one grid-cell footprint.
-   const beam=box(4.2,1.0,4.2,0x68737e,.78);g.add(beam);
-   const rail=box(3.5,.28,3.8,0xb3bdc5,.82);rail.position.y=.5;g.add(rail);
-   const trolley=box(2.4,1.5,1.8,0xf0782c,.92);trolley.position.set(0,-.95,0);g.add(trolley);
-   const motor=box(1.45,1.05,1.35,0xd88928,.9);motor.position.set(0,-2.05,0);g.add(motor);
-   const cable=box(.14,2.9,.14,0x20252b,.95);cable.position.set(0,-3.85,0);g.add(cable);
-   const hook=new THREE.TorusGeometry(.48,.11,12,24,Math.PI*1.65);
-   const hm=new THREE.Mesh(hook,mat(0xd98923,.4,.7,.95));hm.rotation.x=Math.PI/2;hm.position.set(0,-5.25,0);g.add(hm);
- }else if(type==='office'){
-   const base=box(11,3.2,8.5,0xcaa878,.72);base.position.y=1.6;g.add(base);
-   const floor=box(10.2,2.3,7.7,0xf0dfbf,.6);floor.position.y=4.1;g.add(floor);
-   for(let i=-1;i<=1;i++){const desk=box(2.5,.7,1.6,0x674c39,.82);desk.position.set(i*3,5.6,0);g.add(desk);}
- }else if(type==='fan'){
-   const stand=box(2.2,1.3,2.2,0x74818e,.7);stand.position.y=.65;g.add(stand);
-   const mast=box(.5,3,.5,0x7f8c99,.78);mast.position.y=2.2;g.add(mast);
-   const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,.7,32),mat(0x7c8996,.3,.55,.72));hub.rotation.x=Math.PI/2;hub.position.y=3.7;g.add(hub);
-   for(let i=0;i<5;i++){const blade=box(.28,.2,3.4,0xd5dde4,.55);blade.position.set(0,3.7,1.6);blade.rotation.y=i*Math.PI*2/5;g.add(blade);}
- }else{
-   g.add(box(5,4,5,0x93a6b5,.65));
- }
+ if(type==='washer'){const w=6.8,d=6;g.add(rbox(w,5.6,d,0xd8e0e5,.82,.22));panelBox(g,5.6,.42,.28,0x3d83ad,0,2.65,-d/2-.1,.9);panelBox(g,1.35,.55,.18,0x132638,-1.8,3.03,-d/2-.22,.95);washerDoor(g,1.65,d/2+.12);for(let i=-2;i<=2;i++)panelBox(g,.16,.1,.08,0x8de8ff,i*.55,3.04,-d/2-.24,.95);}
+ else if(type==='vertical'){const w=5,d=5;g.add(rbox(w,7.8,d,0xd5dde2,.82,.22));panelBox(g,4.1,.55,.25,0x347da6,0,3.55,-d/2-.12,.92);panelBox(g,1.35,.42,.16,0x10263a,-1.15,3.92,-d/2-.25,.96);washerDoor(g,1.48,d/2+.12);panelBox(g,3.8,.22,3.6,0x9aa8b0,0,-3.85,0,.7);}
+ else if(type==='dryer'){const w=6.6,d=5.6;g.add(rbox(w,5.6,d,0xe0e5e7,.84,.22));panelBox(g,5.3,.42,.25,0x2f789a,0,2.68,-d/2-.1,.9);panelBox(g,1.25,.5,.16,0x14293a,-1.7,3.04,-d/2-.23,.95);washerDoor(g,1.7,d/2+.12);panelBox(g,4.8,.18,4.3,0x9aa6ac,0,-2.88,0,.72);}
+ else if(type==='longPress'||type==='icc'){const L=15.5;panelBox(g,5.9,2,L,0xd7dfe3,0,1,0,.72);panelBox(g,5.15,.38,L-1,0x4c6675,0,2.15,0,.9);for(let z=-6;z<=6;z+=6){panelBox(g,4.1,3.1,3.2,0xbcc7cc,0,3.55,z,.72);panelBox(g,3.45,2.25,2.75,0x315e73,0,3.45,z+1.66,.7);const roller=cyl(.62,4,0xbcc8ce,.9);roller.rotation.z=Math.PI/2;roller.position.set(0,2.1,z);g.add(roller);}panelBox(g,4.9,.24,L,0x8aa3ae,0,5.35,0,.8);}
+ else if(type==='shirt'){panelBox(g,5.8,5.2,7.8,0xcdd7dc,0,2.7,0,.76);panelBox(g,4.7,.42,.2,0x2e779a,0,5.2,-3.95,.9);panelBox(g,1.8,7,1.7,0x3b7e9d,0,7.2,0,.72);panelBox(g,4.8,.32,1.2,0x8fc6db,0,10.2,0,.72);}
+ else if(type==='crane'){panelBox(g,4.7,.75,4.7,0x4f5b66,0,5.2,0,.9);panelBox(g,3.7,.28,3.8,0xc2cbd1,0,4.72,0,.85);panelBox(g,2.1,1.45,1.8,0xe86d26,0,3.85,0,.95);panelBox(g,1.35,1,1.25,0xf2a12e,0,2.65,0,.95);panelBox(g,.12,2,.12,0x1e252a,0,1.15,0,.95);const hook=new THREE.Mesh(new THREE.TorusGeometry(.45,.11,12,24,Math.PI*1.7),mat(0xe7a12c,.3,.7,.95));hook.rotation.x=Math.PI/2;hook.position.set(0,.05,0);g.add(hook);}
+ else if(type==='office'){panelBox(g,12,.55,9,0x8c6b4d,0,.3,0,.88);for(const x of [-5.5,5.5])panelBox(g,.22,5.8,8.4,0x8fa4ad,x,3.2,0,.32);panelBox(g,10.8,.35,8.1,0xf0e2c8,0,5.55,0,.7);for(const x of [-3.6,0,3.6]){panelBox(g,2.5,.45,1.35,0x6f513d,x,6.15,-1,.9);panelBox(g,.55,.75,.55,0x4e6170,x,6.05,-2.05,.9);panelBox(g,.55,.75,.55,0x4e6170,x,6.05,.05,.9);panelBox(g,1.1,1,.1,0x6aa8c8,x,6.55,-1.05,.75);}}
+ else if(type==='fan'){panelBox(g,2.4,1.1,2.4,0x788894,0,.55,0,.7);panelBox(g,.42,3.8,.42,0x8796a1,0,2.9,0,.8);const hub=cyl(1.15,.55,0x657581,.78);hub.rotation.x=Math.PI/2;hub.position.set(0,4.35,0);g.add(hub);for(let i=0;i<5;i++){const blade=panelBox(g,.3,.18,2.9,0xdce3e6,0,4.35,1.35,.58);blade.rotation.y=i*Math.PI*2/5;g.add(blade);}}
+ else{g.add(rbox(5,4,5,0xaab7bf,.68,.22));}
  return g;
 }
 
@@ -237,8 +187,8 @@ function addEquipment(name,type,kind,x,z){
  const root=new THREE.Group();
  const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
  const id=stableIdMap[name] || ('EQ-' + (++uid));
- root.userData={name,type,kind,id};
- const m=model(kind);m.position.y=1.5;root.add(m);
+ root.userData={name,type,kind,id,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
+ const m=model(kind);m.position.y=1.5;root.add(m);if(kind==='icc')root.rotation.y=Math.PI/2;
 
  const plateW=(kind==='icc'||kind==='longPress')?17:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8;
  const plateD=(kind==='icc'||kind==='longPress')?7:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8;
