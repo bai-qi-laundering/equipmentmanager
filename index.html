@@ -41,7 +41,7 @@ button{cursor:pointer}button.active{background:linear-gradient(180deg,#148ed3,#0
 .reference-actions{position:fixed;z-index:32;right:14px;bottom:138px;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
 .reference-actions button{font-size:12px;padding:8px 10px;background:rgba(5,22,39,.72)}
 @media(max-width:700px){.reference-actions{right:8px;bottom:102px;gap:5px}.reference-actions button{font-size:10px;padding:7px 8px}}
-</style>
+.thumb3d{width:54px;height:34px;display:flex;align-items:center;justify-content:center;font-size:23px;line-height:1;background:radial-gradient(circle at 50% 35%,rgba(69,196,255,.28),rgba(8,24,41,.18) 60%,transparent 70%);text-shadow:0 0 8px #56cfff,0 2px 2px rgba(0,0,0,.9);filter:drop-shadow(0 0 6px rgba(53,196,255,.45))}.item[data-kind="dryer"] .thumb3d{color:#55e7bb;text-shadow:0 0 8px #55e7bb}.item[data-kind="longPress"] .thumb3d,.item[data-kind^="line"] .thumb3d{color:#b879ff;text-shadow:0 0 8px #b879ff}</style>
 </head>
 <body>
 <div id="app"><div id="canvas"></div>
@@ -102,8 +102,8 @@ async function attachGLB(root,name,kind,procedural){
 }
 
 const app=document.getElementById('canvas'), scene=new THREE.Scene();
-scene.background=new THREE.Color(0x061321);
-scene.fog=new THREE.Fog(0x061321,115,330);
+scene.background=new THREE.Color(0x0b2035);
+scene.fog=new THREE.Fog(0x0b2035,150,420);
 
 const camera=new THREE.OrthographicCamera(-100,100,100,-100,-1000,2000);
 camera.position.set(120,170,190);
@@ -193,7 +193,7 @@ const palette=[
  ['30K','洗衣設備','folding','▰'],['60K','洗衣設備','folding','▰'],['80K','洗衣設備','folding','▰'],
  ['35kg','洗衣設備','washer','🧺'],['50kg','洗衣設備','washer','🧺'],['直式洗衣機','洗衣設備','vertical','🧺'],
  ['烘乾機','烘乾設備','dryer','◉'],['乾洗機','洗衣設備','dryclean','◉'],['N5','整燙設備','lineN5','▤'],['IRT','整燙設備','lineIRT','▤'],['SMF','整燙設備','lineSMF','▤'],
- ['襯衫機','整燙設備','shirt','▣'],['平燙機','整燙設備','flat','▤'],['ICC','整燙設備','lineICC','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯'],['打包機','周邊設備','packer','▣']
+ ['襯衫機','整燙設備','shirt','▣'],['壓板機','整燙設備','longPress','▤'],['ICC','整燙設備','lineICC','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯'],['打包機','周邊設備','packer','▣']
 ];
 const instances=[
  ['30K','洗衣設備','folding',-58,0,-28],
@@ -201,7 +201,7 @@ const instances=[
  ['80K','洗衣設備','folding',-58,0,8],
  ['L型桌','周邊設備','office',-58,0,-48],
  ['襯衫機','整燙設備','shirt',-18,0,-20],
- ['平燙機','整燙設備','longPress',-18,0,0],
+ ['壓板機','整燙設備','longPress',-18,0,0],
  ['整燙區','整燙設備','longPress',-18,0,20],
  ['ICC','整燙設備','lineICC',-38,0,36],
  ['35kg','洗衣設備','washer',34,0,-44],
@@ -250,13 +250,12 @@ function glassMat(c=0x88ccff, op=0.8){
 function box(w,h,d,c,opacity=1){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,.4,.7,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
 function glowPlate(w,d,c){
  const g=new THREE.Group();
- const core=box(w,.10,d,c,.25);core.material.emissive=new THREE.Color(c);core.material.emissiveIntensity=1.5;g.add(core);
- // 使用 AdditiveBlending 疊加發光層，模擬雷射光暈
- const haloMat = new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:0.18, blending: THREE.AdditiveBlending, depthWrite: false});
- const halo = new THREE.Mesh(new THREE.PlaneGeometry(w*1.15, d*1.15), haloMat);
- halo.rotation.x = -Math.PI/2; halo.position.y = 0.05; g.add(halo);
- const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w*1.04,.08,d*1.04)),new THREE.LineBasicMaterial({color:c,transparent:true,opacity:1, blending: THREE.AdditiveBlending}));
- edge.position.y=.08;g.add(edge);
+ const core=box(w,.10,d,c,.24);core.material.emissive=new THREE.Color(c);core.material.emissiveIntensity=2.2;g.add(core);
+ const halo=box(w*1.10,.035,d*1.10,c,.07);halo.material.emissive=new THREE.Color(c);halo.material.emissiveIntensity=4.0;g.add(halo);
+ const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w*1.04,.12,d*1.04)),new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.98}));
+ edge.position.y=.10;g.add(edge);
+ const inner=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w*.96,.06,d*.96)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.28}));
+ inner.position.y=.12;g.add(inner);
  return g;
 }
 function label(text,color='#8bd8ff'){
@@ -701,9 +700,31 @@ setTimeout(async()=>{
   frameFactory();
 },0);
 
+function paletteIcon(kind){
+ const icon=document.createElement('div');icon.className='thumb thumb3d';
+ const map={
+   folding:'🏭',washer:'◉',vertical:'◉',dryer:'◉',dryclean:'◉',
+   lineN5:'▤',lineIRT:'▤',lineSMF:'▤',lineICC:'▤',
+   longPress:'▣',shirt:'♧',crane:'⚙',compressor:'◌',manganese:'◒',
+   boiler:'♨',water:'◍',tank:'◉',packer:'⌘',steelDesk:'▱'
+ };
+ icon.textContent=map[kind]||'◆';
+ icon.dataset.kind=kind;
+ return icon;
+}
 function addPalette(){
  const wrap=document.getElementById('items');wrap.innerHTML='';
- palette.forEach(([n,t,k,ic])=>{const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;b.innerHTML=`<div class="thumb"></div><span>${n}</span>`;b.onclick=()=>{if(!edit){toast('目前是巡檢模式，請先切換到編輯模式');return;}const r=addEquipment(n,t,k,controls.target.x,0,controls.target.z,'一樓');savePositions();toast('已加入地圖，可直接拖曳');};wrap.appendChild(b)});
+ palette.forEach(([n,t,k,ic])=>{
+   const b=document.createElement('button');b.className='item';b.dataset.kind=k;b.dataset.type=t;
+   b.appendChild(paletteIcon(k));
+   const span=document.createElement('span');span.textContent=n;b.appendChild(span);
+   b.onclick=()=>{
+     if(!edit){toast('目前是巡檢模式，請先切換到編輯模式');return;}
+     const r=addEquipment(n,t,k,controls.target.x,0,controls.target.z,'一樓');
+     savePositions();toast('已加入地圖，可直接拖曳');
+   };
+   wrap.appendChild(b);
+ });
 }
 addPalette();
 
