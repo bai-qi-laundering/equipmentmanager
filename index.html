@@ -150,7 +150,7 @@ const palette=[
  ['30K','洗衣設備','folding','▰'],['60K','洗衣設備','folding','▰'],['80K','洗衣設備','folding','▰'],
  ['35kg','洗衣設備','washer','🧺'],['50kg','洗衣設備','washer','🧺'],['直式洗衣機','洗衣設備','vertical','🧺'],
  ['烘乾機','烘乾設備','dryer','◉'],['乾洗機','洗衣設備','dryclean','◉'],['N5','整燙設備','lineN5','▤'],['IRT','整燙設備','lineIRT','▤'],['SMF','整燙設備','lineSMF','▤'],
- ['襯衫機','整燙設備','shirt','▣'],['平燙機','整燙設備','flat','▤'],['ICC','整燙設備','lineICC','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯'],['打包機','周邊設備','packer','▣']
+ ['襯衫機','整燙設備','shirt','▣'],['平燙機','整燙設備','flat','▤'],['ICC','整燙設備','lineICC','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯'],['打包機','周邊設備','packer','▣'],['長型鐵桌','周邊設備','steelDesk','▱']
 ];
 const instances=[
  ['30K','洗衣設備','folding',-58,0,-28],
@@ -664,7 +664,7 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const stableExtra={'乾洗機':'DRYCLEAN-01','打包機':'PACK-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const visualKind=kind==='washer'&&['35kg','50kg'].includes(name)?('washer-'+name):kind;
- const m=model(visualKind);m.position.y=.25;m.scale.setScalar(1.22);root.add(m);void attachGLB(root,name,visualKind,m);void attachGLB(root,name,visualKind,m);
+ const m=model(visualKind);m.position.y=.25;m.scale.setScalar(1.22);root.add(m);void attachGLB(root,name,visualKind,m);
  if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
 
  const plateW=((kind==='icc'||kind==='longPress')?17:kind==='folding'?14.8:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
