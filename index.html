@@ -102,8 +102,8 @@ async function attachGLB(root,name,kind,procedural){
 }
 
 const app=document.getElementById('canvas'), scene=new THREE.Scene();
-scene.background=new THREE.Color(0x0b2035);
-scene.fog=new THREE.Fog(0x0b2035,150,420);
+scene.background=new THREE.Color(0x14324a);
+scene.fog=new THREE.Fog(0x14324a,190,520);
 
 const camera=new THREE.OrthographicCamera(-100,100,100,-100,-1000,2000);
 camera.position.set(120,170,190);
@@ -114,7 +114,7 @@ renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.2; 
+renderer.toneMappingExposure=1.72; 
 app.appendChild(renderer.domElement);
 
 const labels=new CSS2DRenderer();
@@ -162,24 +162,25 @@ scene.environment = envTexture;
 
 // --- 燈光配置 ---
 scene.add(new THREE.AmbientLight(0xffffff, 0.5)); // 增加整體亮度
-scene.add(new THREE.HemisphereLight(0xd8f1ff,0x07111c,1.5));
-const key=new THREE.DirectionalLight(0xffffff,3.2);
+scene.add(new THREE.HemisphereLight(0xe9f8ff,0x16334a,3.4));
+const key=new THREE.DirectionalLight(0xffffff,5.2);
 key.position.set(28,120,38);
 key.castShadow=true;
 scene.add(key);
-const rim=new THREE.DirectionalLight(0x4abfff,1.8);
+const rim=new THREE.DirectionalLight(0x67d2ff,2.6);
 rim.position.set(-60,55,-40);
 scene.add(rim);
-const fill=new THREE.PointLight(0x26a9ff,180,240);
+const fill=new THREE.PointLight(0x39baff,340,300);
 fill.position.set(-35,48,30);
 scene.add(fill);
-const magenta=new THREE.PointLight(0xa65dff,85,170);
+const magenta=new THREE.PointLight(0xb978ff,125,220);
 magenta.position.set(48,24,44);
 scene.add(magenta);
+const ambient=new THREE.AmbientLight(0x9bdcff,1.25);scene.add(ambient);
 
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(520,520),new THREE.MeshStandardMaterial({color:0x05131f,roughness:.1,metalness:.8,transparent:true,opacity:.95}));
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(520,520),new THREE.MeshStandardMaterial({color:0x123049,roughness:.34,metalness:.28,transparent:true,opacity:.98}));
 floor.rotation.x=-Math.PI/2;floor.position.y=-1.04;floor.receiveShadow=true;scene.add(floor);
-const grid=new THREE.GridHelper(420,84,0x245b88,0x0c253d);grid.position.y=-1.01;grid.material.transparent=true;grid.material.opacity=.4;scene.add(grid);
+const grid=new THREE.GridHelper(420,84,0x245b88,0x0c253d);grid.position.y=-1.01;grid.material.transparent=true;grid.material.opacity=.58;scene.add(grid);
 
 const raisedDeckFrame=(w,d,x,z,c)=>{const g=new THREE.Group();const p=glowPlate(w,d,c);p.position.y=7.04;g.add(p);
 const edgeMat=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.8});const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.16,d)),edgeMat);edge.position.y=7.08;g.add(edge);
@@ -253,9 +254,9 @@ function glowPlate(w,d,c){
  const core=box(w,.10,d,c,.24);core.material.emissive=new THREE.Color(c);core.material.emissiveIntensity=2.2;g.add(core);
  const halo=box(w*1.10,.035,d*1.10,c,.07);halo.material.emissive=new THREE.Color(c);halo.material.emissiveIntensity=4.0;g.add(halo);
  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w*1.04,.12,d*1.04)),new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.98}));
- edge.position.y=.10;g.add(edge);
+ edge.position.y=.10;g.add(edge);edge.material.opacity=.99;
  const inner=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w*.96,.06,d*.96)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.28}));
- inner.position.y=.12;g.add(inner);
+ inner.position.y=.12;g.add(inner);inner.material.opacity=.42;
  return g;
 }
 function label(text,color='#8bd8ff'){
