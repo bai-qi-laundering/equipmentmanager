@@ -237,10 +237,16 @@ const groups=new Map();let selected=null;let edit=true;let snap=true;let uid=0;l
 
 // --- 材質升級區 ---
 function mat(c,rough=.35,metal=.65,opacity=1){
-  return new THREE.MeshStandardMaterial({
+  const transparent=opacity<.999;
+  const m=new THREE.MeshStandardMaterial({
     color:c,roughness:rough,metalness:metal,
-    transparent:opacity<1,opacity,depthWrite:opacity>=1
+    transparent,opacity,
+    depthWrite:!transparent,
+    side:THREE.DoubleSide
   });
+  // 半透明科技材質在某些視角容易因背面剔除/深度排序而「消失」。
+  // 讓設備外殼雙面可見，確保旋轉視角時不會突然變透明。
+  return m;
 }
 function glassMat(c=0x88ccff, op=0.8){
   return new THREE.MeshPhysicalMaterial({
