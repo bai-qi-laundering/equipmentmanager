@@ -64,7 +64,51 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const gltfLoader=new GLTFLoader();
-const externalAssets={
+// 舊版圖片模型：保留你喜歡的正面設備素材；旋轉時切換對應側面示意圖，設備資料仍掛在同一個 root。
+const spriteSpecs={
+ folding:{file:'folding.png',w:17,h:7,color:'#168ee1'},
+ washer:{file:'washer-front.png',w:7.5,h:7.5,color:'#c8d8e3'},
+ 'washer-35kg':{file:'washer-front.png',w:7.2,h:7.2,color:'#c8d8e3'},
+ 'washer-50kg':{file:'washer-front.png',w:7.6,h:7.5,color:'#c8d8e3'},
+ vertical:{file:'washer-front.png',w:6.5,h:8.8,color:'#c8d8e3'},
+ dryer:{file:'dryer-front.png',w:7.8,h:7.5,color:'#c8d8e3'},
+ manganese:{file:'manganese-front.png',w:18,h:12,color:'#167bca',offsetY:-7},
+ crane:{file:'crane-front.png',w:9.8,h:7.5,color:'#e7a925'}
+};
+const spriteLoader=new THREE.TextureLoader();
+const spriteFrontCache=new Map(),spriteTurnCache=new Map();
+function frontTexture(spec){
+ const url='./assets/'+spec.file;
+ if(!spriteFrontCache.has(url)){
+  const t=spriteLoader.load(url,()=>{t.colorSpace=THREE.SRGBColorSpace;});
+  t.colorSpace=THREE.SRGBColorSpace;spriteFrontCache.set(url,t);
+ }
+ return spriteFrontCache.get(url);
+}
+function turnedTexture(spec,side){
+ const key=spec.file+':'+side;if(spriteTurnCache.has(key))return spriteTurnCache.get(key);
+ const cv=document.createElement('canvas');cv.width=512;cv.height=512;const x=cv.getContext('2d');
+ const left=side===1,right=side===3,back=side===2;
+ const width=back?320:205,px=(512-width)/2;x.shadowBlur=24;x.shadowColor='rgba(0,0,0,.5)';
+ const g=x.createLinearGradient(px,100,px+width,400);g.addColorStop(0,'#f5f8fa');g.addColorStop(.55,spec.color);g.addColorStop(1,'#344d60');
+ x.fillStyle=g;x.fillRect(px,120,width,300);x.shadowBlur=0;x.strokeStyle='#a8c5d5';x.lineWidth=7;x.strokeRect(px+3,123,width-6,294);
+ x.fillStyle='#263c4d';x.fillRect(px+16,148,width-32,34);x.fillStyle='#7aa9c7';x.fillRect(px+22,218,width-44,6);x.fillRect(px+22,315,width-44,6);
+ if(left||right){x.fillStyle='#213b50';x.fillRect(px+(left?24:width-49),205,25,90);}
+ x.fillStyle='#536b7c';x.fillRect(px+22,420,38,28);x.fillRect(px+width-60,420,38,28);
+ const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;spriteTurnCache.set(key,t);return t;
+}
+function attachEquipmentSprite(root,kind){
+ const spec=spriteSpecs[kind];if(!spec)return false;
+ const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:frontTexture(spec),transparent:true,depthTest:false,depthWrite:false,alphaTest:.06,toneMapped:false}));
+ sprite.renderOrder=18;sprite.scale.set(spec.w,spec.h,1);sprite.position.y=(spec.offsetY||0)+spec.h/2+.18;
+ sprite.userData.root=root;sprite.userData.interactive=true;root.add(sprite);root.userData.pictureSprite=sprite;root.userData.spriteSpec=spec;root.userData.lastSpriteTurn=0;return true;
+}
+function syncEquipmentSprite(root){
+ const sprite=root?.userData?.pictureSprite;if(!sprite)return;
+ const turn=((Math.round(root.rotation.y/(Math.PI/2))%4)+4)%4;if(root.userData.lastSpriteTurn===turn)return;
+ root.userData.lastSpriteTurn=turn;sprite.material.map=turn===0?frontTexture(root.userData.spriteSpec):turnedTexture(root.userData.spriteSpec,turn);sprite.material.needsUpdate=true;
+}
+\nconst externalAssets={
  washer35:'https://cdn.3dassets.dev/assets/25512/v1/model.glb',
  vertical:'https://cdn.3dassets.dev/assets/25511/v1/model.glb',
  dryer:'https://cdn.3dassets.dev/assets/25514/v1/model.glb',
@@ -637,7 +681,7 @@ async function loadRemoteLayout(){
   setSyncBadge('連線中');const res=await fetch(API_BASE+'/api/layout',{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);
   const payload=await res.json();const positions=Array.isArray(payload.positions)?payload.positions:[];
   if(positions.length){const byId=new Map(positions.map(v=>[v.id,v]));const byName=new Map(positions.map(v=>[v.name,v]));
-   groups.forEach(r=>{const v=byId.get(r.userData.id)||byName.get(r.userData.name);if(v){if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.level!=null)r.userData.level=v.level;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(v.notes!=null)r.userData.notes=v.notes;}});
+   groups.forEach(r=>{const v=byId.get(r.userData.id)||byName.get(r.userData.name);if(v){if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.level!=null)r.userData.level=v.level;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(v.notes!=null)r.userData.notes=v.notes;syncEquipmentSprite(r);}});
    localStorage.setItem(SYNC_KEY,JSON.stringify(getPositionData()));
   }
   apiAvailable=true;setSyncBadge('NAS 已連線',true);return true;
@@ -687,9 +731,12 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const stableExtra={'乾洗機':'DRYCLEAN-01','打包機':'PACK-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',visualScale:1,cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const visualKind=kind==='washer'&&['35kg','50kg'].includes(name)?('washer-'+name):kind;
- const m=model(visualKind);m.position.y=.25;m.scale.setScalar(1.22);boostProceduralModel(m,visualKind);root.add(m);
- void attachGLB(root,name,visualKind,m); // 僅保留一次呼叫
+ const useSprite=attachEquipmentSprite(root,visualKind);
+ const m=useSprite?null:model(visualKind);
+ if(m){m.position.y=.25;m.scale.setScalar(1.22);boostProceduralModel(m,visualKind);root.add(m);void attachGLB(root,name,visualKind,m);}
+
  if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
+ syncEquipmentSprite(root);
 
  const plateW=((kind==='icc'||kind==='longPress')?17:kind==='folding'?14.8:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
  const plateD=((kind==='icc'||kind==='longPress')?7:kind==='folding'?6.9:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
@@ -858,7 +905,7 @@ function importLayout(file){
      const byName=new Map(list.map(v=>[v.name,v]));
      groups.forEach(r=>{
        const v=byName.get(r.userData.name);
-       if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=v.rotationY||0;r.userData.level=v.level||r.userData.level;}
+       if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=v.rotationY||0;r.userData.level=v.level||r.userData.level;syncEquipmentSprite(r);}
      });
      savePositions();toast('版位已匯入');
    }catch(err){toast('匯入檔案格式不正確');}
@@ -930,9 +977,9 @@ renderer.domElement.addEventListener('pointercancel',e=>finishPointer(e,true));
 renderer.domElement.addEventListener('lostpointercapture',e=>{if(drag&&drag.pointerId===e.pointerId)finishPointer(e,true);});
 
 document.getElementById('saveEqBtn').onclick=async()=>{if(!selected)return;selected.userData.name=document.getElementById('eqName').value.trim()||selected.userData.name;selected.userData.status=document.getElementById('eqStatus').value;selected.userData.cleaningLastDate=document.getElementById('eqCleaningDate').value;selected.userData.cleaningCycleDays=Math.max(0,Number(document.getElementById('eqCleaningCycle').value||0));selected.userData.maintenanceLastDate=document.getElementById('eqMaintenanceDate').value;selected.userData.maintenanceCycleDays=Math.max(0,Number(document.getElementById('eqMaintenanceCycle').value||0));selected.userData.notes=document.getElementById('eqNotes').value;const lbl=selected.children.find(o=>o.isCSS2DObject);if(lbl)lbl.element.textContent=selected.userData.name;document.getElementById('pn').textContent=selected.userData.name;savePositions();if(apiAvailable)await saveRemoteLayout();toast('設備資料已同步至 NAS');};
-document.getElementById('rotateLeftBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;savePositions();toast('設備已左轉 90°');};
-document.getElementById('rotateRightBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;savePositions();toast('設備已右轉 90°');};
-document.getElementById('resetRotationBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;savePositions();toast('設備方向已重設');};
+document.getElementById('rotateLeftBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;syncEquipmentSprite(selected);savePositions();toast('設備已左轉 90°');};
+document.getElementById('rotateRightBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;syncEquipmentSprite(selected);savePositions();toast('設備已右轉 90°');};
+document.getElementById('resetRotationBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;syncEquipmentSprite(selected);savePositions();toast('設備方向已重設');};
 function syncQuickRotate(){const on=!!selected&&edit;['quickRotateLeft','quickRotateRight','quickRotateReset'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!on;});}
 document.getElementById('quickRotateLeft').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;savePositions();syncQuickRotate();toast('設備已左轉 90°');};
 document.getElementById('quickRotateRight').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;savePositions();syncQuickRotate();toast('設備已右轉 90°');};
