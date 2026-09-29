@@ -54,7 +54,7 @@ button{cursor:pointer}button.active{background:linear-gradient(180deg,#148ed3,#0
 <div class="hint" id="hint">編輯模式：短點查看資料；長按拖曳；右側可旋轉設備與編輯資料；雙指操作地圖</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
 <div class="side"><button>▧<br>地圖</button><button>⚙<br>設備</button><button>✓<br>清潔</button><button>◷<br>保養</button><button>⚒<br>維修</button></div>
 <div class="palette"><h3>設備庫 （點一下加入地圖，再長按拖曳到想要的位置）</h3><div class="items" id="items"></div></div><div class="reference-actions"><button id="snapBtn">吸附：開</button><button id="saveBtn">💾 儲存</button><button id="exportBtn">⬇️ 匯出版位</button><label style="padding:9px 12px;border:1px solid #245b88;background:#0a2744;border-radius:10px;cursor:pointer">⬆️ 匯入版位<input id="importInput" type="file" accept="application/json" style="display:none"></label></div>
-<div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card"><div style="font-weight:800;margin-bottom:8px">設備方向</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="rotateLeftBtn">↶ 左轉 90°</button><button id="rotateRightBtn">↷ 右轉 90°</button></div><button id="resetRotationBtn" style="width:100%;margin-top:8px">⟳ 重設方向</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card"><button style="width:100%;margin:4px 0">＋ 新增清潔紀錄</button><button style="width:100%;margin:4px 0">＋ 新增保養紀錄</button><button style="width:100%;margin:4px 0">＋ 新增維修紀錄</button></div></div>
+<div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card"><div style="font-weight:800;margin-bottom:8px">設備方向</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="rotateLeftBtn">↶ 左轉 90°</button><button id="rotateRightBtn">↷ 右轉 90°</button></div><button id="resetRotationBtn" style="width:100%;margin-top:8px">⟳ 重設方向</button></div><div class="card"><div style="font-weight:800;margin-bottom:8px">設備大小</div><div style="display:flex;align-items:center;gap:8px"><button id="scaleDownBtn" type="button">－</button><input id="eqScale" type="range" min="0.5" max="2.5" step="0.05" value="1" style="flex:1;min-width:0"><button id="scaleUpBtn" type="button">＋</button><b id="eqScaleValue" style="min-width:45px">100%</b></div><button id="deleteEqBtn" type="button" style="width:100%;margin-top:14px;border-color:#c65a67;color:#ffd8dd">刪除這台設備</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card"><button style="width:100%;margin:4px 0">＋ 新增清潔紀錄</button><button style="width:100%;margin:4px 0">＋ 新增保養紀錄</button><button style="width:100%;margin:4px 0">＋ 新增維修紀錄</button></div></div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
@@ -80,9 +80,8 @@ function loadGLB(url){
  glbCache.set(url,p);return p;
 }
 function externalSpec(name,kind){
- if(kind==='washer-35kg'||kind==='washer-50kg')return {url:externalAssets.washer35,scale:5.15,y:.22};
- if(kind==='vertical')return {url:externalAssets.vertical,scale:5.0,y:.20};
- if(kind==='dryer')return {url:externalAssets.dryer,scale:5.15,y:.18};
+ // 舊版模型呈現：洗衣機、直式洗衣機、烘乾機等優先使用內建細節模型；
+ // 只有需要外部 GLB 的設備才載入 GLB。
  if(kind==='longPress')return {url:externalAssets.press,scale:6.0,y:.18};
  if(kind==='flat')return {url:externalAssets.flatwork,scale:5.7,y:.18};
  if(kind==='dryclean')return {url:externalAssets.dryclean,scale:5.0,y:.18};
@@ -101,6 +100,18 @@ async function attachGLB(root,name,kind,procedural){
  }catch(e){console.warn('GLB fallback',name,e);}
 }
 
+const DELETE_KEY='factory3dDeletedIds';
+const deletedIds=new Set(JSON.parse(localStorage.getItem(DELETE_KEY)||'[]'));
+function saveDeletedIds(){localStorage.setItem(DELETE_KEY,JSON.stringify([...deletedIds]));}
+function setEquipmentScale(root,value){
+ const scale=Math.min(2.5,Math.max(.5,Number(value)||1));
+ root.userData.visualScale=scale;
+ root.scale.setScalar(scale);
+ if(root===selected){
+  document.getElementById('eqScale').value=scale;
+  document.getElementById('eqScaleValue').textContent=Math.round(scale*100)+'%';
+ }
+}
 const app=document.getElementById('canvas'), scene=new THREE.Scene();
 scene.background=new THREE.Color(0x14324a);
 scene.fog=new THREE.Fog(0x14324a,190,520);
@@ -674,7 +685,7 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const root=new THREE.Group();
  const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
  const stableExtra={'乾洗機':'DRYCLEAN-01','打包機':'PACK-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
- root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
+ root.userData={name,type,kind,id,level,status:'正常',visualScale:1,cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const visualKind=kind==='washer'&&['35kg','50kg'].includes(name)?('washer-'+name):kind;
  const m=model(visualKind);m.position.y=.25;m.scale.setScalar(1.22);boostProceduralModel(m,visualKind);root.add(m);
  void attachGLB(root,name,visualKind,m); // 僅保留一次呼叫
@@ -688,11 +699,12 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const color=type==='燙床設備'?'#b879ff':type==='烘乾設備'?'#55e7bb':kind==='fan'?'#ff9ac8':'#45c4ff';
  const labelHeight=(kind==='folding'||kind==='longPress'||kind==='pressZone'||kind==='icc'||kind==='lineICC'||kind==='lineN5'||kind==='lineIRT'||kind==='lineSMF')?6.4:kind==='crane'?5.5:kind==='office'?6.5:kind==='vertical'?8.8:6.2;const l=label(name,color);l.position.set(0,labelHeight,0);root.add(l);
 
- root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);
+ root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);setEquipmentScale(root,root.userData.visualScale||1);
  root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
  return root;
 }
 instances.forEach(v=>addEquipment(...v));
+for(const id of deletedIds){const root=groups.get(id);if(root){scene.remove(root);groups.delete(id);}}
 function enforceKnownLevels(){
  const raised=new Set(['COMP-01','MANG-01']);
  groups.forEach(r=>{
@@ -794,8 +806,8 @@ function groundPoint(e,yLevel=0){
  return ray.ray.intersectPlane(plane,out)?out:null;
 }
 function select(root){selected=root;if(root)openPanel(root);syncQuickRotate?.();}
-function setPanelEditable(canEdit){['eqName','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn','rotateLeftBtn','rotateRightBtn','resetRotationBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!canEdit;});}
-function openPanel(r){document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setPanelEditable(edit);document.getElementById('panel').classList.add('open');}
+function setPanelEditable(canEdit){['eqScale','scaleDownBtn','scaleUpBtn','deleteEqBtn','eqName','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn','rotateLeftBtn','rotateRightBtn','resetRotationBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!canEdit;});}
+function openPanel(r){document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setEquipmentScale(r,r.userData.visualScale||1);setPanelEditable(edit);document.getElementById('panel').classList.add('open');}
 function closePanel(){document.getElementById('panel').classList.remove('open');}
 function toast(s){
  const t=document.getElementById('toast');
@@ -803,7 +815,7 @@ function toast(s){
  setTimeout(()=>t.classList.remove('show'),1500);
 }
 function getPositionData(){
- return [...groups.values()].map(r=>({id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,x:r.position.x,z:r.position.z,rotationY:r.rotation.y,level:r.userData.level||'一樓',status:r.userData.status||'正常',cleaningLastDate:r.userData.cleaningLastDate||'',cleaningCycleDays:Number(r.userData.cleaningCycleDays||30),maintenanceLastDate:r.userData.maintenanceLastDate||'',maintenanceCycleDays:Number(r.userData.maintenanceCycleDays||180),notes:r.userData.notes||''}));
+ return [...groups.values()].map(r=>({id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,x:r.position.x,z:r.position.z,rotationY:r.rotation.y,visualScale:r.userData.visualScale||1,level:r.userData.level||'一樓',status:r.userData.status||'正常',cleaningLastDate:r.userData.cleaningLastDate||'',cleaningCycleDays:Number(r.userData.cleaningCycleDays||30),maintenanceLastDate:r.userData.maintenanceLastDate||'',maintenanceCycleDays:Number(r.userData.maintenanceCycleDays||180),notes:r.userData.notes||''}));
 }
 function savePositions(){
  const data=JSON.stringify(getPositionData());
@@ -827,7 +839,7 @@ function restoreSavedPositions(){
    const byId=new Map(saved.map(v=>[v.id,v]));
    groups.forEach(r=>{
      const v=byId.get(r.userData.id);
-     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=typeof v.rotationY==='number'?v.rotationY:0;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;Object.assign(r.userData,{name:v.name||r.userData.name,status:v.status||r.userData.status,cleaningLastDate:v.cleaningLastDate||'',cleaningCycleDays:Number(v.cleaningCycleDays||r.userData.cleaningCycleDays),maintenanceLastDate:v.maintenanceLastDate||'',maintenanceCycleDays:Number(v.maintenanceCycleDays||r.userData.maintenanceCycleDays),notes:v.notes||''});}
+     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=typeof v.rotationY==='number'?v.rotationY:0;r.userData.visualScale=Number(v.visualScale||1);setEquipmentScale(r,r.userData.visualScale);if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;Object.assign(r.userData,{name:v.name||r.userData.name,status:v.status||r.userData.status,cleaningLastDate:v.cleaningLastDate||'',cleaningCycleDays:Number(v.cleaningCycleDays||r.userData.cleaningCycleDays),maintenanceLastDate:v.maintenanceLastDate||'',maintenanceCycleDays:Number(v.maintenanceCycleDays||r.userData.maintenanceCycleDays),notes:v.notes||''});}
    });
    return true;
  }catch(err){return false;}
@@ -926,6 +938,15 @@ document.getElementById('quickRotateLeft').onclick=()=>{if(!selected||!edit)retu
 document.getElementById('quickRotateRight').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;savePositions();syncQuickRotate();toast('設備已右轉 90°');};
 document.getElementById('quickRotateReset').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;savePositions();syncQuickRotate();toast('設備方向已重設');};
 document.getElementById('close').onclick=closePanel;
+document.getElementById('eqScale').oninput=e=>{if(!selected||!edit)return;setEquipmentScale(selected,e.target.value);savePositions();};
+document.getElementById('scaleDownBtn').onclick=()=>{if(!selected||!edit)return;setEquipmentScale(selected,(selected.userData.visualScale||1)-.05);savePositions();};
+document.getElementById('scaleUpBtn').onclick=()=>{if(!selected||!edit)return;setEquipmentScale(selected,(selected.userData.visualScale||1)+.05);savePositions();};
+document.getElementById('deleteEqBtn').onclick=()=>{
+ if(!selected||!edit)return;
+ const id=selected.userData.id;
+ deletedIds.add(id);saveDeletedIds();
+ scene.remove(selected);groups.delete(id);selected=null;closePanel();syncQuickRotate();savePositions();toast('設備已刪除');
+};
 document.getElementById('editBtn').onclick=()=>{
  edit=true;closePanel();setPanelEditable(true);syncQuickRotate();
  document.getElementById('editBtn').classList.add('active');
