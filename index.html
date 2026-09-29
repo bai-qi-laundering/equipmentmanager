@@ -66,6 +66,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const gltfLoader=new GLTFLoader();
 // 舊版圖片模型：保留你喜歡的正面設備素材；旋轉時切換對應側面示意圖，設備資料仍掛在同一個 root。
 const spriteSpecs={
+ folding:{file:'folding.png',w:17,h:7,color:'#168ee1'},
  washer:{file:'washer-front.png',w:7.5,h:7.5,color:'#c8d8e3'},
  'washer-35kg':{file:'washer-front.png',w:7.2,h:7.2,color:'#c8d8e3'},
  'washer-50kg':{file:'washer-front.png',w:7.6,h:7.5,color:'#c8d8e3'},
@@ -801,14 +802,18 @@ setTimeout(async()=>{
 },0);
 
 function paletteIcon(kind){
- const icon=document.createElement('div');icon.className='thumb thumb3d';
- const map={
-   folding:'🏭',washer:'◉',vertical:'◉',dryer:'◉',dryclean:'◉',
-   lineN5:'▤',lineIRT:'▤',lineSMF:'▤',lineICC:'▤',
-   longPress:'▣',shirt:'♧',crane:'⚙',compressor:'◌',manganese:'◒',
-   boiler:'♨',water:'◍',tank:'◉',packer:'⌘',steelDesk:'▱'
- };
- icon.textContent=map[kind]||'◆';
+ const icon=document.createElement('div');icon.className='thumb3d equipment-thumb';
+ const spec=spriteSpecs[kind]||((kind==='washer')?spriteSpecs.washer:null);
+ if(spec){
+   const img=document.createElement('img');
+   img.src='./assets/'+spec.file;
+   img.alt='';
+   img.style.cssText='max-width:100%;max-height:100%;object-fit:contain';
+   icon.appendChild(img);
+ }else{
+   const map={lineN5:'▤',lineIRT:'▤',lineSMF:'▤',lineICC:'▤',longPress:'▣',shirt:'♧',compressor:'◌',boiler:'♨',water:'◍',tank:'◉',packer:'⌘',steelDesk:'▱'};
+   icon.textContent=map[kind]||'◆';
+ }
  icon.dataset.kind=kind;
  return icon;
 }
