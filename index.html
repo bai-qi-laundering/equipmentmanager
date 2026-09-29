@@ -200,7 +200,7 @@ const instances=[
  ['30K','洗衣設備','folding',-58,0,-28],
  ['60K','洗衣設備','folding',-58,0,-10],
  ['80K','洗衣設備','folding',-58,0,8],
- ['L型桌','周邊設備','office',-58,0,-48],
+ ['長型鐵桌','周邊設備','steelDesk',-58,0,-48],
  ['襯衫機','整燙設備','shirt',-18,0,-20],
  ['壓板機','整燙設備','longPress',-18,0,0],
  ['整燙區','整燙設備','longPress',-18,0,20],
@@ -228,7 +228,7 @@ const instances=[
  ['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],
  ['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
-const MODEL_REVISION='2026-09-29-c-style-showcase-v5';
+const MODEL_REVISION='2026-09-29-c-style-showcase-v6';
 const API_BASE = localStorage.getItem('equipmentApiBase') || 'http://192.168.123.201:3000';
 const SYNC_KEY = 'factory3dPositions_C_STYLE_V2';
 let apiAvailable=false;
@@ -459,9 +459,9 @@ function detailCrane(g){
 function detailLine(g,variant='lineN5'){
  const L=16.2,W=6.0,H=3.7;
  addMachineBase(g,L+1.2,W+1.1,0x19bfff);
- panelBox(g,W,H,L,0x1c64a5,0,H/2+.35,0,.94);
- panelBox(g,W+.15,H+.45,2.8,0x2a78ba,-L/2+1.45,H/2+.45,0,.96);
- panelBox(g,W+.15,H+.45,2.8,0x2a78ba,L/2-1.45,H/2+.45,0,.96);
+ const shell=panelBox(g,W,H,L,0x3b91c7,0,H/2+.35,0,.98);shell.material.emissive=new THREE.Color(0x176b9f);shell.material.emissiveIntensity=.75;
+ const endA=panelBox(g,W+.15,H+.45,2.8,0x3f9bd0,-L/2+1.45,H/2+.45,0,.98);endA.material.emissive=new THREE.Color(0x176b9f);endA.material.emissiveIntensity=.6;
+ const endB=panelBox(g,W+.15,H+.45,2.8,0x3f9bd0,L/2-1.45,H/2+.45,0,.98);endB.material.emissive=new THREE.Color(0x176b9f);endB.material.emissiveIntensity=.6;
  for(const z of [-L*.33,0,L*.33]) panelBox(g,W-.25,.55,2.5,0x2f87c6,0,2.25,z,.92);
  panelBox(g,W-.2,.25,L-.35,0xcbd5da,0,3.95,0,.84);
  for(let i=0;i<5;i++){const roller=cyl(.42,W-1.0,0xe5eaed,.95);roller.rotation.z=Math.PI/2;roller.position.set(0,2.0,-L/2+2+i*((L-4)/4));g.add(roller);}
@@ -630,13 +630,44 @@ async function saveRemoteLayout(){
  }catch(err){apiAvailable=false;setSyncBadge('本機暫存');return false;}
  finally{syncing=false;}
 }
+function boostProceduralModel(g,kind){
+  const glbKinds=new Set(['washer-35kg','washer-50kg','vertical','dryer','longPress','flat','dryclean','boiler']);
+  if(glbKinds.has(kind))return;
+  g.traverse(o=>{
+    if(!o.isMesh||!o.material||!o.material.isMeshStandardMaterial)return;
+    const m=o.material;
+    if(m.transparent && m.opacity<.75)return;
+    m.roughness=Math.min(m.roughness||.4,.55);
+    if(m.emissive){
+      const base=new THREE.Color(m.color||0xffffff);
+      m.emissive=base.clone().multiplyScalar(.18);
+      m.emissiveIntensity=.45;
+    }else{
+      m.emissive=new THREE.Color(m.color||0xffffff);
+      m.emissiveIntensity=.22;
+    }
+  });
+  // Long finishing machines get a brighter blue metal shell so they cannot disappear into the floor.
+  if(kind==='lineN5'||kind==='lineIRT'||kind==='lineSMF'||kind==='lineICC'||kind==='icc'){
+    g.traverse(o=>{
+      if(o.isMesh&&o.material&&o.material.color){
+        const h=o.material.color.getHex();
+        if(h===0x1c64a5||h===0x2a78ba||h===0x2f87c6){
+          o.material.color.setHex(0x3b91c7);
+          o.material.emissive=new THREE.Color(0x176b9f);
+          o.material.emissiveIntensity=.75;
+        }
+      }
+    });
+  }
+}
 function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const root=new THREE.Group();
- const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','L型桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
+ const stableIdMap={'30K':'30K-01','60K':'60K-01','80K':'80K-01','35kg':'W35-01','50kg':'W50-01','直式洗衣機 #01':'VERT-01','直式洗衣機 #02':'VERT-02','直式洗衣機 #03':'VERT-03','N5':'N5-01','IRT':'IRT-01','襯衫機':'SHIRT-01','平燙機':'FLAT-01','整燙區':'FINISH-01','ICC':'ICC-01','烘乾機 #01':'DRY-01','烘乾機 #02':'DRY-02','烘乾機 #03':'DRY-03','天車 #01':'CRANE-01','天車 #02':'CRANE-02','長型鐵桌':'DESK-01','兩層辦公室':'OFFICE-01','冷風區':'FAN-01'};
  const stableExtra={'乾洗機':'DRYCLEAN-01','打包機':'PACK-01','SMF':'SMF-01','空壓機':'COMP-01','錳砂過濾設備':'MANG-01','鍋爐':'BOILER-01','水設備':'WATER-01','水塔':'TANK-01'};const id=stableIdMap[name] || stableExtra[name] || ('EQ-' + (++uid));
  root.userData={name,type,kind,id,level,status:'正常',cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const visualKind=kind==='washer'&&['35kg','50kg'].includes(name)?('washer-'+name):kind;
- const m=model(visualKind);m.position.y=.25;m.scale.setScalar(1.22);root.add(m);
+ const m=model(visualKind);m.position.y=.25;m.scale.setScalar(1.22);boostProceduralModel(m,visualKind);root.add(m);
  void attachGLB(root,name,visualKind,m); // 僅保留一次呼叫
  if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
 
