@@ -108,7 +108,8 @@ function syncEquipmentSprite(root){
  const turn=((Math.round(root.rotation.y/(Math.PI/2))%4)+4)%4;if(root.userData.lastSpriteTurn===turn)return;
  root.userData.lastSpriteTurn=turn;sprite.material.map=turn===0?frontTexture(root.userData.spriteSpec):turnedTexture(root.userData.spriteSpec,turn);sprite.material.needsUpdate=true;
 }
-\nconst externalAssets={
+
+const externalAssets={
  washer35:'https://cdn.3dassets.dev/assets/25512/v1/model.glb',
  vertical:'https://cdn.3dassets.dev/assets/25511/v1/model.glb',
  dryer:'https://cdn.3dassets.dev/assets/25514/v1/model.glb',
