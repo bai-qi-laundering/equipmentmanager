@@ -13,9 +13,9 @@ button,select,input{font:inherit;color:#fff;border:1px solid rgba(54,128,182,.72
 button{cursor:pointer}button.active{background:linear-gradient(180deg,#148ed3,#086eb1);border-color:#45c6ff;box-shadow:0 0 18px rgba(41,176,255,.24),inset 0 1px rgba(255,255,255,.18)}.search{width:240px}
 .side{position:fixed;z-index:29;left:14px;top:84px;bottom:auto;width:auto;display:flex;gap:7px;padding:7px;border:1px solid rgba(35,112,164,.45);border-radius:16px;background:rgba(4,17,31,.50);backdrop-filter:blur(14px);box-shadow:0 10px 28px rgba(0,0,0,.18)}
 .side button{padding:9px 11px;font-size:12px}.side button:first-child{background:linear-gradient(180deg,rgba(8,126,193,.95),rgba(6,86,138,.9));border-color:#36bbff}
-.palette{position:fixed;z-index:28;left:50%;transform:translateX(-50%);bottom:14px;width:min(1180px,calc(100% - 24px));height:112px;padding:8px 12px 10px;border:1px solid rgba(35,112,164,.40);border-radius:18px;background:linear-gradient(180deg,rgba(5,19,36,.72),rgba(3,12,23,.86));backdrop-filter:blur(18px);overflow-x:auto;box-shadow:0 -12px 36px rgba(0,0,0,.20)}
-.palette h3{margin:0 0 5px;font-size:12px;color:#a7dcf7}.items{display:flex;gap:8px;min-width:max-content}
-.item{width:94px;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(49,121,173,.55);border-radius:12px;background:linear-gradient(180deg,rgba(13,41,69,.82),rgba(8,25,44,.84));box-shadow:inset 0 0 18px rgba(43,175,255,.03),0 8px 20px rgba(0,0,0,.12)}.item:active{transform:scale(.97)}
+.palette{position:fixed;z-index:28;left:50%;transform:translateX(-50%);bottom:14px;width:min(1180px,calc(100% - 24px));height:112px;padding:8px 12px 10px;border:1px solid rgba(35,112,164,.40);border-radius:18px;background:linear-gradient(180deg,rgba(5,19,36,.82),rgba(3,12,23,.94));backdrop-filter:blur(18px);overflow:hidden;box-shadow:0 -12px 36px rgba(0,0,0,.20)}
+.palette h3{margin:0 0 5px;font-size:12px;color:#a7dcf7}.items{display:flex;gap:8px;min-width:max-content;height:76px;overflow-x:auto;overflow-y:hidden;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:#2f86bd transparent}
+.item{flex:0 0 94px;width:94px;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(49,121,173,.55);border-radius:12px;background:linear-gradient(180deg,rgba(13,41,69,.82),rgba(8,25,44,.84));box-shadow:inset 0 0 18px rgba(43,175,255,.03),0 8px 20px rgba(0,0,0,.12)}.item:active{transform:scale(.97)}
 .thumb{width:54px;height:34px;display:flex;align-items:center;justify-content:center;font-size:0;position:relative}
 .thumb:before{content:'';display:block;width:34px;height:24px;border-radius:5px;border:2px solid #8bd8ff;background:linear-gradient(145deg,#dfe7eb,#71808a);box-shadow:0 0 10px rgba(42,168,255,.32),inset 0 0 7px rgba(255,255,255,.25)}
 .thumb:after{content:'◉';position:absolute;font-size:15px;line-height:1;color:#132838;text-shadow:0 0 5px #75d9ff}
@@ -28,7 +28,7 @@ button{cursor:pointer}button.active{background:linear-gradient(180deg,#148ed3,#0
 .hint{position:fixed;z-index:31;left:50%;top:76px;transform:translateX(-50%);padding:5px 11px;border:1px solid rgba(43,124,180,.34);border-radius:999px;background:rgba(4,18,32,.46);color:#a7c4d8;font-size:11px;pointer-events:none;letter-spacing:.15px;backdrop-filter:blur(10px)}
 .eq-label{transform:translateY(-2px);transition:opacity .15s;filter:drop-shadow(0 5px 8px rgba(0,0,0,.72))}
 .eq-label{padding:6px 10px!important;border-radius:12px!important;background:linear-gradient(180deg,rgba(5,23,40,.96),rgba(3,13,25,.88))!important;box-shadow:0 0 0 1px rgba(77,194,255,.10),0 0 18px currentColor!important;font-size:12px!important;line-height:1!important}
-@media(max-width:700px){
+.quick-rotate{position:fixed;z-index:34;right:18px;top:78px;display:flex;gap:6px;align-items:center;padding:5px;border:1px solid rgba(48,139,200,.45);border-radius:13px;background:rgba(4,18,32,.72);backdrop-filter:blur(12px);box-shadow:0 8px 24px rgba(0,0,0,.22)}.quick-rotate button{padding:7px 9px;font-size:12px;font-weight:800}.quick-rotate button:disabled{opacity:.38;cursor:not-allowed}.quick-rotate button:not(:disabled){border-color:#43c5ff;box-shadow:0 0 12px rgba(51,190,255,.22)}@media(max-width:700px){
  .top{top:max(6px,env(safe-area-inset-top));height:52px;width:calc(100% - 14px);padding:6px 8px;border-radius:16px;gap:5px}
  .logo{font-size:15px}.top select{width:108px;padding-left:8px;padding-right:8px}.top .search{width:138px;height:38px}.mode{display:none}
  .side{left:8px;top:66px;gap:5px;padding:5px;border-radius:14px;opacity:.72}.side button{padding:7px 8px;font-size:10px}
@@ -49,7 +49,7 @@ button{cursor:pointer}button.active{background:linear-gradient(180deg,#148ed3,#0
   <div class="logo">▱ 洗滌廠 3D 設備地圖</div>
   <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
   <input class="search" id="search" placeholder="搜尋設備名稱…">
-  <div class="mode"><button id="editBtn" class="active">編輯模式</button><button id="viewBtn">巡檢模式</button><button id="resetBtn">重置視角</button></div>
+  <div class="mode"><button id="editBtn" class="active">編輯模式</button><button id="viewBtn">巡檢模式</button><button id="resetBtn">重置視角</button></div><div class="quick-rotate"><button id="quickRotateLeft" disabled>↶ 左轉90°</button><button id="quickRotateRight" disabled>↷ 右轉90°</button><button id="quickRotateReset" disabled>⟳ 重設</button></div>
 </div>
 <div class="hint" id="hint">編輯模式：短點查看資料；長按拖曳；右側可旋轉設備與編輯資料；雙指操作地圖</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
 <div class="side"><button>▧<br>地圖</button><button>⚙<br>設備</button><button>✓<br>清潔</button><button>◷<br>保養</button><button>⚒<br>維修</button></div>
@@ -752,7 +752,7 @@ function groundPoint(e,yLevel=0){
  const plane=new THREE.Plane(new THREE.Vector3(0,1,0),-yLevel),out=new THREE.Vector3();
  return ray.ray.intersectPlane(plane,out)?out:null;
 }
-function select(root){selected=root;if(root)openPanel(root);}
+function select(root){selected=root;if(root)openPanel(root);syncQuickRotate?.();}
 function setPanelEditable(canEdit){['eqName','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn','rotateLeftBtn','rotateRightBtn','resetRotationBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!canEdit;});}
 function openPanel(r){document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setPanelEditable(edit);document.getElementById('panel').classList.add('open');}
 function closePanel(){document.getElementById('panel').classList.remove('open');}
@@ -880,15 +880,19 @@ document.getElementById('saveEqBtn').onclick=async()=>{if(!selected)return;selec
 document.getElementById('rotateLeftBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;savePositions();toast('設備已左轉 90°');};
 document.getElementById('rotateRightBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;savePositions();toast('設備已右轉 90°');};
 document.getElementById('resetRotationBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;savePositions();toast('設備方向已重設');};
+function syncQuickRotate(){const on=!!selected&&edit;['quickRotateLeft','quickRotateRight','quickRotateReset'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!on;});}
+document.getElementById('quickRotateLeft').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;savePositions();syncQuickRotate();toast('設備已左轉 90°');};
+document.getElementById('quickRotateRight').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;savePositions();syncQuickRotate();toast('設備已右轉 90°');};
+document.getElementById('quickRotateReset').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;savePositions();syncQuickRotate();toast('設備方向已重設');};
 document.getElementById('close').onclick=closePanel;
 document.getElementById('editBtn').onclick=()=>{
- edit=true;closePanel();setPanelEditable(true);
+ edit=true;closePanel();setPanelEditable(true);syncQuickRotate();
  document.getElementById('editBtn').classList.add('active');
  document.getElementById('viewBtn').classList.remove('active');
  document.getElementById('hint').textContent='編輯模式：短點查看；長按設備約 0.4 秒後拖曳；雙指操作地圖';
 };
 document.getElementById('viewBtn').onclick=()=>{
- edit=false;closePanel();setPanelEditable(false);
+ edit=false;closePanel();setPanelEditable(false);syncQuickRotate();
  document.getElementById('viewBtn').classList.add('active');
  document.getElementById('editBtn').classList.remove('active');
  document.getElementById('hint').textContent='巡檢模式：點設備查看清潔、保養、維修資料';
