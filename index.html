@@ -40,8 +40,8 @@ button{cursor:pointer}button.active{background:linear-gradient(180deg,#148ed3,#0
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .reference-actions{position:fixed;z-index:32;right:14px;bottom:138px;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
 .reference-actions button{font-size:12px;padding:8px 10px;background:rgba(5,22,39,.72)}
-@media(max-width:700px){.reference-actions{right:8px;bottom:102px;gap:5px}.reference-actions button{font-size:10px;padding:7px 8px}}
-.thumb3d{width:54px;height:34px;display:flex;align-items:center;justify-content:center;font-size:23px;line-height:1;background:radial-gradient(circle at 50% 35%,rgba(69,196,255,.28),rgba(8,24,41,.18) 60%,transparent 70%);text-shadow:0 0 8px #56cfff,0 2px 2px rgba(0,0,0,.9);filter:drop-shadow(0 0 6px rgba(53,196,255,.45))}.item[data-kind="dryer"] .thumb3d{color:#55e7bb;text-shadow:0 0 8px #55e7bb}.item[data-kind="longPress"] .thumb3d,.item[data-kind^="line"] .thumb3d{color:#b879ff;text-shadow:0 0 8px #b879ff}</style>
+@media(max-width:700px){.reference-actions{right:8px;bottom:96px;gap:5px;z-index:33}.reference-actions button{font-size:10px;padding:7px 8px}#syncBadge{display:none!important}.quick-rotate{display:none}.panel{z-index:60;left:8px;right:8px;top:64px;width:auto;max-height:none;height:calc(100% - 158px);padding:14px;border-radius:16px}.panel h2{font-size:20px;margin-top:10px}body.panel-open .side,body.panel-open .reference-actions{display:none}}
+.thumb3d{width:54px;height:34px;display:flex;align-items:center;justify-content:center;font-size:23px;line-height:1;background:radial-gradient(circle at 50% 35%,rgba(69,196,255,.20),rgba(8,24,41,.12) 60%,transparent 70%);filter:drop-shadow(0 0 6px rgba(53,196,255,.32));overflow:hidden}.thumb3d img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 2px 3px rgba(0,0,0,.65))}.item[data-kind="dryer"] .thumb3d{color:#55e7bb;text-shadow:0 0 8px #55e7bb}.item[data-kind="longPress"] .thumb3d,.item[data-kind^="line"] .thumb3d{color:#b879ff;text-shadow:0 0 8px #b879ff}</style>
 </head>
 <body>
 <div id="app"><div id="canvas"></div>
@@ -838,16 +838,13 @@ function pointerNDC(e){
  return {x:((e.clientX-r.left)/r.width)*2-1,y:-((e.clientY-r.top)/r.height)*2+1};
 }
 function hitEquipment(e){
- const p=pointerNDC(e);
- ray.setFromCamera(new THREE.Vector2(p.x,p.y),camera);
+ const p=pointerNDC(e);ray.setFromCamera(new THREE.Vector2(p.x,p.y),camera);
  const hits=ray.intersectObjects(scene.children,true);
- for(const h of hits){
-   let o=h.object;
-   while(o){
-     if(o.userData?.interactive && o.userData?.root) return o.userData.root;
-     o=o.parent;
-   }
- }
+ for(const h of hits){let o=h.object;while(o){
+   if(o.userData?.root && groups.has(o.userData.root.userData?.id)) return o.userData.root;
+   if(o.userData?.interactive && groups.has(o.userData?.id)) return o;
+   o=o.parent;
+ }}
  return null;
 }
 function groundPoint(e,yLevel=0){
@@ -858,8 +855,8 @@ function groundPoint(e,yLevel=0){
 }
 function select(root){selected=root;if(root)openPanel(root);syncQuickRotate?.();}
 function setPanelEditable(canEdit){['eqScale','scaleDownBtn','scaleUpBtn','deleteEqBtn','eqName','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn','rotateLeftBtn','rotateRightBtn','resetRotationBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!canEdit;});}
-function openPanel(r){document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setEquipmentScale(r,r.userData.visualScale||1);setPanelEditable(edit);document.getElementById('panel').classList.add('open');}
-function closePanel(){document.getElementById('panel').classList.remove('open');}
+function openPanel(r){document.body.classList.add('panel-open');document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setEquipmentScale(r,r.userData.visualScale||1);setPanelEditable(edit);document.getElementById('panel').classList.add('open');}
+function closePanel(){document.getElementById('panel').classList.remove('open');document.body.classList.remove('panel-open');}
 function toast(s){
  const t=document.getElementById('toast');
  t.textContent=s;t.classList.add('show');
@@ -920,9 +917,10 @@ function snapValue(v){return snap?Math.round(v/5)*5:v;}
 
 renderer.domElement.addEventListener('pointerdown',e=>{
  if(e.pointerType!=='mouse' && e.isPrimary===false)return;
- if(!edit)return;
  const r=hitEquipment(e);
  if(!r)return;
+
+ if(!edit){select(r);return;}
 
  controls.enabled=false;
  if(drag){drag=null;}
@@ -1037,7 +1035,7 @@ function resize(){
  camera.updateProjectionMatrix();
  renderer.setSize(innerWidth,innerHeight);
  labels.setSize(innerWidth,innerHeight);
- frameFactory();
+ controls.update();
 }
 addEventListener('resize',resize);
 function animate(){
