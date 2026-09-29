@@ -891,7 +891,7 @@ function restoreSavedPositions(){
    const byId=new Map(saved.map(v=>[v.id,v]));
    groups.forEach(r=>{
      const v=byId.get(r.userData.id);
-     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=typeof v.rotationY==='number'?v.rotationY:0;r.userData.visualScale=Number(v.visualScale||1);setEquipmentScale(r,r.userData.visualScale);if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;Object.assign(r.userData,{name:v.name||r.userData.name,status:v.status||r.userData.status,cleaningLastDate:v.cleaningLastDate||'',cleaningCycleDays:Number(v.cleaningCycleDays||r.userData.cleaningCycleDays),maintenanceLastDate:v.maintenanceLastDate||'',maintenanceCycleDays:Number(v.maintenanceCycleDays||r.userData.maintenanceCycleDays),notes:v.notes||''});}
+     if(v){r.position.x=v.x;r.position.z=v.z;r.rotation.y=typeof v.rotationY==='number'?v.rotationY:0;r.userData.visualScale=Number(v.visualScale||1);setEquipmentScale(r,r.userData.visualScale);if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;Object.assign(r.userData,{name:v.name||r.userData.name,status:v.status||r.userData.status,cleaningLastDate:v.cleaningLastDate||'',cleaningCycleDays:Number(v.cleaningCycleDays||r.userData.cleaningCycleDays),maintenanceLastDate:v.maintenanceLastDate||'',maintenanceCycleDays:Number(v.maintenanceCycleDays||r.userData.maintenanceCycleDays),notes:v.notes||''});syncEquipmentSprite(r);}
    });
    return true;
  }catch(err){return false;}
@@ -986,9 +986,9 @@ document.getElementById('rotateLeftBtn').onclick=()=>{if(!selected||!edit)return
 document.getElementById('rotateRightBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;syncEquipmentSprite(selected);savePositions();toast('設備已右轉 90°');};
 document.getElementById('resetRotationBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;syncEquipmentSprite(selected);savePositions();toast('設備方向已重設');};
 function syncQuickRotate(){const on=!!selected&&edit;['quickRotateLeft','quickRotateRight','quickRotateReset'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!on;});}
-document.getElementById('quickRotateLeft').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;savePositions();syncQuickRotate();toast('設備已左轉 90°');};
-document.getElementById('quickRotateRight').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;savePositions();syncQuickRotate();toast('設備已右轉 90°');};
-document.getElementById('quickRotateReset').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;savePositions();syncQuickRotate();toast('設備方向已重設');};
+document.getElementById('quickRotateLeft').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;syncEquipmentSprite(selected);savePositions();syncQuickRotate();toast('設備已左轉 90°');};
+document.getElementById('quickRotateRight').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;syncEquipmentSprite(selected);savePositions();syncQuickRotate();toast('設備已右轉 90°');};
+document.getElementById('quickRotateReset').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;syncEquipmentSprite(selected);savePositions();syncQuickRotate();toast('設備方向已重設');};
 document.getElementById('close').onclick=closePanel;
 document.getElementById('eqScale').oninput=e=>{if(!selected||!edit)return;setEquipmentScale(selected,e.target.value);savePositions();};
 document.getElementById('scaleDownBtn').onclick=()=>{if(!selected||!edit)return;setEquipmentScale(selected,(selected.userData.visualScale||1)-.05);savePositions();};
