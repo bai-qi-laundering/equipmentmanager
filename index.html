@@ -41,7 +41,7 @@ button{cursor:pointer}button.active{background:linear-gradient(180deg,#148ed3,#0
 .reference-actions{position:fixed;z-index:32;right:14px;bottom:138px;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
 .reference-actions button{font-size:12px;padding:8px 10px;background:rgba(5,22,39,.72)}
 @media(max-width:700px){.reference-actions{right:8px;bottom:96px;gap:5px;z-index:33}.reference-actions button{font-size:10px;padding:7px 8px}#syncBadge{display:none!important}.quick-rotate{display:none}.panel{z-index:60;left:8px;right:8px;top:64px;width:auto;max-height:none;height:calc(100% - 158px);padding:14px;border-radius:16px}.panel h2{font-size:20px;margin-top:10px}body.panel-open .side,body.panel-open .reference-actions{display:none}}
-.thumb3d{width:54px;height:34px;display:flex;align-items:center;justify-content:center;font-size:23px;line-height:1;background:radial-gradient(circle at 50% 35%,rgba(69,196,255,.20),rgba(8,24,41,.12) 60%,transparent 70%);filter:drop-shadow(0 0 6px rgba(53,196,255,.32));overflow:hidden}.thumb3d img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 2px 3px rgba(0,0,0,.65))}.item[data-kind="dryer"] .thumb3d{color:#55e7bb;text-shadow:0 0 8px #55e7bb}.item[data-kind="longPress"] .thumb3d,.item[data-kind^="line"] .thumb3d{color:#b879ff;text-shadow:0 0 8px #b879ff}</style>
+.thumb3d{width:58px;height:38px;display:flex;align-items:center;justify-content:center;font-size:23px;line-height:1;background:radial-gradient(circle at 50% 35%,rgba(69,196,255,.20),rgba(8,24,41,.12) 60%,transparent 70%);filter:drop-shadow(0 0 6px rgba(53,196,255,.32));overflow:hidden}.thumb3d img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 2px 3px rgba(0,0,0,.65))}.item[data-kind="dryer"] .thumb3d{color:#55e7bb;text-shadow:0 0 8px #55e7bb}.item[data-kind="longPress"] .thumb3d,.item[data-kind^="line"] .thumb3d{color:#b879ff;text-shadow:0 0 8px #b879ff}</style>
 </head>
 <body>
 <div id="app"><div id="canvas"></div>
@@ -66,6 +66,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const gltfLoader=new GLTFLoader();
 // 舊版圖片模型：保留你喜歡的正面設備素材；旋轉時切換對應側面示意圖，設備資料仍掛在同一個 root。
 const spriteSpecs={
+ folding:{file:'folding.png',w:17,h:7,color:'#168ee1'},
  washer:{file:'washer-front.png',w:7.5,h:7.5,color:'#c8d8e3'},
  'washer-35kg':{file:'washer-front.png',w:7.2,h:7.2,color:'#c8d8e3'},
  'washer-50kg':{file:'washer-front.png',w:7.6,h:7.5,color:'#c8d8e3'},
@@ -800,20 +801,67 @@ setTimeout(async()=>{
   frameFactory();
 },0);
 
+const paletteThumbCache=new Map();
+let paletteThumbRenderer=null;
+function getPaletteThumbRenderer(){
+ if(paletteThumbRenderer)return paletteThumbRenderer;
+ const canvas=document.createElement('canvas');
+ canvas.width=180;canvas.height=110;
+ paletteThumbRenderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,preserveDrawingBuffer:true});
+ paletteThumbRenderer.setPixelRatio(1);
+ paletteThumbRenderer.setSize(180,110,false);
+ paletteThumbRenderer.outputColorSpace=THREE.SRGBColorSpace;
+ paletteThumbRenderer.toneMapping=THREE.ACESFilmicToneMapping;
+ paletteThumbRenderer.toneMappingExposure=1.35;
+ return paletteThumbRenderer;
+}
+function renderPaletteModel(kind){
+ if(paletteThumbCache.has(kind))return paletteThumbCache.get(kind);
+ try{
+   const g=model(kind);
+   boostProceduralModel(g,kind);
+   const box=new THREE.Box3().setFromObject(g);
+   if(box.isEmpty())return '';
+   const size=box.getSize(new THREE.Vector3());
+   const center=box.getCenter(new THREE.Vector3());
+   const maxDim=Math.max(size.x,size.y,size.z,1);
+   const aspect=180/110;
+   const halfH=maxDim*.72+1;
+   const cam=new THREE.OrthographicCamera(-halfH*aspect,halfH*aspect,halfH,-halfH,.1,1000);
+   cam.position.set(maxDim*1.35,maxDim*1.05,maxDim*1.35);
+   cam.lookAt(center);
+   const s=new THREE.Scene();
+   s.add(g);
+   s.add(new THREE.HemisphereLight(0xffffff,0x24415a,2.2));
+   const key=new THREE.DirectionalLight(0xffffff,2.8);key.position.set(4,8,6);s.add(key);
+   const fill=new THREE.DirectionalLight(0x78cfff,1.2);fill.position.set(-5,3,-2);s.add(fill);
+   const rr=getPaletteThumbRenderer();
+   rr.setClearColor(0x000000,0);
+   rr.render(s,cam);
+   const data=rr.domElement.toDataURL('image/png');
+   paletteThumbCache.set(kind,data);
+   return data;
+ }catch(err){
+   console.warn('palette thumbnail fallback',kind,err);
+   return '';
+ }
+}
 function paletteIcon(kind){
- const icon=document.createElement('div');icon.className='thumb3d equipment-thumb';
+ const icon=document.createElement('div');icon.className='thumb3d equipment-thumb';icon.dataset.kind=kind;
  const spec=spriteSpecs[kind]||((kind==='washer')?spriteSpecs.washer:null);
  if(spec){
-   const img=document.createElement('img');
-   img.src='./assets/'+spec.file;
-   img.alt='';
-   img.style.cssText='max-width:100%;max-height:100%;object-fit:contain';
+   const img=document.createElement('img');img.src='./assets/'+spec.file;img.alt='';
+   icon.appendChild(img);
+   return icon;
+ }
+ const data=renderPaletteModel(kind);
+ if(data){
+   const img=document.createElement('img');img.src=data;img.alt='';
    icon.appendChild(img);
  }else{
-   const map={lineN5:'▤',lineIRT:'▤',lineSMF:'▤',lineICC:'▤',longPress:'▣',shirt:'♧',compressor:'◌',boiler:'♨',water:'◍',tank:'◉',packer:'⌘',steelDesk:'▱'};
-   icon.textContent=map[kind]||'◆';
+   // 最後保底只顯示簡單符號；正常情況不會走到這裡。
+   icon.textContent='◆';
  }
- icon.dataset.kind=kind;
  return icon;
 }
 function addPalette(){
