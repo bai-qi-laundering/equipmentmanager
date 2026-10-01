@@ -18,7 +18,7 @@ const ensureSchema = async () => {
 };
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
@@ -33,6 +33,26 @@ app.get('/api/health', async (_req, res) => {
   }
 });
 
+app.get('/api/checklists/:equipmentId', async (req,res)=>{
+  try{
+    const {rows}=await pool.query('SELECT id,equipment_id,equipment_name,schedule,items,check_date,operator,action,note,saved_at FROM routine_checklist_records WHERE equipment_id=$1 ORDER BY saved_at DESC LIMIT 100',[String(req.params.equipmentId)]);
+    res.json({records:rows});
+  }catch(error){res.status(500).json({error:'checklist_load_failed'});}
+});
+app.put('/api/checklists/:equipmentId', async (req,res)=>{
+  const r=req.body||{};
+  if(!r.schedule||!Array.isArray(r.items))return res.status(400).json({error:'invalid_checklist'});
+  try{
+    await ensureSchema();
+    const {rows}=await pool.query(
+      `INSERT INTO routine_checklist_records
+       (equipment_id,equipment_name,schedule,items,check_date,operator,action,note)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+      [String(req.params.equipmentId),String(r.equipmentName||''),String(r.schedule),JSON.stringify(r.items),r.date||null,String(r.operator||''),String(r.action||''),String(r.note||'')]
+    );
+    res.json({ok:true,id:rows[0].id});
+  }catch(error){res.status(500).json({error:'checklist_save_failed'});}
+});
 app.get('/api/layout', async (_req, res) => {
   try {
     await ensureSchema();
