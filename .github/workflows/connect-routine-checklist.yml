@@ -1,0 +1,40 @@
+name: Connect routine checklist
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  connect-checklist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inject checklist script into index
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import os, json, base64, urllib.request, urllib.error
+          repo=os.environ["GITHUB_REPOSITORY"]
+          api=f"https://api.github.com/repos/{repo}/contents/index.html?ref=main"
+          req=urllib.request.Request(api,headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],"Accept":"application/vnd.github+json"})
+          with urllib.request.urlopen(req) as r: obj=json.load(r)
+          raw=base64.b64decode(obj["content"])
+          text=raw.decode("utf-8")
+          marker='<script src="./routine-checklist.js"></script>'
+          if marker in text:
+              print("Checklist already connected.")
+              raise SystemExit(0)
+          text=text.replace("</body>",marker+"\n</body>",1)
+          payload=json.dumps({
+            "message":"Connect routine checklist UI",
+            "content":base64.b64encode(text.encode("utf-8")).decode("ascii"),
+            "sha":obj["sha"],
+            "branch":"main"
+          }).encode()
+          put=urllib.request.Request(api,data=payload,method="PUT",headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],"Accept":"application/vnd.github+json","Content-Type":"application/json"})
+          with urllib.request.urlopen(put) as r:
+              print(r.read().decode())
+          PY
