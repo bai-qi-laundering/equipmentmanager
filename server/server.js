@@ -14,6 +14,7 @@ const ensureSchema = async () => {
     ADD COLUMN IF NOT EXISTS cleaning_cycle_days INTEGER NOT NULL DEFAULT 30,
     ADD COLUMN IF NOT EXISTS maintenance_last_date DATE,
     ADD COLUMN IF NOT EXISTS maintenance_cycle_days INTEGER NOT NULL DEFAULT 180,
+    ADD COLUMN IF NOT EXISTS commissioned_date DATE,
     ADD COLUMN IF NOT EXISTS notes TEXT NOT NULL DEFAULT ''`);
 };
 app.use((req, res, next) => {
@@ -59,7 +60,7 @@ app.get('/api/layout', async (_req, res) => {
     const { rows } = await pool.query(
       `SELECT id, name, type, kind, x, z, rotation_y, status,
               cleaning_last_date, cleaning_cycle_days,
-              maintenance_last_date, maintenance_cycle_days, notes
+              maintenance_last_date, maintenance_cycle_days, commissioned_date, notes
        FROM equipment ORDER BY id`
     );
     res.json({ positions: rows });
@@ -78,8 +79,8 @@ app.put('/api/layout', async (req, res) => {
       if (!item?.id || typeof item.x !== 'number' || typeof item.z !== 'number') continue;
       await client.query(
         `INSERT INTO equipment
-          (id,name,type,kind,x,z,rotation_y,status,cleaning_last_date,cleaning_cycle_days,maintenance_last_date,maintenance_cycle_days,notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+          (id,name,type,kind,x,z,rotation_y,status,cleaning_last_date,cleaning_cycle_days,maintenance_last_date,maintenance_cycle_days,notes,commissioned_date)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
          ON CONFLICT (id) DO UPDATE SET
            name=EXCLUDED.name,type=EXCLUDED.type,kind=EXCLUDED.kind,
            x=EXCLUDED.x,z=EXCLUDED.z,rotation_y=EXCLUDED.rotation_y,
@@ -87,12 +88,12 @@ app.put('/api/layout', async (req, res) => {
            cleaning_cycle_days=EXCLUDED.cleaning_cycle_days,
            maintenance_last_date=EXCLUDED.maintenance_last_date,
            maintenance_cycle_days=EXCLUDED.maintenance_cycle_days,
-           notes=EXCLUDED.notes,updated_at=NOW()`,
+           commissioned_date=EXCLUDED.commissioned_date,notes=EXCLUDED.notes,updated_at=NOW()`,
         [
           String(item.id),String(item.name||''),String(item.type||''),String(item.kind||''),
           item.x,item.z,typeof item.rotationY==='number'?item.rotationY:0,
           String(item.status||'正常'),item.cleaningLastDate||null,Number(item.cleaningCycleDays||30),
-          item.maintenanceLastDate||null,Number(item.maintenanceCycleDays||180),String(item.notes||'')
+          item.maintenanceLastDate||null,Number(item.maintenanceCycleDays||180),String(item.notes||''),item.commissionedDate||null
         ]
       );
     }
