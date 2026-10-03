@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS equipment (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   status TEXT NOT NULL DEFAULT '正常',
+  commissioned_date DATE,
   cleaning_last_date DATE,
   cleaning_cycle_days INTEGER NOT NULL DEFAULT 30,
   maintenance_last_date DATE,
@@ -17,7 +18,9 @@ CREATE TABLE IF NOT EXISTS equipment (
 );
 
 CREATE INDEX IF NOT EXISTS equipment_type_idx ON equipment(type);
-\n\nCREATE TABLE IF NOT EXISTS routine_checklist_records (
+
+
+CREATE TABLE IF NOT EXISTS routine_checklist_records (
   id BIGSERIAL PRIMARY KEY,
   equipment_id TEXT NOT NULL,
   equipment_name TEXT NOT NULL DEFAULT '',
