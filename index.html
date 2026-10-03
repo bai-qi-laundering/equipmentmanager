@@ -887,7 +887,7 @@ for(const raisedId of ['COMP-01','MANG-01']){
  const b=new THREE.Box3().setFromObject(root),size=b.getSize(new THREE.Vector3());
  const support=new THREE.Group();support.userData.raisedSupport=true;
  for(const x of [-size.x*.38,size.x*.38])for(const z of [-size.z*.38,size.z*.38]){
-  const post=box(.45,7,.45,0x7893a8);post.position.set(x,-3.5,z);support.add(post);
+  const post=box(.45,16,.45,0x7893a8);post.position.set(x,-8,z);support.add(post);
  }
  root.add(support);
 }
@@ -895,7 +895,7 @@ for(const id of deletedIds){const root=groups.get(id);if(root){scene.remove(root
 function enforceKnownLevels(){
  const raised=new Set(['COMP-01','MANG-01']);
  groups.forEach(r=>{
-  if(raised.has(r.userData.id)){r.userData.level='架高二層';r.position.y=7;}
+  if(raised.has(r.userData.id)){r.userData.level='架高二層';r.position.y=16;}
   else {r.userData.level='一樓';r.position.y=0;}
  });
 }
