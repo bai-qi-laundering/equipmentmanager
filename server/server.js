@@ -60,24 +60,37 @@ app.get('/api/layout', async (_req, res) => {
     const { rows } = await pool.query(
       `SELECT id, name, type, kind, x, z, rotation_y, status,
               cleaning_last_date, cleaning_cycle_days,
-              maintenance_last_date, maintenance_cycle_days, commissioned_date, notes
+              maintenance_last_date, maintenance_cycle_days, commissioned_date, notes, updated_at::text AS version
        FROM equipment ORDER BY id`
     );
-    res.json({ positions: rows });
+    res.json({ syncVersion:2, positions: rows });
   } catch (error) {
     res.status(500).json({ error: 'layout_load_failed' });
   }
 });
 app.put('/api/layout', async (req, res) => {
+  if(req.body?.syncVersion!==2)return res.status(428).json({error:'sync_upgrade_required'});
   const positions = Array.isArray(req.body?.positions) ? req.body.positions : null;
   if (!positions) return res.status(400).json({ error: 'positions must be an array' });
+  const expected=req.body.expectedVersions;
+  if(!expected||positions.some(p=>!p?.id||!Number.isFinite(p.x)||!Number.isFinite(p.z)||!Object.hasOwn(expected,String(p.id))||(expected[String(p.id)]!==null&&typeof expected[String(p.id)]!=='string'))||new Set(positions.map(p=>String(p.id))).size!==positions.length)
+    return res.status(400).json({error:'invalid_versioned_positions'});
   const client = await pool.connect();
   try {
     await ensureSchema();
     await client.query('BEGIN');
+    await client.query('LOCK TABLE equipment IN SHARE ROW EXCLUSIVE MODE');
+    for(const item of positions){
+      const {rows}=await client.query('SELECT updated_at::text AS version FROM equipment WHERE id=$1 FOR UPDATE',[String(item.id)]);
+      if((rows[0]?.version??null)!==expected[String(item.id)]){
+        await client.query('ROLLBACK');
+        return res.status(409).json({error:'layout_conflict',id:String(item.id)});
+      }
+    }
+    const versions={};
     for (const item of positions) {
       if (!item?.id || typeof item.x !== 'number' || typeof item.z !== 'number') continue;
-      await client.query(
+      const {rows}=await client.query(
         `INSERT INTO equipment
           (id,name,type,kind,x,z,rotation_y,status,cleaning_last_date,cleaning_cycle_days,maintenance_last_date,maintenance_cycle_days,notes,commissioned_date)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
@@ -88,7 +101,7 @@ app.put('/api/layout', async (req, res) => {
            cleaning_cycle_days=EXCLUDED.cleaning_cycle_days,
            maintenance_last_date=EXCLUDED.maintenance_last_date,
            maintenance_cycle_days=EXCLUDED.maintenance_cycle_days,
-           commissioned_date=EXCLUDED.commissioned_date,notes=EXCLUDED.notes,updated_at=NOW()`,
+           commissioned_date=EXCLUDED.commissioned_date,notes=EXCLUDED.notes,updated_at=clock_timestamp() RETURNING id,updated_at::text AS version`,
         [
           String(item.id),String(item.name||''),String(item.type||''),String(item.kind||''),
           item.x,item.z,typeof item.rotationY==='number'?item.rotationY:0,
@@ -96,9 +109,10 @@ app.put('/api/layout', async (req, res) => {
           item.maintenanceLastDate||null,Number(item.maintenanceCycleDays||180),String(item.notes||''),item.commissionedDate||null
         ]
       );
+      versions[String(item.id)]=rows[0].version;
     }
     await client.query('COMMIT');
-    res.json({ ok:true,count:positions.length });
+    res.json({ ok:true,count:positions.length,versions });
   } catch (error) {
     await client.query('ROLLBACK');
     res.status(500).json({ error:'layout_save_failed' });

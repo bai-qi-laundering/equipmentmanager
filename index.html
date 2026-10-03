@@ -82,7 +82,7 @@ body.panel-open .equipment-tools{display:none}
 </style>
 </head>
 <body>
-<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">模型 V4 · 查檢清單 V5 · 同步 R2</div><div id="app"><div id="canvas"></div>
+<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">模型 V4 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠 3D 設備地圖</div>
   <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
@@ -94,7 +94,7 @@ body.panel-open .equipment-tools{display:none}
 <div class="palette"><h3>設備庫 （點一下加入地圖，再長按拖曳到想要的位置）</h3><div class="items" id="items"></div></div><div class="reference-actions"><button id="snapBtn">吸附：開</button><button id="saveBtn">💾 儲存</button><button id="exportBtn">⬇️ 匯出版位</button><label style="padding:9px 12px;border:1px solid #245b88;background:#0a2744;border-radius:10px;cursor:pointer">⬆️ 匯入版位<input id="importInput" type="file" accept="application/json" style="display:none"></label></div>
 <div class="map-tools" aria-label="地圖操作"><span>地圖</span><button id="mapZoomOut" aria-label="縮小地圖">－</button><button id="mapZoomIn" aria-label="放大地圖">＋</button><button id="mapTurnLeft" aria-label="地圖向左轉">↶</button><button id="mapTurnRight" aria-label="地圖向右轉">↷</button><button id="mapHome">全圖</button></div>
 <div class="equipment-tools" id="equipmentTools" hidden><span>設備大小</span><button id="eqQuickDown" aria-label="縮小設備">－</button><b id="eqQuickPercent">100%</b><button id="eqQuickUp" aria-label="放大設備">＋</button><button id="eqQuickDelete">刪除</button></div>
-<div class="touch-help">單指移動地圖 · 雙指縮放 · 長按設備拖曳</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card"><div style="font-weight:800;margin-bottom:8px">設備大小</div><div style="display:flex;align-items:center;gap:8px"><button id="scaleDownBtn" type="button">－</button><input id="eqScale" type="range" min="0.5" max="2.5" step="0.05" value="1" style="flex:1;min-width:0"><button id="scaleUpBtn" type="button">＋</button><b id="eqScaleValue" style="min-width:45px">100%</b></div><button id="deleteEqBtn" type="button" style="width:100%;margin-top:14px;border-color:#c65a67;color:#ffd8dd">刪除這台設備</button></div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R2｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card"><div style="font-weight:800;margin-bottom:8px">設備方向</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="rotateLeftBtn">↶ 左轉 90°</button><button id="rotateRightBtn">↷ 右轉 90°</button></div><button id="resetRotationBtn" style="width:100%;margin-top:8px">⟳ 重設方向</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="inspectionMini"><button id="inspectionMachineEntry">開啟此機台查檢清單</button></div></div>
+<div class="touch-help">單指移動地圖 · 雙指縮放 · 長按設備拖曳</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card"><div style="font-weight:800;margin-bottom:8px">設備大小</div><div style="display:flex;align-items:center;gap:8px"><button id="scaleDownBtn" type="button">－</button><input id="eqScale" type="range" min="0.5" max="2.5" step="0.05" value="1" style="flex:1;min-width:0"><button id="scaleUpBtn" type="button">＋</button><b id="eqScaleValue" style="min-width:45px">100%</b></div><button id="deleteEqBtn" type="button" style="width:100%;margin-top:14px;border-color:#c65a67;color:#ffd8dd">刪除這台設備</button></div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card"><div style="font-weight:800;margin-bottom:8px">設備方向</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="rotateLeftBtn">↶ 左轉 90°</button><button id="rotateRightBtn">↷ 右轉 90°</button></div><button id="resetRotationBtn" style="width:100%;margin-top:8px">⟳ 重設方向</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="inspectionMini"><button id="inspectionMachineEntry">開啟此機台查檢清單</button></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <button id="inspectionEntry">✓ 查檢清單</button><section id="inspectionOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="inspectionTitle"><header class="ins-header"><button id="inspectionBack">返回地圖</button><h2 id="inspectionTitle">設備查檢清單</h2><button id="inspectionSettingsBtn">設定／備份</button></header><div class="ins-sync">查檢紀錄：此裝置儲存 · NAS 共用紀錄與手機自動通知尚未串接</div><main id="inspectionContent"></main><footer id="inspectionSaveBar" hidden><b id="inspectionProgress">已查檢 0 項</b><button id="inspectionSubmit" class="ins-primary">確認送出查檢</button></footer></section>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
@@ -741,7 +741,7 @@ let nasReadState={status:'尚未讀取 NAS',ok:false,positions:[],at:''};
 function renderNasReadDetails(){
  const el=document.getElementById('nasReadDetails');
  if(!el)return;
- const lines=['同步 R2｜'+nasReadState.status];
+ const lines=['同步 R3｜'+nasReadState.status];
  if(nasReadState.at)lines.push('讀取時間：'+nasReadState.at);
  if(selected){
   const id=String(selected.userData.id).trim();
@@ -759,7 +759,7 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='模型 V4 · 查檢清單 V5 · 同步 R2｜'+text;
+ if(version)version.textContent='模型 V4 · 查檢清單 V5 · 同步 R3｜'+text;
 }
 function applyEquipmentName(root,name){
  if(typeof name!=='string'||!name.trim())return;
@@ -771,7 +771,62 @@ function applyEquipmentName(root,name){
   document.getElementById('eqName').value=root.userData.name;
  }
 }
+
+const layoutFields=['name','type','kind','x','z','rotationY','status','cleaningLastDate','cleaningCycleDays','maintenanceLastDate','maintenanceCycleDays','commissionedDate','notes'];
+let layoutBaseline=null,hasUnsyncedLayoutChanges=false,savePromise=null,syncRequested=false;
+function normalizeNasRow(v){
+ const date=k=>v[k]?String(v[k]).slice(0,10):'';
+ return {id:String(v.id).trim(),name:v.name||'',type:v.type||'',kind:v.kind||'',x:Number(v.x),z:Number(v.z),rotationY:Number(v.rotation_y??v.rotationY??0),status:v.status||'正常',
+ cleaningLastDate:date('cleaning_last_date'),cleaningCycleDays:Number(v.cleaning_cycle_days??30),
+ maintenanceLastDate:date('maintenance_last_date'),maintenanceCycleDays:Number(v.maintenance_cycle_days??180),
+ commissionedDate:date('commissioned_date'),notes:v.notes||'',version:v.version};
+}
+function mergeLayoutChanges(local,baseline,remote){
+ const writes=[],expectedVersions={},merged=new Map(remote.map(v=>[String(v.id),{...v}]));
+ for(const row of local){
+  const id=String(row.id),base=baseline.get(id),latest=merged.get(id);
+  const changed=layoutFields.filter(k=>!base||row[k]!==base[k]);
+  if(!changed.length)continue;
+  if(base&&!latest)throw new Error('設備 '+id+' 已從 NAS 移除，請先確認資料');
+  const next=latest?{...latest}:{...row};
+  for(const k of changed){
+   if(base&&latest[k]!==base[k]&&latest[k]!==row[k])throw new Error('設備 '+id+' 的 '+k+' 已被另一台裝置修改；尚未覆蓋 NAS');
+   next[k]=row[k];
+  }
+  if(latest&&layoutFields.every(k=>next[k]===latest[k]))continue;
+  writes.push(next);expectedVersions[id]=latest?.version??null;merged.set(id,next);
+ }
+ return {writes,expectedVersions,merged};
+}
+function reconcileNasRows(merged,snapshot){
+ const before=new Map(snapshot.map(v=>[String(v.id),v]));
+ const current=new Map(getPositionData().map(v=>[String(v.id),v]));
+ groups.forEach(r=>{
+  const id=String(r.userData.id),next=merged.get(id),prev=before.get(id),live=current.get(id);
+  if(!next||!prev||!live)return;
+  for(const k of layoutFields){
+   if(live[k]!==prev[k])continue;
+   if(k==='name')applyEquipmentName(r,next[k]);
+   else if(k==='x'||k==='z')r.position[k]=next[k];
+   else if(k==='rotationY')r.rotation.y=next[k];
+   else r.userData[k]=next[k];
+  }
+  syncEquipmentSprite(r);
+ });
+}
+async function fetchNasLayout(){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+ try{
+  const res=await fetch(API_BASE+'/api/layout?t='+Date.now(),{cache:'no-store',signal:controller.signal});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  const payload=await res.json();
+  if(!Array.isArray(payload.positions))throw new Error('NAS 回傳格式錯誤');
+  return payload;
+ }finally{clearTimeout(timer);}
+}
+
 async function loadRemoteLayout(){
+ if(syncing)return false;
  const controller=new AbortController();
  const timer=setTimeout(()=>controller.abort(),12000);
  try{
@@ -786,9 +841,10 @@ async function loadRemoteLayout(){
   if(positions.length){
    const byId=new Map(positions.map(v=>[String(v.id).trim(),v]));
    const byName=new Map(positions.map(v=>[v.name,v]));
-   groups.forEach(r=>{const v=byId.get(String(r.userData.id).trim())||byName.get(r.userData.name);if(v){applyEquipmentName(r,v.name);if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.level!=null)r.userData.level=v.level;if(v.status!=null)r.userData.status=v.status;if(v.cleaning_last_date!=null)r.userData.cleaningLastDate=String(v.cleaning_last_date).slice(0,10);if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(v.maintenance_last_date!=null)r.userData.maintenanceLastDate=String(v.maintenance_last_date).slice(0,10);if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(Object.hasOwn(v,'commissioned_date'))r.userData.commissionedDate=v.commissioned_date?String(v.commissioned_date).slice(0,10):'';if(v.notes!=null)r.userData.notes=v.notes;if(v.visualScale!=null||v.scale!=null)setEquipmentScale(r,v.visualScale??v.scale);syncEquipmentSprite(r);}});
+   groups.forEach(r=>{const v=byId.get(String(r.userData.id).trim())||byName.get(r.userData.name);if(v){applyEquipmentName(r,v.name);if(typeof v.x==='number')r.position.x=v.x;if(typeof v.z==='number')r.position.z=v.z;if(typeof v.rotation_y==='number')r.rotation.y=v.rotation_y;else if(typeof v.rotationY==='number')r.rotation.y=v.rotationY;if(r.userData.kind==='icc'&&Math.abs(r.rotation.y)<.001)r.rotation.y=Math.PI/2;if(v.level!=null)r.userData.level=v.level;if(v.status!=null)r.userData.status=v.status;if(Object.hasOwn(v,'cleaning_last_date'))r.userData.cleaningLastDate=v.cleaning_last_date?String(v.cleaning_last_date).slice(0,10):'';if(v.cleaning_cycle_days!=null)r.userData.cleaningCycleDays=Number(v.cleaning_cycle_days);if(Object.hasOwn(v,'maintenance_last_date'))r.userData.maintenanceLastDate=v.maintenance_last_date?String(v.maintenance_last_date).slice(0,10):'';if(v.maintenance_cycle_days!=null)r.userData.maintenanceCycleDays=Number(v.maintenance_cycle_days);if(Object.hasOwn(v,'commissioned_date'))r.userData.commissionedDate=v.commissioned_date?String(v.commissioned_date).slice(0,10):'';if(v.notes!=null)r.userData.notes=v.notes;if(v.visualScale!=null||v.scale!=null)setEquipmentScale(r,v.visualScale??v.scale);syncEquipmentSprite(r);}});
    try{localStorage.setItem(SYNC_KEY,JSON.stringify(getPositionData()));}catch(err){console.warn('NAS 資料已讀取，但本機暫存失敗',err);}
   }
+  layoutBaseline=new Map(getPositionData().map(v=>[String(v.id),{...v}]));hasUnsyncedLayoutChanges=false;
   apiAvailable=true;nasReadState.ok=true;
   nasReadState.at=new Date().toLocaleTimeString('zh-TW',{timeZone:'Asia/Taipei'});
   nasReadState.status='已讀取 NAS，共 '+positions.length+' 台設備';
@@ -800,18 +856,46 @@ async function loadRemoteLayout(){
   console.error('NAS layout read failed',err);return false;
  }finally{clearTimeout(timer);}
 }
-async function saveRemoteLayout(){
- if(syncing||!apiAvailable)return false;
- syncing=true;
- try{
-  const res=await fetch(API_BASE+'/api/layout',{
-   method:'PUT',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({positions:getPositionData()})
-  });
-  if(!res.ok)throw new Error('HTTP '+res.status);
-  setSyncBadge('NAS 已同步',true); return true;
- }catch(err){apiAvailable=false;setSyncBadge('本機暫存');return false;}
- finally{syncing=false;}
+function saveRemoteLayout(){
+ if(savePromise){syncRequested=true;return savePromise;}
+ savePromise=Promise.resolve().then(async()=>{
+  syncing=true;let success=false;
+  try{
+   if(!layoutBaseline)throw new Error('尚未取得 NAS 基準資料；請先讀取 NAS 再編輯');
+   do{
+    syncRequested=false;
+    const snapshot=getPositionData();
+    const payload=await fetchNasLayout();
+    if(payload.syncVersion!==2)throw new Error('NAS 服務需更新到同步 R3；尚未送出資料');
+    const {writes,expectedVersions,merged}=mergeLayoutChanges(snapshot,layoutBaseline,payload.positions.map(normalizeNasRow));
+    if(writes.length){
+     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+     let result;
+     try{
+      const res=await fetch(API_BASE+'/api/layout',{method:'PUT',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({syncVersion:2,positions:writes,expectedVersions})});
+      if(res.status===409)throw new Error('另一台裝置剛更新資料；尚未覆蓋 NAS，請確認後再儲存');
+      if(res.status===428)throw new Error('NAS 要求新版同步程式，請重新開啟網頁');
+      if(!res.ok)throw new Error('儲存失敗 HTTP '+res.status);
+      result=await res.json();
+     }finally{clearTimeout(timer);}
+     for(const row of writes)merged.get(String(row.id)).version=result.versions?.[String(row.id)];
+    }
+    reconcileNasRows(merged,snapshot);
+    layoutBaseline=new Map([...merged].map(([id,row])=>[id,{...row}]));
+    nasReadState.positions=[...merged.values()];nasReadState.ok=true;
+    nasReadState.at=new Date().toLocaleTimeString('zh-TW',{timeZone:'Asia/Taipei'});
+    // Diagnostics accept normalized rows, which retain the stable equipment ID/name.
+    hasUnsyncedLayoutChanges=getPositionData().some(row=>layoutFields.some(k=>row[k]!==layoutBaseline.get(String(row.id))?.[k]));
+    try{localStorage.setItem(SYNC_KEY,JSON.stringify(getPositionData()));}catch(err){}
+    apiAvailable=true;nasReadState.status='NAS 已同步';setSyncBadge(nasReadState.status,true);renderNasReadDetails();
+   }while(syncRequested);
+   success=true;return true;
+  }catch(err){
+   hasUnsyncedLayoutChanges=true;nasReadState.status=err.name==='AbortError'?'NAS 同步逾時，請確認後再儲存':err.message;
+   setSyncBadge(nasReadState.status);renderNasReadDetails();return false;
+  }finally{syncing=false;savePromise=null;if(!success)syncRequested=false;}
+ });
+ return savePromise;
 }
 function boostProceduralModel(g,kind){
   const externalKinds=new Set(['washer-35kg','washer-50kg','vertical','dryer','longPress','flat','dryclean','boiler']);
@@ -1040,7 +1124,8 @@ function getPositionData(){
 }
 function savePositions(){
  const data=JSON.stringify(getPositionData());
- localStorage.setItem(SYNC_KEY,data);
+ hasUnsyncedLayoutChanges=true;
+ try{localStorage.setItem(SYNC_KEY,data);}catch(err){}
  try{
   const req=indexedDB.open('factory3d-db',1);
   req.onupgradeneeded=()=>req.result.createObjectStore('layout');
@@ -1050,7 +1135,7 @@ function savePositions(){
    tx.objectStore('layout').put({id:'current',data});
   };
  }catch(err){}
- void saveRemoteLayout();
+ return saveRemoteLayout();
 }
 function restoreSavedPositions(){
  try{
@@ -1277,7 +1362,7 @@ document.getElementById('reloadNasBtn').onclick=async()=>{
   toast(ok?'已重新讀取 NAS':nasReadState.status);
  }finally{button.disabled=false;}
 };
-document.getElementById('saveEqBtn').onclick=async()=>{if(!selected)return;const commissioned=document.getElementById('eqCommissionedDate').value;if(commissioned&&(!validDay(commissioned)||commissioned>taipeiToday()))return toast('啟用日期不能晚於今天');selected.userData.commissionedDate=commissioned;selected.userData.name=document.getElementById('eqName').value.trim()||selected.userData.name;selected.userData.status=document.getElementById('eqStatus').value;selected.userData.cleaningLastDate=document.getElementById('eqCleaningDate').value;selected.userData.cleaningCycleDays=Math.max(0,Number(document.getElementById('eqCleaningCycle').value||0));selected.userData.maintenanceLastDate=document.getElementById('eqMaintenanceDate').value;selected.userData.maintenanceCycleDays=Math.max(0,Number(document.getElementById('eqMaintenanceCycle').value||0));selected.userData.notes=document.getElementById('eqNotes').value;const lbl=selected.children.find(o=>o.isCSS2DObject);if(lbl)lbl.element.textContent=selected.userData.name;document.getElementById('pn').textContent=selected.userData.name;savePositions();refreshEquipmentDates();renderInspectionMini(selected);toast(apiAvailable?'設備資料已儲存，正在同步 NAS':'設備資料已儲存在本機；NAS 暫離線');};
+document.getElementById('saveEqBtn').onclick=async()=>{if(!selected)return;const commissioned=document.getElementById('eqCommissionedDate').value;if(commissioned&&(!validDay(commissioned)||commissioned>taipeiToday()))return toast('啟用日期不能晚於今天');selected.userData.commissionedDate=commissioned;selected.userData.name=document.getElementById('eqName').value.trim()||selected.userData.name;selected.userData.status=document.getElementById('eqStatus').value;selected.userData.cleaningLastDate=document.getElementById('eqCleaningDate').value;selected.userData.cleaningCycleDays=Math.max(0,Number(document.getElementById('eqCleaningCycle').value||0));selected.userData.maintenanceLastDate=document.getElementById('eqMaintenanceDate').value;selected.userData.maintenanceCycleDays=Math.max(0,Number(document.getElementById('eqMaintenanceCycle').value||0));selected.userData.notes=document.getElementById('eqNotes').value;const lbl=selected.children.find(o=>o.isCSS2DObject);if(lbl)lbl.element.textContent=selected.userData.name;document.getElementById('pn').textContent=selected.userData.name;const saved=await savePositions();refreshEquipmentDates();renderInspectionMini(selected);toast(saved?'設備資料已同步至 NAS':nasReadState.status);};
 document.getElementById('rotateLeftBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y-=Math.PI/2;syncEquipmentSprite(selected);savePositions();toast('設備已左轉 90°');};
 document.getElementById('rotateRightBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y+=Math.PI/2;syncEquipmentSprite(selected);savePositions();toast('設備已右轉 90°');};
 document.getElementById('resetRotationBtn').onclick=()=>{if(!selected||!edit)return;selected.rotation.y=0;syncEquipmentSprite(selected);savePositions();toast('設備方向已重設');};
@@ -1315,10 +1400,8 @@ document.getElementById('snapBtn').onclick=()=>{
  document.getElementById('snapBtn').textContent=`吸附：${snap?'開':'關'}`;
 };
 document.getElementById('saveBtn').onclick=async()=>{
- savePositions();
- if(!apiAvailable)await loadRemoteLayout();
- if(apiAvailable)await saveRemoteLayout();
- toast(apiAvailable?'已同步至 NAS':'已儲存到本機，NAS 暫時離線');
+ const saved=await savePositions();
+ toast(saved?'已同步至 NAS':nasReadState.status);
 };
 document.getElementById('exportBtn').onclick=exportLayout;
 document.getElementById('importInput').onchange=e=>{if(e.target.files[0])importLayout(e.target.files[0]);};
@@ -1330,7 +1413,7 @@ document.getElementById('filter').onchange=e=>{
  const f=e.target.value;
  groups.forEach(r=>r.visible=f==='全部設備'||r.userData.type===f);
 };
-setInterval(()=>{if(!apiAvailable&&!syncing)loadRemoteLayout();},15000);
+setInterval(()=>{if(!apiAvailable&&!syncing&&!hasUnsyncedLayoutChanges)loadRemoteLayout();},15000);
 function resize(){
  const aspect=innerWidth/innerHeight;
  camera.left=-100*aspect;camera.right=100*aspect;camera.top=100;camera.bottom=-100;
