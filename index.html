@@ -79,10 +79,18 @@ body.panel-open .equipment-tools{display:none}
 #inspectionSaveBar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;padding:12px max(16px,calc((100vw - 1000px)/2)) calc(12px + env(safe-area-inset-bottom));background:white;border-top:1px solid #ccdbe5;box-shadow:0 -4px 15px #1d3c5010}#inspectionSubmit{min-width:160px}.ins-file{border:1px dashed #aac0d2;border-radius:12px;padding:12px}.ins-file input{border:0!important}.inspection-open #app{pointer-events:none}#inspectionOverlay details summary{cursor:pointer;min-height:36px}.ins-task details{font-size:12px;margin-top:4px}#inspectionOverlay hr{border:0;border-top:1px solid #dbe6ee;margin:24px 0}
 @media(max-width:650px){.ins-header{padding-left:12px;padding-right:12px;gap:8px}.ins-header h2{font-size:18px}.ins-header button{padding:10px;font-size:14px}.ins-sync{padding:8px 12px;font-size:11px}#inspectionContent{padding:16px 12px}.ins-stats{grid-template-columns:1fr 1fr}.ins-stats div:last-child{grid-column:1/-1}.ins-stats div{padding:12px}.ins-card{padding:16px 12px}.ins-results{gap:6px}.ins-form-meta{grid-template-columns:1fr}.ins-form-meta p{grid-column:auto}#inspectionEntry{left:10px;top:142px;bottom:auto;padding:10px 14px}.ins-machine b{font-size:18px}#inspectionSaveBar{padding-left:12px;padding-right:12px}#inspectionSubmit{min-width:140px}}
 
+
+/* V5: miniature equipment and quiet labels; layout coordinates come from saved data. */
+.eq-label{padding:3px 7px!important;border-radius:5px!important;border:1px solid color-mix(in srgb,var(--label-color),transparent 45%)!important;
+ background:rgba(13,28,47,.86)!important;box-shadow:0 2px 6px rgba(0,0,0,.25)!important;
+ color:#e3edf4;font-size:10px!important;font-weight:600;text-shadow:none!important;letter-spacing:.1px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;backdrop-filter:none!important}
+.thumb3d{width:72px;height:42px;filter:none;background:none}
+.item{background:rgba(23,43,64,.8)}
+@media(max-width:700px){.eq-label{font-size:9px!important;padding:3px 5px!important;max-width:125px}.thumb3d{width:64px;height:30px}}
 </style>
 </head>
 <body>
-<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">模型 V4 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"></div>
+<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">模型 V5 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠 3D 設備地圖</div>
   <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
@@ -103,109 +111,8 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {CSS2DRenderer,CSS2DObject} from 'three/addons/renderers/CSS2DRenderer.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
-import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-
-const gltfLoader=new GLTFLoader();
-// 舊版圖片模型：保留你喜歡的正面設備素材；旋轉時切換對應側面示意圖，設備資料仍掛在同一個 root。
-const embeddedImages={"washer-front.png":"./assets/washer-front.png","dryer-front.png":"./assets/dryer-front.png","manganese-front.png":"./assets/manganese-front.png","crane-front.png":"./assets/crane-front.png","tank.png":"./assets/tank.png","finishing.png":"./assets/finishing.png","water.png":"./assets/water.png","finishing-front-v4.png":"./assets/finishing-front-v4.png","press-front-v4.png":"./assets/press-front-v4.png"};
-const spriteSpecs={
- // 30K/60K/80K use the artwork selected by the user; preserve existing NAS kinds and IDs.
- folding:{file:'finishing-front-v4.png',w:15,h:5.0,color:'#277ed0',preserveArtwork:true},
- tank:{file:'tank.png',w:7,h:9,color:'#b9c9d0',preserveArtwork:true},
- longPress:{file:'press-front-v4.png',w:10,h:6.7,color:'#1784cf',preserveArtwork:true},
- lineN5:{file:'finishing-front-v4.png',w:17,h:5.667,color:'#277ed0',preserveArtwork:true},
- lineIRT:{file:'finishing-front-v4.png',w:17,h:5.667,color:'#277ed0',preserveArtwork:true},
- lineSMF:{file:'finishing.png',w:17,h:6.6,color:'#277ed0',preserveArtwork:true},
- water:{file:'water.png',w:9.8,h:7.8,color:'#7eacbf',preserveArtwork:true},
- washer:{file:'washer-front.png',w:7.5,h:7.5,color:'#c8d8e3'},
- 'washer-35kg':{file:'washer-front.png',w:7.2,h:7.2,color:'#c8d8e3'},
- 'washer-50kg':{file:'washer-front.png',w:7.6,h:7.5,color:'#c8d8e3'},
- vertical:{file:'washer-front.png',w:6.5,h:8.8,color:'#c8d8e3'},
- dryer:{file:'dryer-front.png',w:7.8,h:7.5,color:'#c8d8e3'},
- manganese:{file:'manganese-front.png',w:18,h:12,color:'#167bca',offsetY:-7},
- crane:{file:'crane-front.png',w:9.8,h:7.5,color:'#e7a925'}
-};
-const spriteLoader=new THREE.TextureLoader();
-const spriteFrontCache=new Map(),spriteTurnCache=new Map();
-function frontTexture(spec){
- const url=embeddedImages[spec.file];
- if(!spriteFrontCache.has(url)){
-  const t=spriteLoader.load(url,()=>{t.colorSpace=THREE.SRGBColorSpace;});
-  t.colorSpace=THREE.SRGBColorSpace;spriteFrontCache.set(url,t);
- }
- return spriteFrontCache.get(url);
-}
-function turnedTexture(spec,side){
- const key=spec.file+':'+side;if(spriteTurnCache.has(key))return spriteTurnCache.get(key);
- const cv=document.createElement('canvas');cv.width=512;cv.height=512;const x=cv.getContext('2d');
- const left=side===1,right=side===3,back=side===2;
- const width=back?320:205,px=(512-width)/2;x.shadowBlur=24;x.shadowColor='rgba(0,0,0,.5)';
- const g=x.createLinearGradient(px,100,px+width,400);g.addColorStop(0,'#f5f8fa');g.addColorStop(.55,spec.color);g.addColorStop(1,'#344d60');
- x.fillStyle=g;x.fillRect(px,120,width,300);x.shadowBlur=0;x.strokeStyle='#a8c5d5';x.lineWidth=7;x.strokeRect(px+3,123,width-6,294);
- x.fillStyle='#263c4d';x.fillRect(px+16,148,width-32,34);x.fillStyle='#7aa9c7';x.fillRect(px+22,218,width-44,6);x.fillRect(px+22,315,width-44,6);
- if(left||right){x.fillStyle='#213b50';x.fillRect(px+(left?24:width-49),205,25,90);}
- x.fillStyle='#536b7c';x.fillRect(px+22,420,38,28);x.fillRect(px+width-60,420,38,28);
- const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;spriteTurnCache.set(key,t);return t;
-}
-function attachEquipmentSprite(root,kind){
- const spec=spriteSpecs[kind];if(!spec)return false;
- const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:frontTexture(spec),transparent:true,depthTest:false,depthWrite:false,alphaTest:.06,toneMapped:false}));
- sprite.renderOrder=18;sprite.scale.set(spec.w,spec.h,1);sprite.position.y=(spec.offsetY||0)+spec.h/2+.18;
- sprite.userData.root=root;sprite.userData.interactive=true;root.add(sprite);root.userData.pictureSprite=sprite;root.userData.spriteSpec=spec;root.userData.lastSpriteTurn=0;return true;
-}
-function syncEquipmentSprite(root){
- const sprite=root?.userData?.pictureSprite;if(!sprite)return;
- const viewYaw=Math.atan2(camera.position.x-controls.target.x,camera.position.z-controls.target.z);
- const turn=((Math.round((root.rotation.y-viewYaw)/(Math.PI/2))%4)+4)%4;
- const spec=root.userData.spriteSpec;
- // Keep the approved machine artwork visible for saved side/back orientations.
- // Approximate side views by narrowing the illustrated body; never substitute a generic block.
- if(spec.preserveArtwork){
-  const angle=root.rotation.y-viewYaw;
-  sprite.scale.x=spec.w*(.72+.28*Math.abs(Math.cos(angle)));
- }
- if(root.userData.lastSpriteTurn===turn)return;
- root.userData.lastSpriteTurn=turn;
- sprite.material.map=(spec.preserveArtwork||turn===0)?frontTexture(spec):turnedTexture(spec,turn);
- sprite.material.needsUpdate=true;
-}
-
-const externalAssets={
- washer35:'https://cdn.3dassets.dev/assets/25512/v1/model.glb',
- vertical:'https://cdn.3dassets.dev/assets/25511/v1/model.glb',
- dryer:'https://cdn.3dassets.dev/assets/25514/v1/model.glb',
- flatwork:'https://cdn.3dassets.dev/assets/25534/v1/model.glb',
- press:'https://cdn.3dassets.dev/assets/25535/v1/model.glb',
- dryclean:'https://cdn.3dassets.dev/assets/25556/v1/model.glb',
- boiler:'https://cdn.3dassets.dev/assets/34954/v1/model.glb'
-};
-const glbCache=new Map();
-function loadGLB(url){
- if(glbCache.has(url))return glbCache.get(url);
- const p=new Promise((resolve,reject)=>gltfLoader.load(url,g=>resolve(g.scene),undefined,reject));
- glbCache.set(url,p);return p;
-}
-function externalSpec(name,kind){
- // 舊版模型呈現：洗衣機、直式洗衣機、烘乾機等優先使用內建細節模型；
- // 只有需要外部 GLB 的設備才載入 GLB。
- if(kind==='longPress')return {url:externalAssets.press,scale:6.0,y:.18};
- if(kind==='flat')return {url:externalAssets.flatwork,scale:5.7,y:.18};
- if(kind==='dryclean')return {url:externalAssets.dryclean,scale:5.0,y:.18};
- if(kind==='boiler')return {url:externalAssets.boiler,scale:5.4,y:.18};
- return null;
-}
-async function attachGLB(root,name,kind,procedural){
- const spec=externalSpec(name,kind);if(!spec)return;
- try{
-  const source=await loadGLB(spec.url);
-  if(!groups.has(root.userData.id))return;
-  const asset=source.clone(true);
-  asset.position.y=spec.y;asset.scale.setScalar(spec.scale);
-  asset.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.userData.root=root;o.userData.interactive=true;}});
-  root.remove(procedural);root.add(asset);root.userData.assetSource=spec.url;
- }catch(e){console.warn('GLB fallback',name,e);}
-}
-
+// V5 renders every equipment model locally; no image sprites or remote GLB downloads.
+function syncEquipmentSprite(root){}
 const DELETE_KEY='factory3dDeletedIds';
 const deletedIds=new Set(JSON.parse(localStorage.getItem(DELETE_KEY)||'[]'));
 function saveDeletedIds(){localStorage.setItem(DELETE_KEY,JSON.stringify([...deletedIds]));}
@@ -220,19 +127,19 @@ function setEquipmentScale(root,value){
  }
 }
 const app=document.getElementById('canvas'), scene=new THREE.Scene();
-scene.background=new THREE.Color(0x14324a);
-scene.fog=new THREE.Fog(0x14324a,190,520);
+scene.background=new THREE.Color(0x101d31);
+scene.fog=null;
 
 const camera=new THREE.OrthographicCamera(-100,100,100,-100,-1000,2000);
 camera.position.set(120,170,190);
 camera.zoom=1;
 const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=true;
+renderer.shadowMap.enabled=false;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.72; 
+renderer.toneMappingExposure=1.12; 
 app.appendChild(renderer.domElement);
 
 const labels=new CSS2DRenderer();
@@ -284,12 +191,12 @@ scene.environment = envTexture;
 
 // --- 燈光配置 ---
 scene.add(new THREE.AmbientLight(0xffffff, 0.5)); // 增加整體亮度
-scene.add(new THREE.HemisphereLight(0xe9f8ff,0x16334a,3.4));
-const key=new THREE.DirectionalLight(0xffffff,5.2);
+scene.add(new THREE.HemisphereLight(0xe9f8ff,0x27354d,2.1));
+const key=new THREE.DirectionalLight(0xfff3df,2.6);
 key.position.set(28,120,38);
 key.castShadow=true;
 scene.add(key);
-const rim=new THREE.DirectionalLight(0x67d2ff,2.6);
+const rim=new THREE.DirectionalLight(0x93bdf4,1.3);
 rim.position.set(-60,55,-40);
 scene.add(rim);
 const fill=new THREE.PointLight(0x39baff,340,300);
@@ -298,19 +205,11 @@ scene.add(fill);
 const magenta=new THREE.PointLight(0xb978ff,125,220);
 magenta.position.set(48,24,44);
 scene.add(magenta);
-const ambient=new THREE.AmbientLight(0x9bdcff,1.25);scene.add(ambient);
+const ambient=new THREE.AmbientLight(0x9bdcff,.3);scene.add(ambient);
 
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(520,520),new THREE.MeshStandardMaterial({color:0x123049,roughness:.34,metalness:.28,transparent:true,opacity:.98}));
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(520,520),new THREE.MeshStandardMaterial({color:0x14243c,roughness:.88,metalness:.12}));
 floor.rotation.x=-Math.PI/2;floor.position.y=-1.04;floor.receiveShadow=true;scene.add(floor);
-const grid=new THREE.GridHelper(420,84,0x245b88,0x0c253d);grid.position.y=-1.01;grid.material.transparent=true;grid.material.opacity=.58;scene.add(grid);
-
-const raisedDeckFrame=(w,d,x,z,c)=>{const g=new THREE.Group();const p=glowPlate(w,d,c);p.position.y=7.04;g.add(p);
-const edgeMat=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.8});const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.16,d)),edgeMat);edge.position.y=7.08;g.add(edge);
-const postMat=mat(0x8294a0,.2,.8,.9);for(const px of [-w/2+.7,w/2-.7])for(const pz of [-d/2+.7,d/2-.7]){const post=new THREE.Mesh(new THREE.BoxGeometry(.72,7.1,.72),postMat.clone());post.position.set(px,3.5,pz);post.castShadow=true;g.add(post);}
-const beamMat=mat(0x566a78,.2,.7,.9);for(const py of [2.2,4.6]){const bx=new THREE.Mesh(new THREE.BoxGeometry(w-.8,.28,.34),beamMat.clone());bx.position.set(0,py,-d/2+.72);g.add(bx);const bz=new THREE.Mesh(new THREE.BoxGeometry(.34,.28,d-1.4),beamMat.clone());bz.position.set(-w/2+.72,py,0);g.add(bz);}
-g.position.set(x,0,z);scene.add(g);return g;};
-raisedDeckFrame(15,12,-2,42,0x2aa8ff);
-// Front manganese image includes its raised platform.
+const grid=new THREE.GridHelper(520,104,0x415371,0x253853);grid.position.y=-1.01;grid.material.transparent=true;grid.material.opacity=.25;scene.add(grid);
 
 const palette=[
  ['30K','洗衣設備','folding','▰'],['60K','洗衣設備','folding','▰'],['80K','洗衣設備','folding','▰'],
@@ -350,7 +249,7 @@ const instances=[
  ['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],
  ['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
-const MODEL_REVISION='2026-09-30-true-front-artwork-v4';
+const MODEL_REVISION='2026-10-03-solid-miniature-v5';
 const API_BASE = 'https://fileserver.tailbb066f.ts.net';
 const SYNC_KEY = 'factory3dPositions_C_STYLE_V2';
 let apiAvailable=false;
@@ -359,44 +258,36 @@ const groups=new Map();let selected=null;let edit=true;let snap=true;let uid=0;l
 
 // --- 材質升級區 ---
 function mat(c,rough=.35,metal=.65,opacity=1){
-  const transparent=opacity<.999;
-  const m=new THREE.MeshStandardMaterial({
-    color:c,roughness:rough,metalness:metal,
-    transparent,opacity,
-    depthWrite:!transparent,
-    side:THREE.DoubleSide
-  });
-  // 半透明科技材質在某些視角容易因背面剔除/深度排序而「消失」。
-  // 讓設備外殼雙面可見，確保旋轉視角時不會突然變透明。
-  return m;
+ // Solid machine shells keep their depth; transparency is reserved for platforms and room glazing.
+ const transparent=opacity<.84;
+ return new THREE.MeshStandardMaterial({color:c,roughness:Math.max(.32,rough),metalness:Math.min(.48,metal),
+  transparent,opacity:transparent?opacity:1,depthWrite:!transparent,side:THREE.DoubleSide});
 }
-function glassMat(c=0x88ccff, op=0.8){
-  return new THREE.MeshPhysicalMaterial({
-    color: c, metalness: 0.2, roughness: 0.1,
-    transmission: 0.9, thickness: 0.5, transparent: true, opacity: op, ior: 1.5
-  });
+function glassMat(c=0x6894ae,op=.7){
+ return new THREE.MeshStandardMaterial({color:c,metalness:.25,roughness:.28,transparent:true,opacity:op,depthWrite:false,side:THREE.DoubleSide});
 }
 function box(w,h,d,c,opacity=1){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,.4,.7,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
 function glowPlate(w,d,c){
  const g=new THREE.Group();
- const core=box(w,.10,d,c,.24);core.material.emissive=new THREE.Color(c);core.material.emissiveIntensity=2.2;g.add(core);
- const halo=box(w*1.10,.035,d*1.10,c,.07);halo.material.emissive=new THREE.Color(c);halo.material.emissiveIntensity=4.0;g.add(halo);
- const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w*1.04,.12,d*1.04)),new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.98}));
- edge.position.y=.10;g.add(edge);edge.material.opacity=.99;
- const inner=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w*.96,.06,d*.96)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.28}));
- inner.position.y=.12;g.add(inner);inner.material.opacity=.42;
+ const core=box(w,.16,d,c,.16);core.material.emissive=new THREE.Color(c);core.material.emissiveIntensity=.45;g.add(core);
+ const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.2,d)),
+  new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.75}));
+ edge.position.y=.05;g.add(edge);
  return g;
 }
 function label(text,color='#8bd8ff'){
  const el=document.createElement('div');el.className='eq-label';el.textContent=text;
- el.style.cssText='--label-color:'+color+';padding:6px 10px;border:1px solid '+color+';border-radius:12px;background:linear-gradient(180deg,rgba(5,23,40,.96),rgba(3,13,25,.88));color:#fff;font-weight:850;font-size:11px;letter-spacing:.12px;white-space:nowrap;box-shadow:0 0 18px '+color+'88, inset 0 0 10px '+color+'44;text-shadow:0 0 7px rgba(255,255,255,.5);backdrop-filter:blur(6px)';
+ el.style.setProperty('--label-color',color);
  return new CSS2DObject(el);
 }
-function rbox(w,h,d,c,opacity=1,r=.18){const m=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,3,r),mat(c,.3,.7,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
-function cyl(radius,depth,c,opacity=1){const m=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,depth,32),mat(c,.2,.8,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
+function rbox(w,h,d,c,opacity=1,r=.18){const m=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,2,r),mat(c,.3,.7,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
+function cyl(radius,depth,c,opacity=1){const m=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,depth,20),mat(c,.2,.8,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
 function panelBox(g,w,h,d,c,x,y,z,opacity=.9){const m=rbox(w,h,d,c,opacity,.12);m.position.set(x,y,z);g.add(m);return m;}
 function pipe(g,a,b,r=.08,c=0xaeb8bc){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),v=B.clone().sub(A),m=cyl(r,v.length(),c,.9);m.position.copy(A.clone().add(B).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());g.add(m);return m;}
-function addMachineBase(g,w,d,c=0x118fff){const p=glowPlate(w,d,c);p.position.y=.04;g.add(p);const edge=box(w+.18,.12,d+.18,0x9deaff,.62);edge.position.y=.12;g.add(edge);const inner=box(Math.max(1,w-.55),.08,Math.max(1,d-.55),c,.22);inner.position.y=.16;inner.material.emissive=new THREE.Color(c);inner.material.emissiveIntensity=1.7;g.add(inner);}
+function addMachineBase(g,w,d,c=0x6bbecb){
+ const plate=glowPlate(w,d,c);plate.position.y=.08;g.add(plate);
+ const plinth=box(w-.22,.26,d-.22,0x273d51,.7);plinth.position.y=.18;g.add(plinth);
+}
 function addFeet(g,w,d){for(const x of [-w*.38,w*.38])for(const z of [-d*.38,d*.38]){const f=box(.32,.42,.32,0x263744,.92);f.position.set(x,.2,z);g.add(f);}}
 
 function detailWasher(g,variant='standard'){
@@ -417,17 +308,17 @@ function detailWasher(g,variant='standard'){
  const top=rbox(s.w-.22,.28,s.d-.25,0xffffff,.99,.10);
  top.position.y=s.h+.52;g.add(top);
 
- const fascia=panelBox(g,s.w-.42,.72,.30,0x294958,0,s.h-.48,-s.d/2-.08,.98);
+ const fascia=panelBox(g,s.w-.42,.72,.30,0x294958,0,s.h-.48,s.d/2+.08,.98);
  fascia.material.emissive=new THREE.Color(s.accent);fascia.material.emissiveIntensity=.3;
- const display=panelBox(g,1.18,.32,.09,0x07131d,-s.w*.23,s.h-.43,-s.d/2-.27,.98);
+ const display=panelBox(g,1.18,.32,.09,0x07131d,-s.w*.23,s.h-.43,s.d/2+.27,.98);
  display.material.emissive=new THREE.Color(0x43d9ff);display.material.emissiveIntensity=2.5;
 
  const dial=cyl(.34,.14,0xc0c8cc,.98);
- dial.rotation.x=Math.PI/2;dial.position.set(s.w*.17,s.h-.43,-s.d/2-.28);g.add(dial);
+ dial.rotation.x=Math.PI/2;dial.position.set(s.w*.17,s.h-.43,s.d/2+.28);g.add(dial);
 
  for(let i=0;i<5;i++){
   const led=box(.10,.10,.08,0x54ddff,.95);
-  led.position.set(-s.w*.05+i*.24,s.h-.43,-s.d/2-.29);
+  led.position.set(-s.w*.05+i*.24,s.h-.43,s.d/2+.29);
   led.material.emissive=new THREE.Color(0x2dcaff);led.material.emissiveIntensity=2.5;
   g.add(led);
  }
@@ -442,7 +333,7 @@ function detailWasher(g,variant='standard'){
  
  // 使用 MeshPhysicalMaterial 製作真實玻璃
  const glass=new THREE.Mesh(new THREE.CircleGeometry(Math.min(s.w,s.d)*.185,48), glassMat());
- glass.position.set(0,2.55,s.d/2+.49);glass.rotation.x=Math.PI/2;g.add(glass);
+ glass.position.set(0,2.55,s.d/2+.49);glass.rotation.x=0;g.add(glass);
 
  for(const y of [2.05,3.05]){
   const bolt=cyl(.08,.10,0xaeb8bc,.98);bolt.rotation.x=Math.PI/2;bolt.position.set(-Math.min(s.w,s.d)*.25,y,s.d/2+.43);g.add(bolt);
@@ -459,17 +350,17 @@ function detailDryer(g){
  const body=rbox(w,h,d,0xdfe5e8,.98,.22);body.position.y=3.25;g.add(body);
  const top=rbox(w-.25,.3,d-.25,0xf7f8f8,.99,.1);top.position.y=6.28;g.add(top);
 
- const fascia=panelBox(g,w-.42,.74,.30,0x314b59,0,5.55,-d/2-.08,.98);
+ const fascia=panelBox(g,w-.42,.74,.30,0x314b59,0,5.55,d/2+.08,.98);
  fascia.material.emissive=new THREE.Color(0x8c4dff);fascia.material.emissiveIntensity=.3;
- panelBox(g,1.15,.30,.10,0x07131d,-1.55,5.55,-d/2-.28,.98);
- const dial=cyl(.34,.14,0xc0c8cc,.98);dial.rotation.x=Math.PI/2;dial.position.set(1.05,5.55,-d/2-.28);g.add(dial);
+ panelBox(g,1.15,.30,.10,0x07131d,-1.55,5.55,d/2+.28,.98);
+ const dial=cyl(.34,.14,0xc0c8cc,.98);dial.rotation.x=Math.PI/2;dial.position.set(1.05,5.55,d/2+.28);g.add(dial);
 
  const outer=cyl(1.78,.24,0x7f8c94,.98);outer.rotation.x=Math.PI/2;outer.position.set(0,3.05,d/2+.13);g.add(outer);
  const trim=cyl(1.56,.25,0xffffff,.99);trim.rotation.x=Math.PI/2;trim.position.set(0,3.05,d/2+.27);g.add(trim);
  const dark=cyl(1.37,.27,0x0a151f,.98);dark.rotation.x=Math.PI/2;dark.position.set(0,3.05,d/2+.39);g.add(dark);
  
  const glass=new THREE.Mesh(new THREE.CircleGeometry(1.12,48), glassMat());
- glass.position.set(0,3.05,d/2+.52);glass.rotation.x=Math.PI/2;g.add(glass);
+ glass.position.set(0,3.05,d/2+.52);glass.rotation.x=0;g.add(glass);
 
  addFeet(g,w,d);
 }
@@ -499,15 +390,15 @@ function detailVertical(g){
  addMachineBase(g,w+.75,d+.75,0x168ed1);
  const body=rbox(w,h,d,0xdce3e6,.98,.22);body.position.y=4.35;g.add(body);
  const top=rbox(w-.25,.3,d-.25,0xf7f8f8,.99,.1);top.position.y=8.62;g.add(top);
- const fascia=panelBox(g,w-.38,.72,.3,0x294958,0,7.95,-d/2-.08,.98);
+ const fascia=panelBox(g,w-.38,.72,.3,0x294958,0,7.95,d/2+.08,.98);
  fascia.material.emissive=new THREE.Color(0x197fc2);fascia.material.emissiveIntensity=.3;
- panelBox(g,1.0,.30,.09,0x07131d,-1.2,7.95,-d/2-.27,.98);
- const dial=cyl(.32,.14,0xc0c8cc,.98);dial.rotation.x=Math.PI/2;dial.position.set(1.05,7.95,-d/2-.28);g.add(dial);
+ panelBox(g,1.0,.30,.09,0x07131d,-1.2,7.95,d/2+.27,.98);
+ const dial=cyl(.32,.14,0xc0c8cc,.98);dial.rotation.x=Math.PI/2;dial.position.set(1.05,7.95,d/2+.28);g.add(dial);
  const outer=cyl(1.48,.22,0x84939b,.98);outer.rotation.x=Math.PI/2;outer.position.set(0,4.45,d/2+.12);g.add(outer);
  const trim=cyl(1.30,.24,0xffffff,.99);trim.rotation.x=Math.PI/2;trim.position.set(0,4.45,d/2+.25);g.add(trim);
  const dark=cyl(1.12,.26,0x0a151f,.98);dark.rotation.x=Math.PI/2;dark.position.set(0,4.45,d/2+.37);g.add(dark);
  const glass=new THREE.Mesh(new THREE.CircleGeometry(.91,44), glassMat());
- glass.position.set(0,4.45,d/2+.49);glass.rotation.x=Math.PI/2;g.add(glass);
+ glass.position.set(0,4.45,d/2+.49);glass.rotation.x=0;g.add(glass);
  panelBox(g,.42,6.9,.62,0x8ca4af,w/2-.15,3.9,d/2-.55,.9);
  addFeet(g,w,d);
 }
@@ -593,20 +484,29 @@ function detailCrane(g){
 }
 
 function detailLine(g,variant='lineN5'){
- const L=16.2,W=6.0,H=3.7;
- addMachineBase(g,L+1.2,W+1.1,0x19bfff);
- panelBox(g,W,H,L,0x1c64a5,0,H/2+.35,0,.94);
- panelBox(g,W+.15,H+.45,2.8,0x2a78ba,-L/2+1.45,H/2+.45,0,.96);
- panelBox(g,W+.15,H+.45,2.8,0x2a78ba,L/2-1.45,H/2+.45,0,.96);
- for(const z of [-L*.33,0,L*.33]) panelBox(g,W-.25,.55,2.5,0x2f87c6,0,2.25,z,.92);
- panelBox(g,W-.2,.25,L-.35,0xcbd5da,0,3.95,0,.84);
- for(let i=0;i<5;i++){const roller=cyl(.42,W-1.0,0xe5eaed,.95);roller.rotation.z=Math.PI/2;roller.position.set(0,2.0,-L/2+2+i*((L-4)/4));g.add(roller);}
- const belt=box(W-.8,.18,L*.9,0x1ca7a0,.95);belt.position.y=1.25;g.add(belt);
- const control=panelBox(g,1.45,1.15,.38,0x1d3544,-W/2-.15,2.4,-L/2+.9,.98);control.material.emissive=new THREE.Color(0x12aaf6);control.material.emissiveIntensity=.25;
- for(const z of [-L*.28,0,L*.28]) pipe(g,[-W*.42,3.1,z],[W*.42,3.1,z],.075,0xaeb8bc);
- addFeet(g,L,W);
+ const length=variant==='lineICC'?20:variant==='lineSMF'?17:16,width=6.3;
+ addMachineBase(g,width+1.5,length+1.5,0x68cbb5);
+ // End housings stay within the long footprint instead of protruding as side wings.
+ for(const z of [-length/2+1.7,length/2-1.7]){
+  panelBox(g,width,3.9,3.1,0x396d9e,0,2.25,z);
+  panelBox(g,width-.25,.3,2.8,0xe0e8ed,0,4.35,z);
+  panelBox(g,width-.5,.12,2.5,0x8099ad,0,4.57,z);
+ }
+ panelBox(g,width-1,.45,length-3,0x283f56,0,1.25,0);
+ panelBox(g,width-.8,.18,length-3.8,0x8795a7,0,1.6,0);
+ for(let i=0;i<7;i++){
+  const z=-length/2+2.6+i*(length-5.2)/6;
+  const roller=cyl(.35,width-.9,0xcdd7df);roller.rotation.z=Math.PI/2;roller.position.set(0,2.4,z);g.add(roller);
+ }
+ for(const x of [-width/2+.25,width/2-.25]){
+  panelBox(g,.25,2.1,length-3.5,0x4d7fa5,x,2.5,0);
+  pipe(g,[x,3.62,-length/2+1.7],[x,3.62,length/2-1.7],.09,0xc4d5df);
+ }
+ panelBox(g,1.4,1.1,.35,0x172d40,-width*.25,3.15,length/2+.02);
+ const display=panelBox(g,.8,.36,.06,0x73c2dc,-width*.25,3.3,length/2+.23);
+ display.material.emissive=new THREE.Color(0x73c2dc);display.material.emissiveIntensity=.6;
+ addFeet(g,width,length);
 }
-
 function detailPacker(g){
  addMachineBase(g,6.8,6.0,0x14c5ff);
  const body=rbox(2.2,4.8,2.2,0xd6dde0,.98,.16);body.position.y=2.8;g.add(body);
@@ -619,18 +519,45 @@ function detailPacker(g){
 }
 
 function detailOffice(g){
- addMachineBase(g,13.5,10.5,0x5d8294);
- panelBox(g,12.2,.55,9.2,0x806247,0,.32,0,.92);
- panelBox(g,11.8,.3,8.8,0xefe3cc,0,5.45,0,.74);
- for(const x of [-4.3,0,4.3]){
-  panelBox(g,2.5,.42,1.45,0x6e503c,x,6.05,-1.2,.94);
-  panelBox(g,.48,.72,.48,0x536773,x,5.95,-2.25,.94);
-  panelBox(g,.48,.72,.48,0x536773,x,5.95,-.15,.94);
-  panelBox(g,1.0,.75,.10,0x6ea9c5,x,6.55,-1.2,.78);
+ const w=13.5,d=10.5;
+ addMachineBase(g,w+.8,d+.8,0xe4c385);
+ panelBox(g,w,.24,d,0xb79b73,0,.42,0);
+ // An open cutaway makes both the ground-floor desks and the upper landing visible.
+ panelBox(g,w*.5,.28,d,0xddc9a4,-w*.25,5.25,0);
+ for(const x of [-w/2,w/2])panelBox(g,.18,5.7,d,0x99bfcc,x,3.2,0,.25);
+ panelBox(g,w,5.7,.18,0x95b9c9,0,3.2,-d/2,.28);
+ for(const x of [-4.4,-1.1,3.7]){
+  panelBox(g,2.1,.2,1.4,0xf0dfbd,x,1.9,1.6);
+  for(const dx of [-.85,.85])panelBox(g,.12,1.35,.12,0x657b86,x+dx,1.12,1.6);
+  panelBox(g,.85,.64,.09,0x31495b,x,2.35,1.6);
+  panelBox(g,.8,.42,.8,0x586e7e,x,1.2,3.1);
+  panelBox(g,.8,1.0,.12,0x586e7e,x,1.7,3.47);
  }
- for(const x of [-5.6,5.6])panelBox(g,.22,5.5,8.3,0x879aa3,x,3.1,0,.36);
+ panelBox(g,3.1,.2,1.5,0xf0dfbd,-3,6.6,-1.9);
+ panelBox(g,1.05,.7,.1,0x31495b,-3,7.05,-1.9);
+ for(let i=0;i<9;i++)panelBox(g,1.45,.52,1.0,0xc6b28e,4.9,.7+i*.52,-3.8+i*.65);
+ for(const z of [-d/2+.2,d/2-.2])pipe(g,[-w/2,6.65,z],[0,6.65,z],.055,0xe4d5b7);
+ for(const x of [-6.5,-3.2,-.1])pipe(g,[x,5.35,d/2-.2],[x,6.65,d/2-.2],.045,0xe4d5b7);
 }
-
+function detailWorktable(g){
+ addMachineBase(g,11,5.4,0xa9bcc8);
+ panelBox(g,10,.26,4.8,0xb7c9d3,0,2.75,0);
+ for(const x of [-4.2,4.2])for(const z of [-1.8,1.8])panelBox(g,.2,2.5,.2,0x6a808d,x,1.4,z);
+ panelBox(g,9.2,.18,4.0,0x5d7785,0,.8,0);
+}
+function detailFan(g){
+ addMachineBase(g,9.3,7,0x71c5d6);
+ for(const x of [-2.2,2.2]){
+  panelBox(g,2.5,.2,1.9,0x627d8f,x,.42,0);
+  pipe(g,[x,.5,0],[x,3.9,0],.14,0xaec5d0);
+  const guard=new THREE.Mesh(new THREE.TorusGeometry(1.45,.10,8,24),mat(0xaec5d0));
+  guard.position.set(x,4.65,0);g.add(guard);
+  for(let i=0;i<4;i++){
+   const blade=box(.55,1.9,.12,0x789ba9);blade.position.set(x,4.65,.03);blade.rotation.z=i*Math.PI/2+.5;g.add(blade);
+  }
+  const hub=new THREE.Mesh(new THREE.SphereGeometry(.32,12,8),mat(0x445e72));hub.position.set(x,4.65,.14);g.add(hub);
+ }
+}
 function detailDryclean(g){
  addMachineBase(g,7.4,6.7,0x15bda0);
  panelBox(g,6.5,5.8,5.8,0xd3dce0,0,2.95,0,.9);
@@ -727,6 +654,8 @@ function model(type){
  else if(type==='shirt') detailShirt(g);
  else if(type==='crane') detailCrane(g);
  else if(type==='office') detailOffice(g);
+ else if(type==='worktable') detailWorktable(g);
+ else if(type==='fan') detailFan(g);
  else if(type==='smf') detailLine(g,'lineSMF');
  else if(type==='dryclean') detailDryclean(g);
  else if(type==='compressor') detailCompressor(g);
@@ -759,7 +688,7 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='模型 V4 · 查檢清單 V5 · 同步 R3｜'+text;
+ if(version)version.textContent='模型 V5 · 查檢清單 V5 · 同步 R3｜'+text;
 }
 function applyEquipmentName(root,name){
  if(typeof name!=='string'||!name.trim())return;
@@ -923,6 +852,7 @@ function boostProceduralModel(g,kind){
   }
 }
 function resolveEquipmentVisual(name,kind){
+ if(name==='L型桌'||name==='長型鐵桌')return 'worktable';
  const normalized=String(name||'').replace(/\s/g,'').toUpperCase();
  if(['30K','60K','80K'].includes(normalized))return 'folding';
  if(normalized==='N5')return 'lineN5';
@@ -938,31 +868,34 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  while(groups.has(id))id='EQ-'+(++uid);
  root.userData={name,type,kind,id,level,status:'正常',visualScale:1,cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,notes:''};
  const visualKind=resolveEquipmentVisual(name,kind);
- const useSprite=attachEquipmentSprite(root,visualKind);
- const m=useSprite?null:model(visualKind);
- if(m){m.position.y=.25;m.scale.setScalar(1.22);boostProceduralModel(m,visualKind);root.add(m);void attachGLB(root,name,visualKind,m);}
-
+ const m=model(visualKind);
+ const visualScale=visualKind==='office'?2.35:visualKind==='worktable'?2.1:visualKind.startsWith('line')?1.85:visualKind==='folding'?1.85:2.15;
+ m.position.y=.25;m.scale.setScalar(visualScale);root.add(m);
+ const bounds=new THREE.Box3().setFromObject(m);
+ const color=visualKind==='office'?'#e4c385':type==='烘乾設備'?'#78dbb6':type==='整燙設備'?'#86b4e1':'#8bc8dd';
+ const l=label(name,color);
+ l.position.set(0,bounds.max.y+2.2,0);root.add(l);
  if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
- syncEquipmentSprite(root);
-
- const plateW=((kind==='icc'||kind==='longPress')?17:kind==='folding'?14.8:kind==='crane'?5:kind==='fan'?7:kind==='office'?13:8)*.88;
- const plateD=((kind==='icc'||kind==='longPress')?7:kind==='folding'?6.9:kind==='crane'?5:kind==='fan'?7:kind==='office'?10:8)*.88;
- const plateColor=type==='洗衣設備'?0x0877d1:type==='烘乾設備'?0x1bd58d:type==='燙床設備'?0x9b63ff:kind==='fan'?0xf18cb9:0x2a79b9;
- const plate=glowPlate(plateW,plateD,plateColor);plate.position.y=.05;root.add(plate);
-
- const color=type==='燙床設備'?'#b879ff':type==='烘乾設備'?'#55e7bb':kind==='fan'?'#ff9ac8':'#45c4ff';
- const labelHeight=kind==='folding'?7.1:(kind==='longPress'||kind==='pressZone'||kind==='icc'||kind==='lineICC'||kind==='lineN5'||kind==='lineIRT'||kind==='lineSMF')?6.4:kind==='crane'?5.5:kind==='office'?6.5:kind==='vertical'?8.8:6.2;const l=label(name,color);l.position.set(0,labelHeight,0);root.add(l);
 
  root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);setEquipmentScale(root,root.userData.visualScale||1);
  root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
  return root;
 }
 instances.forEach(v=>addEquipment(...v));
+for(const raisedId of ['COMP-01','MANG-01']){
+ const root=groups.get(raisedId);if(!root)continue;
+ const b=new THREE.Box3().setFromObject(root),size=b.getSize(new THREE.Vector3());
+ const support=new THREE.Group();support.userData.raisedSupport=true;
+ for(const x of [-size.x*.38,size.x*.38])for(const z of [-size.z*.38,size.z*.38]){
+  const post=box(.45,7,.45,0x7893a8);post.position.set(x,-3.5,z);support.add(post);
+ }
+ root.add(support);
+}
 for(const id of deletedIds){const root=groups.get(id);if(root){scene.remove(root);groups.delete(id);}}
 function enforceKnownLevels(){
  const raised=new Set(['COMP-01','MANG-01']);
  groups.forEach(r=>{
-  if(raised.has(r.userData.id)){r.userData.level='架高二層';r.position.y=7;if(r.userData.id==='COMP-01'){r.position.x=-2;r.position.z=42;}if(r.userData.id==='MANG-01'){r.position.x=32;r.position.z=43;}}
+  if(raised.has(r.userData.id)){r.userData.level='架高二層';r.position.y=7;}
   else {r.userData.level='一樓';r.position.y=0;}
  });
 }
@@ -984,7 +917,7 @@ function frameFactory(){
   const spanZ=Math.max(1,maxZ-minZ);
   const aspect=innerWidth/innerHeight;
   const portrait=aspect<0.82;
-  const fit=Math.max((spanX+28)/(2*aspect),(spanZ*.38+35)/2)*(portrait?1.65:1.35);
+  const fit=Math.max((spanX+46)/(2*aspect),(spanZ*.74+46)/2)*(portrait?1.26:1.16);
   const base=100;
   camera.left=-base*aspect;
   camera.right=base*aspect;
@@ -993,7 +926,7 @@ function frameFactory(){
   camera.near=-1000;
   camera.far=2000;
   camera.zoom=base/fit;
-  const dir=new THREE.Vector3(0,.38,1).normalize();
+  const dir=new THREE.Vector3(0,1.1,1).normalize();
   camera.position.copy(new THREE.Vector3(cx,12,cz).addScaledVector(dir,260));
   controls.target.set(cx,1.6,cz);
   controls.update();
@@ -1027,7 +960,7 @@ function renderPaletteModel(kind){
  if(paletteThumbCache.has(kind))return paletteThumbCache.get(kind);
  try{
    const g=model(kind);
-   boostProceduralModel(g,kind);
+
    const box=new THREE.Box3().setFromObject(g);
    if(box.isEmpty())return '';
    const size=box.getSize(new THREE.Vector3());
@@ -1048,6 +981,7 @@ function renderPaletteModel(kind){
    rr.render(s,cam);
    const data=rr.domElement.toDataURL('image/png');
    paletteThumbCache.set(kind,data);
+   g.traverse(o=>{o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose();});
    return data;
  }catch(err){
    console.warn('palette thumbnail fallback',kind,err);
@@ -1057,12 +991,6 @@ function renderPaletteModel(kind){
 function paletteIcon(kind,name){
  kind=resolveEquipmentVisual(name,kind);
  const icon=document.createElement('div');icon.className='thumb3d equipment-thumb';icon.dataset.kind=kind;
- const spec=spriteSpecs[kind]||((kind==='washer')?spriteSpecs.washer:null);
- if(spec){
-   const img=document.createElement('img');img.src=embeddedImages[spec.file];img.alt='';
-   icon.appendChild(img);
-   return icon;
- }
  const data=renderPaletteModel(kind);
  if(data){
    const img=document.createElement('img');img.src=data;img.alt='';
@@ -1088,6 +1016,7 @@ function addPalette(){
  });
 }
 addPalette();
+if(paletteThumbRenderer){paletteThumbRenderer.dispose();paletteThumbRenderer.forceContextLoss();paletteThumbRenderer=null;}
 
 const ray=new THREE.Raycaster();
 function pointerNDC(e){
