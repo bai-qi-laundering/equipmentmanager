@@ -87,10 +87,38 @@ body.panel-open .equipment-tools{display:none}
 .thumb3d{width:72px;height:42px;filter:none;background:none}
 .item{background:rgba(23,43,64,.8)}
 @media(max-width:700px){.eq-label{font-size:9px!important;padding:3px 5px!important;max-width:125px}.thumb3d{width:64px;height:30px}}
+
+/* V6: detailed equipment artwork, readable names, and compact controls on an open floor. */
+.eq-label{font-size:11px!important;font-weight:700;max-width:180px;padding:4px 8px!important;margin-top:5px;
+ border:1px solid rgba(99,185,239,.6)!important;background:rgba(8,28,49,.95)!important;box-shadow:0 2px 8px #0005!important;white-space:nowrap}
+.eq-label.is-raised::after{content:" · 上層";font-size:9px;color:#a9cfeb}.eq-label.is-selected{border-color:#b9e3ff!important;color:#fff;box-shadow:0 0 12px #62baff55!important}
+.thumb3d{width:80px;height:56px;overflow:visible}
+.item{height:88px;flex:0 0 108px;width:108px;gap:3px;border-radius:10px}
+.palette{height:126px}.items{height:92px}.item span{font-size:12px}
+.side{padding:0;background:none;border:none;box-shadow:none}
+.side button{font-size:12px!important;padding:8px 10px!important}
+.map-tools{gap:5px;padding:6px!important}
+.map-tools button{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;font-size:16px!important;padding:0!important}
+.map-tools span{font-size:11px}
+.reference-actions{gap:5px}
+.reference-actions button,.reference-actions label{font-size:11px!important;padding:8px 10px!important}
+@media(max-width:700px){
+ .eq-label{font-size:10px!important;max-width:165px}
+ .thumb3d{width:78px;height:54px}
+ .palette{height:114px;bottom:max(8px,env(safe-area-inset-bottom))}
+ .items{height:82px}.item{height:80px;flex:0 0 102px;width:102px}
+ .item span{font-size:11px}
+ .side{left:auto!important;right:10px!important;top:132px!important;width:auto!important}
+ .side button{font-size:11px!important;padding:7px 9px!important}
+ .reference-actions{bottom:132px!important;left:auto!important;right:8px!important;transform:none!important}
+ .reference-actions button,.reference-actions label{font-size:10px!important;padding:7px!important}
+ .reference-actions #snapBtn{display:none}
+ .map-tools{bottom:178px!important;left:8px!important;border-radius:12px!important}
+}
 </style>
 </head>
 <body>
-<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">模型 V5 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"></div>
+<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">圖示 V6 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠 3D 設備地圖</div>
   <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
@@ -111,8 +139,58 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {CSS2DRenderer,CSS2DObject} from 'three/addons/renderers/CSS2DRenderer.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
-// V5 renders every equipment model locally; no image sprites or remote GLB downloads.
-function syncEquipmentSprite(root){}
+
+const EQUIPMENT_ART_URL='./assets/equipment-atlas-v6.png';
+const ART_ATLAS_SIZE={w:1536,h:1024};
+const equipmentArtBounds={"folding":{"x":9,"y":40,"w":262,"h":211},"washer-35kg":{"x":321,"y":42,"w":142,"h":197},"washer-50kg":{"x":560,"y":20,"w":164,"h":227},"vertical":{"x":829,"y":13,"w":136,"h":238},"dryer":{"x":1073,"y":21,"w":160,"h":224},"dryclean":{"x":1293,"y":34,"w":233,"h":211},"lineN5":{"x":12,"y":277,"w":243,"h":212},"lineIRT":{"x":261,"y":284,"w":248,"h":203},"lineSMF":{"x":510,"y":275,"w":239,"h":221},"lineICC":{"x":747,"y":282,"w":302,"h":206},"shirt":{"x":1069,"y":258,"w":210,"h":238},"longPress":{"x":1317,"y":265,"w":211,"h":237},"flat":{"x":15,"y":531,"w":238,"h":210},"crane":{"x":266,"y":505,"w":241,"h":231},"compressor":{"x":508,"y":544,"w":237,"h":201},"manganese":{"x":779,"y":523,"w":229,"h":230},"boiler":{"x":1048,"y":497,"w":207,"h":266},"water":{"x":1292,"y":527,"w":230,"h":227},"tank":{"x":36,"y":761,"w":179,"h":239},"packer":{"x":256,"y":768,"w":223,"h":217},"office":{"x":509,"y":755,"w":245,"h":237},"worktable":{"x":776,"y":784,"w":248,"h":202},"fan":{"x":1052,"y":772,"w":224,"h":218},"pressZone":{"x":1293,"y":752,"w":234,"h":247}};
+const artWorldWidths={folding:38,'washer-35kg':20,'washer-50kg':22,vertical:18,dryer:23,dryclean:32,lineN5:38,lineIRT:38,lineSMF:40,lineICC:48,shirt:25,longPress:28,flat:28,crane:24,compressor:28,manganese:27,boiler:23,water:26,tank:22,packer:27,office:40,worktable:34,fan:26,pressZone:38};
+const equipmentArtTextures=new Map(),equipmentArtRoots=new Set();
+let equipmentArtReady=false,equipmentArtFailed=false;
+const equipmentAtlasTexture=new THREE.TextureLoader().load(EQUIPMENT_ART_URL,
+ texture=>{
+  equipmentArtReady=true;
+  for(const t of equipmentArtTextures.values())t.needsUpdate=true;
+  for(const root of equipmentArtRoots){root.userData.pictureSprite.visible=true;root.userData.visualFallback.visible=false;}
+ },
+ undefined,err=>{
+  equipmentArtFailed=true;console.warn('Equipment artwork failed to load',err);
+  toast('機台圖片載入失敗，目前顯示備用模型；請重新開啟網頁');
+ });
+equipmentAtlasTexture.colorSpace=THREE.SRGBColorSpace;
+equipmentAtlasTexture.generateMipmaps=false;equipmentAtlasTexture.minFilter=THREE.LinearFilter;equipmentAtlasTexture.magFilter=THREE.LinearFilter;
+function equipmentArtKind(kind){
+ if(kind==='washer')return 'washer-35kg';
+ if(kind==='icc')return 'lineICC';
+ if(kind==='smf')return 'lineSMF';
+ return kind;
+}
+function equipmentArtTexture(kind){
+ kind=equipmentArtKind(kind);if(equipmentArtTextures.has(kind))return equipmentArtTextures.get(kind);
+ const b=equipmentArtBounds[kind];if(!b)return null;
+ const texture=equipmentAtlasTexture.clone();
+ texture.repeat.set(b.w/ART_ATLAS_SIZE.w,b.h/ART_ATLAS_SIZE.h);
+ texture.offset.set(b.x/ART_ATLAS_SIZE.w,1-(b.y+b.h)/ART_ATLAS_SIZE.h);
+ texture.needsUpdate=true;
+ equipmentArtTextures.set(kind,texture);return texture;
+}
+function attachDetailedEquipmentArt(root,kind,fallback){
+ kind=equipmentArtKind(kind);
+ const bounds=equipmentArtBounds[kind],texture=equipmentArtTexture(kind);if(!bounds||!texture)return false;
+ const material=new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,alphaTest:.12,toneMapped:false,fog:false});
+ const sprite=new THREE.Sprite(material);
+ const width=kind==='folding'?(root.userData.id==='80K-01'?42:root.userData.id==='30K-01'?34:38):artWorldWidths[kind];
+ sprite.center.set(.5,0);sprite.scale.set(width,width*bounds.h/bounds.w,1);sprite.position.y=.25;sprite.renderOrder=12;
+ sprite.userData.root=root;sprite.userData.interactive=true;sprite.visible=equipmentArtReady;
+ root.add(sprite);root.userData.pictureSprite=sprite;root.userData.visualFallback=fallback;root.userData.artWidth=width;
+ fallback.visible=!equipmentArtReady;equipmentArtRoots.add(root);
+ return true;
+}
+function syncEquipmentSprite(root){
+ // Billboard artwork keeps the reference's detailed three-quarter view readable while the map pans/zooms.
+ // The root still owns the saved equipment coordinates and orientation.
+ if(root?.userData?.pictureSprite)root.userData.pictureSprite.visible=equipmentArtReady;
+}
+
 const DELETE_KEY='factory3dDeletedIds';
 const deletedIds=new Set(JSON.parse(localStorage.getItem(DELETE_KEY)||'[]'));
 function saveDeletedIds(){localStorage.setItem(DELETE_KEY,JSON.stringify([...deletedIds]));}
@@ -133,7 +211,40 @@ scene.fog=null;
 const camera=new THREE.OrthographicCamera(-100,100,100,-100,-1000,2000);
 camera.position.set(120,170,190);
 camera.zoom=1;
-const renderer=new THREE.WebGLRenderer({antialias:true});
+
+class EquipmentCanvasRenderer{
+ constructor(){this.domElement=document.createElement('canvas');this.context=this.domElement.getContext('2d');this.shadowMap={enabled:false};this.ratio=1;}
+ setPixelRatio(r){this.ratio=r;}
+ setSize(w,h){this.width=w;this.height=h;this.domElement.width=Math.round(w*this.ratio);this.domElement.height=Math.round(h*this.ratio);this.domElement.style.width=w+'px';this.domElement.style.height=h+'px';}
+ render(scene,camera){
+  const c=this.context,w=this.width,h=this.height;c.setTransform(this.ratio,0,0,this.ratio,0,0);c.clearRect(0,0,w,h);
+  c.fillStyle='#13233b';c.fillRect(0,0,w,h);camera.updateMatrixWorld();
+  const project=v=>{const q=v.clone().project(camera);return {x:(q.x+1)*w/2,y:(1-q.y)*h/2};};
+  const target=controls.target,step=20,span=1000;
+  c.strokeStyle='rgba(131,163,191,.09)';c.lineWidth=.7;
+  for(let i=-span;i<=span;i+=step){
+   const x=Math.round(target.x/step)*step+i,z=Math.round(target.z/step)*step+i;
+   const a=project(new THREE.Vector3(x,-1,target.z-span)),b=project(new THREE.Vector3(x,-1,target.z+span));
+   const d=project(new THREE.Vector3(target.x-span,-1,z)),e=project(new THREE.Vector3(target.x+span,-1,z));
+   c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.moveTo(d.x,d.y);c.lineTo(e.x,e.y);c.stroke();
+  }
+  const sprites=[];
+  scene.traverseVisible(o=>{if(o.isSprite&&o.material.map?.image){const pos=o.getWorldPosition(new THREE.Vector3());sprites.push({o,pos,z:pos.clone().applyMatrix4(camera.matrixWorldInverse).z});}});
+  sprites.sort((a,b)=>a.z-b.z);
+  const unitX=w*camera.zoom/(camera.right-camera.left),unitY=h*camera.zoom/(camera.top-camera.bottom);
+  for(const {o,pos} of sprites){
+   const p=project(pos),scale=o.getWorldScale(new THREE.Vector3()),pw=scale.x*unitX,ph=scale.y*unitY,texture=o.material.map;
+   const sx=texture.offset.x*ART_ATLAS_SIZE.w,sy=(1-texture.offset.y-texture.repeat.y)*ART_ATLAS_SIZE.h;
+   c.drawImage(texture.image,sx,sy,texture.repeat.x*ART_ATLAS_SIZE.w,texture.repeat.y*ART_ATLAS_SIZE.h,p.x-o.center.x*pw,p.y-(1-o.center.y)*ph,pw,ph);
+  }
+ }
+}
+function createEquipmentRenderer(){
+ try{return new THREE.WebGLRenderer({antialias:true});}
+ catch(err){console.warn('Using artwork canvas rendering',err);return new EquipmentCanvasRenderer();}
+}
+
+const renderer=createEquipmentRenderer();
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=false;
@@ -207,9 +318,9 @@ magenta.position.set(48,24,44);
 scene.add(magenta);
 const ambient=new THREE.AmbientLight(0x9bdcff,.3);scene.add(ambient);
 
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(520,520),new THREE.MeshStandardMaterial({color:0x14243c,roughness:.88,metalness:.12}));
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(10000,10000),new THREE.MeshStandardMaterial({color:0x14243c,roughness:.88,metalness:.12}));
 floor.rotation.x=-Math.PI/2;floor.position.y=-1.04;floor.receiveShadow=true;scene.add(floor);
-const grid=new THREE.GridHelper(520,104,0x415371,0x253853);grid.position.y=-1.01;grid.material.transparent=true;grid.material.opacity=.25;scene.add(grid);
+const grid=new THREE.GridHelper(4000,400,0x415371,0x253853);grid.position.y=-1.01;grid.material.transparent=true;grid.material.opacity=.25;scene.add(grid);
 
 const palette=[
  ['30K','洗衣設備','folding','▰'],['60K','洗衣設備','folding','▰'],['80K','洗衣設備','folding','▰'],
@@ -249,7 +360,7 @@ const instances=[
  ['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],
  ['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
 ];
-const MODEL_REVISION='2026-10-03-solid-miniature-v5';
+const MODEL_REVISION='2026-10-03-detailed-equipment-art-v6';
 const API_BASE = 'https://fileserver.tailbb066f.ts.net';
 const SYNC_KEY = 'factory3dPositions_C_STYLE_V2';
 let apiAvailable=false;
@@ -688,7 +799,7 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='模型 V5 · 查檢清單 V5 · 同步 R3｜'+text;
+ if(version)version.textContent='圖示 V6 · 查檢清單 V5 · 同步 R3｜'+text;
 }
 function applyEquipmentName(root,name){
  if(typeof name!=='string'||!name.trim())return;
@@ -871,10 +982,11 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
  const m=model(visualKind);
  const visualScale=visualKind==='office'?2.35:visualKind==='worktable'?2.1:visualKind.startsWith('line')?1.85:visualKind==='folding'?1.85:2.15;
  m.position.y=.25;m.scale.setScalar(visualScale);root.add(m);
+ attachDetailedEquipmentArt(root,visualKind,m);
  const bounds=new THREE.Box3().setFromObject(m);
  const color=visualKind==='office'?'#e4c385':type==='烘乾設備'?'#78dbb6':type==='整燙設備'?'#86b4e1':'#8bc8dd';
  const l=label(name,color);
- l.position.set(0,bounds.max.y+2.2,0);root.add(l);
+ l.position.set(0,-.5,0);l.center.set(.5,0);root.add(l);root.userData.mapLabel=l;if(['COMP-01','MANG-01'].includes(id))l.element.classList.add('is-raised');
  if(kind==='icc'||kind==='lineICC')root.rotation.y=Math.PI/2;
 
  root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);setEquipmentScale(root,root.userData.visualScale||1);
@@ -887,7 +999,7 @@ for(const raisedId of ['COMP-01','MANG-01']){
  const b=new THREE.Box3().setFromObject(root),size=b.getSize(new THREE.Vector3());
  const support=new THREE.Group();support.userData.raisedSupport=true;
  for(const x of [-size.x*.38,size.x*.38])for(const z of [-size.z*.38,size.z*.38]){
-  const post=box(.45,16,.45,0x7893a8);post.position.set(x,-8,z);support.add(post);
+  const post=box(.45,36,.45,0x7893a8);post.position.set(x,-18,z);support.add(post);
  }
  root.add(support);
 }
@@ -895,14 +1007,14 @@ for(const id of deletedIds){const root=groups.get(id);if(root){scene.remove(root
 function enforceKnownLevels(){
  const raised=new Set(['COMP-01','MANG-01']);
  groups.forEach(r=>{
-  if(raised.has(r.userData.id)){r.userData.level='架高二層';r.position.y=16;}
+  if(raised.has(r.userData.id)){r.userData.level='架高二層';r.position.y=36;}
   else {r.userData.level='一樓';r.position.y=0;}
  });
 }
 restoreSavedPositions();
 enforceKnownLevels();
 
-function frameFactory(){
+function frameFactory(overview=false){
   if(!groups.size)return;
   let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
   groups.forEach(r=>{
@@ -917,7 +1029,7 @@ function frameFactory(){
   const spanZ=Math.max(1,maxZ-minZ);
   const aspect=innerWidth/innerHeight;
   const portrait=aspect<0.82;
-  const fit=Math.max((spanX+46)/(2*aspect),(spanZ*.74+46)/2)*(portrait?1.26:1.16);
+  const fit=Math.max((spanX+58)/(2*aspect),(spanZ*.89+64)/2)*(portrait?1.08:1.08);
   const base=100;
   camera.left=-base*aspect;
   camera.right=base*aspect;
@@ -925,8 +1037,8 @@ function frameFactory(){
   camera.bottom=-base;
   camera.near=-1000;
   camera.far=2000;
-  camera.zoom=base/fit;
-  const dir=new THREE.Vector3(0,1.1,1).normalize();
+  camera.zoom=base/fit*(overview?1:(portrait?1.4:1.15));
+  const dir=new THREE.Vector3(0,1.9,1).normalize();
   camera.position.copy(new THREE.Vector3(cx,12,cz).addScaledVector(dir,260));
   controls.target.set(cx,1.6,cz);
   controls.update();
@@ -989,15 +1101,19 @@ function renderPaletteModel(kind){
  }
 }
 function paletteIcon(kind,name){
- kind=resolveEquipmentVisual(name,kind);
- const icon=document.createElement('div');icon.className='thumb3d equipment-thumb';icon.dataset.kind=kind;
- const data=renderPaletteModel(kind);
- if(data){
-   const img=document.createElement('img');img.src=data;img.alt='';
-   icon.appendChild(img);
+ kind=equipmentArtKind(resolveEquipmentVisual(name,kind));
+ const icon=document.createElement('div');icon.className='thumb3d equipment-thumb';icon.dataset.kind=kind;icon.setAttribute('aria-hidden','true');
+ const b=equipmentArtBounds[kind];
+ if(b){
+  const scale=Math.min(78/b.w,54/b.h);
+  const crop=document.createElement('div');crop.className='equipment-art-crop';
+  crop.style.cssText='position:relative;overflow:hidden;width:'+b.w*scale+'px;height:'+b.h*scale+'px';
+  const image=document.createElement('img');image.src=EQUIPMENT_ART_URL;image.alt='';image.draggable=false;
+  image.style.cssText='position:absolute;max-width:none;width:'+ART_ATLAS_SIZE.w*scale+'px;height:'+ART_ATLAS_SIZE.h*scale+'px;left:'+(-b.x*scale)+'px;top:'+(-b.y*scale)+'px;object-fit:fill;filter:none';
+  crop.appendChild(image);icon.appendChild(crop);
  }else{
-   // 最後保底只顯示簡單符號；正常情況不會走到這裡。
-   icon.textContent='◆';
+  const data=renderPaletteModel(kind);
+  if(data){const img=document.createElement('img');img.src=data;img.alt='';icon.appendChild(img);}
  }
  return icon;
 }
@@ -1039,7 +1155,7 @@ function groundPoint(e,yLevel=0){
  const plane=new THREE.Plane(new THREE.Vector3(0,1,0),-yLevel),out=new THREE.Vector3();
  return ray.ray.intersectPlane(plane,out)?out:null;
 }
-function select(root){selected=root;if(root)openPanel(root);else closePanel();syncQuickRotate?.();syncEquipmentTools();}
+function select(root){selected=root;groups.forEach(r=>r.userData.mapLabel?.element.classList.toggle('is-selected',r===root));if(root)openPanel(root);else closePanel();syncQuickRotate?.();syncEquipmentTools();}
 function setPanelEditable(canEdit){['eqScale','scaleDownBtn','scaleUpBtn','deleteEqBtn','eqName','eqCommissionedDate','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn','rotateLeftBtn','rotateRightBtn','resetRotationBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!canEdit;});}
 function openPanel(r){document.body.classList.add('panel-open');document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqCommissionedDate').value=r.userData.commissionedDate||'';document.getElementById('eqCommissionedDate').max=taipeiToday();document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setEquipmentScale(r,r.userData.visualScale||1);setPanelEditable(edit);document.getElementById('panel').classList.add('open');renderInspectionMini(r);refreshEquipmentDates();renderNasReadDetails();}
 function closePanel(){document.getElementById('panel').classList.remove('open');document.body.classList.remove('panel-open');}
@@ -1131,7 +1247,7 @@ document.getElementById('mapZoomIn').onclick=()=>zoomMap(1.25);
 document.getElementById('mapZoomOut').onclick=()=>zoomMap(1/1.25);
 document.getElementById('mapTurnLeft').onclick=()=>turnMap(-Math.PI/8);
 document.getElementById('mapTurnRight').onclick=()=>turnMap(Math.PI/8);
-document.getElementById('mapHome').onclick=()=>{mapInteracted=true;frameFactory();};
+document.getElementById('mapHome').onclick=()=>{mapInteracted=true;frameFactory(true);};
 const touchPointers=new Map();
 let touchPress=null,touchTimer=null,touchMetrics=null,touchHadMultiple=false;
 function clearTouchTimer(){if(touchTimer!==null){clearTimeout(touchTimer);touchTimer=null;}}
@@ -1354,6 +1470,7 @@ function resize(){
 addEventListener('resize',resize);
 function animate(){
  requestAnimationFrame(animate);controls.update();
+ floor.position.x=Math.round(controls.target.x/10)*10;floor.position.z=Math.round(controls.target.z/10)*10;grid.position.x=floor.position.x;grid.position.z=floor.position.z;
  groups.forEach(syncEquipmentSprite);syncEquipmentTools();
  renderer.render(scene,camera);labels.render(scene,camera);
 }
