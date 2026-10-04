@@ -136,10 +136,14 @@ body.panel-open .equipment-tools{display:none}
 #categoryDrawer header{display:flex;align-items:center;justify-content:space-between;gap:12px}#categoryTitle{font-size:18px;margin:0}#categoryRows{overflow-y:auto;margin-top:12px}.category-row{display:flex;flex-direction:column;gap:6px;text-align:left;width:100%;margin:0 0 8px;min-height:66px}.category-row span{font-size:12px;color:#acbccb}.items{min-width:0!important;overflow-x:auto!important}.palette .item{flex-shrink:0}.reference-actions,.quick-rotate,.equipment-tools{display:none!important}.hint{display:none!important}.map-tools{bottom:125px!important}.top .mode{margin-left:auto}.panel{max-height:calc(100dvh - 100px)}
 @media(max-width:1024px){#categoryDrawer{bottom:105px}.map-tools{bottom:108px!important}.touch-help{top:98px!important;font-size:10px}.panel.open{height:52dvh!important}body.panel-open .map-tools{display:none!important}}
 
+
+.eq-label{background:#eef1f3f2!important;color:#15305d!important;border:1px solid #8395a5!important;border-radius:2px!important;padding:2px 4px!important;font-size:10px!important;font-weight:700!important;box-shadow:0 1px 3px #0003!important;max-width:108px!important;line-height:1.1!important}
+.eq-label.is-raised::after{content:""}.eq-label.is-selected{background:#d9edff!important;color:#103564!important}
+@media(max-width:700px){.eq-label{font-size:8px!important;padding:2px 3px!important;max-width:84px!important}}
 </style>
 </head>
 <body>
-<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">固定地圖 V9 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"></div>
+<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">立體地圖 V10 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠 3D 設備地圖</div>
   <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>折疊設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
@@ -151,7 +155,7 @@ body.panel-open .equipment-tools{display:none}
 <div class="palette"><h3>設備分類 · 點選分類查看機台</h3><div class="items" id="items"></div></div>
 <div class="map-tools" aria-label="地圖操作"><span>地圖</span><button id="mapZoomOut" aria-label="縮小地圖">－</button><button id="mapZoomIn" aria-label="放大地圖">＋</button><button id="mapTurnLeft" aria-label="地圖向左轉">↶</button><button id="mapTurnRight" aria-label="地圖向右轉">↷</button><button id="mapHome">全圖</button></div>
 
-<div class="touch-help">單指移動 · 雙指縮放／旋轉 · 點設備查看資料</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><button id="resetRotationBtn" style="width:100%;margin-top:8px">⟳ 重設方向</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="inspectionMini"><button id="inspectionMachineEntry">開啟此機台查檢清單</button></div></div>
+<div class="touch-help">單指移動 · 雙指縮放／旋轉 · 點設備查看資料</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="inspectionMini"><button id="inspectionMachineEntry">開啟此機台查檢清單</button></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <button id="inspectionEntry">✓ 查檢清單</button><section id="inspectionOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="inspectionTitle"><header class="ins-header"><button id="inspectionBack">返回地圖</button><h2 id="inspectionTitle">設備查檢清單</h2><button id="inspectionSettingsBtn">設定／備份</button></header><div class="ins-sync">查檢紀錄：此裝置儲存 · NAS 共用紀錄與手機自動通知尚未串接</div><main id="inspectionContent"></main><footer id="inspectionSaveBar" hidden><b id="inspectionProgress">已查檢 0 項</b><button id="inspectionSubmit" class="ins-primary">確認送出查檢</button></footer></section>
 <section id="categoryDrawer" hidden role="dialog" aria-labelledby="categoryTitle"><header><h2 id="categoryTitle">設備清單</h2><button id="categoryClose" aria-label="關閉設備清單">×</button></header><div id="categoryRows"></div></section>
@@ -232,6 +236,17 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.12; 
 app.appendChild(renderer.domElement);
 
+if(renderer.isWebGLRenderer){
+ const faces=[];
+ for(let i=0;i<6;i++){
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const c=canvas.getContext('2d');
+  const gradient=c.createLinearGradient(0,0,0,128);gradient.addColorStop(0,'#d6dde6');gradient.addColorStop(.4,'#a8b2c0');gradient.addColorStop(1,'#535b67');c.fillStyle=gradient;c.fillRect(0,0,128,128);
+  c.fillStyle='#f9f3e7';if(i===2){c.fillRect(12,8,22,112);c.fillRect(74,8,22,112);}else if(i!==3){c.fillRect(12,12,104,9);c.fillRect(19,42,13,55);c.fillRect(85,30,13,65);}
+  faces.push(canvas);
+ }
+ const cube=new THREE.CubeTexture(faces);cube.colorSpace=THREE.SRGBColorSpace;cube.needsUpdate=true;
+ const pmrem=new THREE.PMREMGenerator(renderer);const filtered=pmrem.fromCubemap(cube);scene.environment=filtered.texture;scene.environmentIntensity=.85;cube.dispose();pmrem.dispose();
+}
 const labels=new CSS2DRenderer();
 labels.setSize(innerWidth,innerHeight);
 labels.domElement.style.position='absolute';
@@ -259,10 +274,10 @@ controls.maxDistance=600;
 controls.target.set(7,0,0);
 
 // One shared floor texture, contact shadows; no real-time shadow-map passes.
-scene.add(new THREE.HemisphereLight(0xd7e8ff,0x172331,1.4));
-const key=new THREE.DirectionalLight(0xfff4e6,3.2);key.position.set(-40,100,70);scene.add(key);
+scene.add(new THREE.HemisphereLight(0xe9eff9,0x505054,1.4));
+const key=new THREE.DirectionalLight(0xfff6ec,2.3);key.position.set(-40,100,70);scene.add(key);
 // One cached 512px mobile shadow map; no postprocessing or animation loop.
-key.castShadow=true;key.shadow.mapSize.set(innerWidth<1025?512:1024,innerWidth<1025?512:1024);
+key.castShadow=true;key.shadow.mapSize.set(innerWidth<1025?1024:2048,innerWidth<1025?1024:2048);
 key.shadow.bias=-.0005;key.shadow.normalBias=.4;
 renderer.shadowMap.enabled=renderer.isWebGLRenderer===true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;
 let miniatureShadowDirty=true;scene.add(key.target);
@@ -275,19 +290,19 @@ function updateMiniatureShadows(){
 }
 const fill=new THREE.DirectionalLight(0xacc9ef,.8);fill.position.set(50,40,-60);scene.add(fill);
 const tile=document.createElement('canvas');tile.width=tile.height=128;
-const tc=tile.getContext('2d');tc.fillStyle='#555b61';tc.fillRect(0,0,128,128);
+const tc=tile.getContext('2d');tc.fillStyle='#484b50';tc.fillRect(0,0,128,128);
 tc.strokeStyle='#41474e';tc.lineWidth=1;tc.strokeRect(.5,.5,127,127);
-let noiseSeed=17;for(let i=0;i<1800;i++){noiseSeed=(noiseSeed*1664525+1013904223)>>>0;const x=noiseSeed%128;noiseSeed=(noiseSeed*1664525+1013904223)>>>0;const y=noiseSeed%128;tc.fillStyle=i%2?'#ffffff08':'#0000000a';tc.fillRect(x,y,1,1);}
+let noiseSeed=17;for(let i=0;i<1800;i++){noiseSeed=(noiseSeed*1664525+1013904223)>>>0;const x=noiseSeed%128;noiseSeed=(noiseSeed*1664525+1013904223)>>>0;const y=noiseSeed%128;tc.fillStyle=i%2?'#ffffff03':'#00000003';tc.fillRect(x,y,1,1);}
 const floorTexture=new THREE.CanvasTexture(tile);floorTexture.colorSpace=THREE.SRGBColorSpace;
-floorTexture.wrapS=floorTexture.wrapT=THREE.RepeatWrapping;floorTexture.repeat.set(625,625);
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(10000,10000),new THREE.MeshStandardMaterial({map:floorTexture,color:0xffffff,roughness:.78,metalness:.08}));
+floorTexture.anisotropy=renderer.isWebGLRenderer?Math.min(4,renderer.capabilities.getMaxAnisotropy()):1;floorTexture.wrapS=floorTexture.wrapT=THREE.RepeatWrapping;floorTexture.repeat.set(625,625);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(10000,10000),new THREE.MeshStandardMaterial({map:floorTexture,color:0xc7c7c7,roughness:.48,metalness:.16}));
 floor.receiveShadow=true;floor.rotation.x=-Math.PI/2;floor.position.y=-.06;scene.add(floor);
 const grid=new THREE.Group();scene.add(grid);
 const shadowCanvas=document.createElement('canvas');shadowCanvas.width=shadowCanvas.height=64;
 const sc=shadowCanvas.getContext('2d'),sg=sc.createRadialGradient(32,32,5,32,32,32);
 sg.addColorStop(0,'rgba(0,0,0,.55)');sg.addColorStop(.55,'rgba(0,0,0,.30)');sg.addColorStop(1,'rgba(0,0,0,0)');
 sc.fillStyle=sg;sc.fillRect(0,0,64,64);
-const contactMaterial=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shadowCanvas),transparent:true,depthWrite:false,opacity:.8});
+const contactMaterial=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shadowCanvas),transparent:true,depthWrite:false,opacity:.64});
 const contactGeometry=new THREE.PlaneGeometry(1,1);
 
 const palette=[
@@ -297,7 +312,7 @@ const palette=[
  ['襯衫機','整燙設備','shirt','▣'],['壓板機','整燙設備','longPress','▤'],['ICC','整燙設備','lineICC','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯'],['打包機','周邊設備','packer','▣']
 ];
 const instances=[["不鏽鋼工作台 1", "周邊設備", "worktable", -185, 0, -226, "一樓", "DESK-01", 1.57079632679, 32], ["打包機 1", "周邊設備", "packer", -150, 0, -226, "一樓", "PACK-01", 0, 18], ["不鏽鋼工作台 2", "周邊設備", "worktable", -108, 0, -226, "一樓", "DESK-02", 0, 38], ["打包機 2", "周邊設備", "packer", -185, 0, -187, "一樓", "PACK-02", 0, 18], ["60K", "折疊設備", "folding", -185, 0, -130, "一樓", "60K-01", 1.57079632679, 46], ["80K", "折疊設備", "folding", -185, 0, -64, "一樓", "80K-01", 1.57079632679, 46], ["30K", "折疊設備", "folding", -185, 0, -10, "一樓", "30K-01", 0, 46], ["廁所 1", "周邊設備", "toilet", -185, 0, 45, "一樓", "WC-01", 0, 32], ["廁所 2", "周邊設備", "toilet", -185, 0, 92, "一樓", "WC-02", 0, 32], ["SMF", "燙床設備", "lineSMF", -195, 0, 151, "一樓", "SMF-01", 0, 48], ["ICC", "燙床設備", "lineICC", -132, 0, 151, "一樓", "ICC-01", 0, 50], ["襯衫機", "整燙設備", "shirt", -75, 0, -167, "一樓", "SHIRT-01", 0, 26], ["壓板機", "整燙設備", "longPress", -75, 0, -104, "一樓", "EQ-1", 0, 29], ["整燙區", "整燙設備", "pressZone", -75, 0, -39, "一樓", "FINISH-01", 0, 44], ["冷風區", "周邊設備", "fan", -75, 0, 76, "一樓", "FAN-01", 0, 23], ["空壓機", "周邊設備", "compressor", -75, 36, 76, "架高二層", "COMP-01", 0, 29], ["洗衣機", "洗衣設備", "washer", 0, 0, -228, "一樓", "WASH-EXTRA-01", 0, 23], ["N5", "燙床設備", "lineN5", 0, 0, -125, "一樓", "N5-01", 1.57079632679, 72], ["IRT", "燙床設備", "lineIRT", 0, 0, -53, "一樓", "IRT-01", 1.57079632679, 72], ["35kg", "洗衣設備", "washer", 167, 0, -216, "一樓", "W35-01", 0, 21], ["50kg", "洗衣設備", "washer", 196, 0, -216, "一樓", "W50-01", 0, 23], ["兩層辦公室", "周邊設備", "office", 182, 0, -159, "一樓", "OFFICE-01", 0, 59], ["直式洗衣機 #8", "洗衣設備", "vertical", 193, 0, -101, "一樓", "VERT-01", 0, 24], ["直式洗衣機 #7", "洗衣設備", "vertical", 193, 0, -60, "一樓", "VERT-02", 0, 24], ["直式洗衣機 #6", "洗衣設備", "vertical", 193, 0, -19, "一樓", "VERT-03", 0, 24], ["直式洗衣機 #5", "洗衣設備", "vertical", 193, 0, 22, "一樓", "VERT-05", 0, 24], ["直式洗衣機 #3", "洗衣設備", "vertical", 193, 0, 63, "一樓", "VERT-06", 0, 24], ["直式洗衣機 #2", "洗衣設備", "vertical", 193, 0, 104, "一樓", "VERT-07", 0, 24], ["直式洗衣機 #1", "洗衣設備", "vertical", 193, 0, 145, "一樓", "VERT-08", 0, 24], ["烘乾機 #3", "烘乾設備", "dryer", 62, 0, 101, "一樓", "DRY-03", 0, 26], ["烘乾機 #5", "烘乾設備", "dryer", 91, 0, 101, "一樓", "DRY-02", 0, 26], ["烘乾機 #6", "烘乾設備", "dryer", 120, 0, 101, "一樓", "DRY-01", 0, 26], ["烘乾機（L 型 後段）", "烘乾設備", "dryer", 62, 0, 144, "一樓", "DRY-04", 0, 26], ["烘乾機（L 型 末段）", "烘乾設備", "dryer", 62, 0, 187, "一樓", "DRY-05", 0, 26], ["猛沙過濾設備", "周邊設備", "manganese", 91, 36, 92, "架高二層", "MANG-01", 0, 47], ["天車 #1", "周邊設備", "crane", 59, 76, 73, "架高二層", "CRANE-01", 0, 25], ["天車 #2", "周邊設備", "crane", 123, 76, 73, "架高二層", "CRANE-02", 0, 25], ["鍋爐", "周邊設備", "boiler", 132, 0, 164, "一樓", "BOILER-01", 0, 33], ["水設備", "周邊設備", "water", -124, 0, 281, "一樓", "WATER-01", 0, 43], ["水塔", "周邊設備", "tank", -70, 0, 281, "一樓", "TANK-01", 0, 28]];
-const MODEL_REVISION='2026-10-04-fixed-factory-v9';
+const MODEL_REVISION='2026-10-04-miniature-factory-v10';
 const API_BASE = 'https://fileserver.tailbb066f.ts.net';
 const SYNC_KEY = 'factory3dPositions_C_STYLE_V2';
 let apiAvailable=false;
@@ -308,7 +323,7 @@ const groups=new Map();let selected=null;let edit=true;let snap=true;let uid=0;l
 function mat(c,rough=.35,metal=.65,opacity=1){
  // Solid machine shells keep their depth; transparency is reserved for platforms and room glazing.
  const transparent=opacity<.84;
- return new THREE.MeshStandardMaterial({color:c,roughness:Math.max(.32,rough),metalness:Math.min(.48,metal),
+ return new THREE.MeshStandardMaterial({color:c,roughness:Math.max(.20,rough),metalness:metal,
   transparent,opacity:transparent?opacity:1,depthWrite:!transparent,side:THREE.DoubleSide});
 }
 function glassMat(c=0x6894ae,op=.7){
@@ -327,119 +342,80 @@ function label(text,color='#8bd8ff'){
  el.style.setProperty('--label-color',color);
  return new CSS2DObject(el);
 }
-function rbox(w,h,d,c,opacity=1,r=.18){const m=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,1,r),mat(c,.3,.7,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
+function rbox(w,h,d,c,opacity=1,r=.18){const m=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,1,Math.min(r,Math.min(w,h,d)*.45)),mat(c,.24,.78,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
 function cyl(radius,depth,c,opacity=1){const m=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,depth,16),mat(c,.2,.8,opacity));m.castShadow=true;m.receiveShadow=true;return m;}
 function panelBox(g,w,h,d,c,x,y,z,opacity=.9){const m=rbox(w,h,d,c,opacity,.12);m.position.set(x,y,z);g.add(m);return m;}
 function pipe(g,a,b,r=.08,c=0xaeb8bc){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),v=B.clone().sub(A),m=cyl(r,v.length(),c,.9);m.position.copy(A.clone().add(B).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());g.add(m);return m;}
 function addMachineBase(g,w,d,c){ /* Grounded geometry; no individual border plates. */ }
 function addFeet(g,w,d){for(const x of [-w*.38,w*.38])for(const z of [-d*.38,d*.38]){const f=box(.32,.42,.32,0x263744,.92);f.position.set(x,.2,z);g.add(f);}}
 
+
+function torus(g,r,t,x,y,z,color=0xd5d9dc){const m=new THREE.Mesh(new THREE.TorusGeometry(r,t,8,32),mat(color,.23,.85));m.position.set(x,y,z);g.add(m);return m;}
+function screw(g,x,y,z){const m=cyl(.055,.045,0xc4c7cc);m.rotation.x=Math.PI/2;m.position.set(x,y,z);g.add(m);}
+function controlPanel(g,x,y,z,w=1.15){panelBox(g,w,.9,.1,0x333a40,x,y,z);panelBox(g,w*.6,.43,.035,0x091722,x-.1,y+.1,z+.07);for(let i=0;i<3;i++){const b=cyl(.07,.035,[0x38a879,0xe7b439,0xc23531][i]);b.rotation.x=Math.PI/2;b.position.set(x-w*.32+i*w*.28,y-.28,z+.07);g.add(b);}}
+function seam(g,x,y,z,w,h){panelBox(g,w,h,.018,0x45505b,x,y,z);}
+function steelRail(g,a,b,r=.065){return pipe(g,a,b,r,0xc3c7ce);}
+function signalTower(g,x,y,z){steelRail(g,[x,y,z],[x,y+.8,z]);for(let i=0;i<3;i++){const light=cyl(.14,.22,[0x239b69,0xe8b027,0xcf302b][i]);light.position.set(x,y+.9+i*.24,z);g.add(light);}}
+function vessel(g,x,y,z,r,h,color){const body=cyl(r,h,color);body.position.set(x,y+h/2,z);g.add(body);for(const top of [false,true]){const cap=new THREE.Mesh(new THREE.SphereGeometry(r,20,10,0,Math.PI*2,0,Math.PI/2),mat(color,.24,.78));cap.scale.y=.5;cap.rotation.x=top?0:Math.PI;cap.position.set(x,top?y+h:y,z);g.add(cap);}return body;}
 function machineDoor(g,r,y,z,c){
- for(const [radius,depth,color,dz] of [[r,.20,0x7f909b,.15],[r*.90,.24,0xe1e7ea,.3],[r*.79,.25,c,.45]]){
-  const door=cyl(radius,depth,color);door.rotation.x=Math.PI/2;door.position.set(0,y,z+dz);g.add(door);
- }
- const reflection=panelBox(g,r*.8,.12,.03,0x466070,-r*.15,y+r*.35,z+.59);
- panelBox(g,.18,r*.65,.24,0xbbc8d1,r*.88,y,z+.46);
+ const recess=cyl(r*.96,.12,0x111418);recess.rotation.x=Math.PI/2;recess.position.set(0,y,z+.05);g.add(recess);
+ torus(g,r,.13,0,y,z+.22,0xb9bcc0);torus(g,r*.88,.075,0,y,z+.28,0xf0f0ed);torus(g,r*.78,.055,0,y,z+.3,0x171b20);
+ const glass=new THREE.Mesh(new THREE.CircleGeometry(r*.77,32),new THREE.MeshStandardMaterial({color:c,roughness:.16,metalness:.3}));glass.position.set(0,y,z+.23);g.add(glass);
+ const inner=cyl(r*.47,.06,0x242b31);inner.rotation.x=Math.PI/2;inner.position.set(0,y-.14,z+.24);g.add(inner);
+ panelBox(g,r*.78,.055,.015,0x607181,-r*.16,y+r*.4,z+.25);
+ panelBox(g,.16,r*.7,.22,0xc8c9c6,r*.98,y,z+.25);
+ const hinge=panelBox(g,.25,.32,.17,0xb8bec2,-r*1.02,y,z+.15);
 }
 
 function detailWasher(g,variant='standard'){
- const specs={
-  '30K':{w:5.9,d:5.4,h:5.2,accent:0x197fc2},
-  '60K':{w:6.5,d:5.8,h:5.7,accent:0x197fc2},
-  '80K':{w:7.1,d:6.2,h:6.0,accent:0x197fc2},
-  '35kg':{w:5.4,d:5.2,h:5.0,accent:0x197fc2},
-  '50kg':{w:5.8,d:5.5,h:5.35,accent:0x197fc2},
-  'standard':{w:6.4,d:5.6,h:5.5,accent:0x197fc2}
- };
- const s=specs[variant]||specs.standard;
- addMachineBase(g,s.w+1,s.d+1,s.accent);
- const body=rbox(s.w,s.h,s.d,0xeef3f5,.98,.22); // 更純白的金屬漆
- body.position.y=s.h/2+.35;g.add(body);
- const lower=panelBox(g,s.w-.38,.42,s.d-.34,0x95a2ab,0,.62,0,.98); // 銀灰底座
- lower.material.emissive=new THREE.Color(0x24495e);lower.material.emissiveIntensity=.12;
- const top=rbox(s.w-.22,.28,s.d-.25,0xffffff,.99,.10);
- top.position.y=s.h+.52;g.add(top);
-
- const fascia=panelBox(g,s.w-.42,.72,.30,0x294958,0,s.h-.48,s.d/2+.08,.98);
- fascia.material.emissive=new THREE.Color(s.accent);fascia.material.emissiveIntensity=.3;
- const display=panelBox(g,1.18,.32,.09,0x07131d,-s.w*.23,s.h-.43,s.d/2+.27,.98);
- display.material.emissive=new THREE.Color(0x43d9ff);display.material.emissiveIntensity=2.5;
-
- const dial=cyl(.34,.14,0xc0c8cc,.98);
- dial.rotation.x=Math.PI/2;dial.position.set(s.w*.17,s.h-.43,s.d/2+.28);g.add(dial);
-
- for(let i=0;i<5;i++){
-  const led=box(.10,.10,.08,0x54ddff,.95);
-  led.position.set(-s.w*.05+i*.24,s.h-.43,s.d/2+.29);
-  led.material.emissive=new THREE.Color(0x2dcaff);led.material.emissiveIntensity=2.5;
-  g.add(led);
- }
-
- // --- 高級透明玻璃艙門 ---
- const outer=cyl(Math.min(s.w,s.d)*.285,.22,0x7c8a93,.98);
- outer.rotation.x=Math.PI/2;outer.position.set(0,2.55,s.d/2+.12);g.add(outer);
- const trim=cyl(Math.min(s.w,s.d)*.255,.24,0xffffff,.99); // 高光白鐵
- trim.rotation.x=Math.PI/2;trim.position.set(0,2.55,s.d/2+.24);g.add(trim);
- const black=cyl(Math.min(s.w,s.d)*.222,.26,0x0a151f,.98);
- black.rotation.x=Math.PI/2;black.position.set(0,2.55,s.d/2+.36);g.add(black);
- 
- // 使用 MeshPhysicalMaterial 製作真實玻璃
- const glass=new THREE.Mesh(new THREE.CircleGeometry(Math.min(s.w,s.d)*.185,48), glassMat());
- glass.position.set(0,2.55,s.d/2+.49);glass.rotation.x=0;g.add(glass);
-
- for(const y of [2.05,3.05]){
-  const bolt=cyl(.08,.10,0xaeb8bc,.98);bolt.rotation.x=Math.PI/2;bolt.position.set(-Math.min(s.w,s.d)*.25,y,s.d/2+.43);g.add(bolt);
- }
- const handle=box(.16,.72,.16,0xaeb8bc,.98);
- handle.position.set(Math.min(s.w,s.d)*.25,2.55,s.d/2+.43);g.add(handle);
-
- addFeet(g,s.w,s.d);
+ const w=variant==='50kg'?6.0:5.6,d=5.3,h=7.4;
+ panelBox(g,w,h,d,0xbec4ca,0,h/2+.25,0);
+ panelBox(g,w-.18,h-.12,.12,0xd6d9dc,0,h/2+.25,d/2+.08);
+ panelBox(g,w-.15,1.65,.14,0xe0e1df,0,h-.58,d/2+.17);
+ seam(g,0,h-1.5,d/2+.26,w-.2,.04);controlPanel(g,w*.23,h-.45,d/2+.27,1.35);
+ panelBox(g,1.25,.3,.02,0x777b7c,-w*.24,h-.35,d/2+.27);
+ machineDoor(g,w*.315,3.4,d/2+.19,0x141a21);
+ panelBox(g,w-.28,.38,.2,0x79848c,0,.42,d/2+.18);
+ panelBox(g,w-.2,.17,d-.2,0xf0f0ec,0,h+.36,0);
+ for(const x of [-w*.44,w*.44])for(const y of [1,6.1])screw(g,x,y,d/2+.28);
+ addFeet(g,w,d);
 }
 
 function detailDryer(g){
- const w=7,d=6,h=9;
- panelBox(g,w,h,d,0x079fd0,0,h/2+.3,0);
- panelBox(g,w-.2,1.1,d+.12,0x0785b7,0,h-.25,0);
- panelBox(g,2.0,1,.18,0x627784,1.8,7.55,d/2+.15);
- panelBox(g,.65,.4,.08,0x153247,1.45,7.65,d/2+.28);
- for(let i=0;i<3;i++)panelBox(g,.13,.13,.08,[0xeec63b,0xe7584c,0x344452][i],2.0+i*.25,7.6,d/2+.3);
- machineDoor(g,2.15,4.7,d/2,0x101f2a);
- panelBox(g,w-.6,.25,.15,0xb4c1c7,0,1.75,d/2+.2);
- panelBox(g,3.8,1.1,.18,0xb6c3c9,0,.95,d/2+.18);addFeet(g,w,d);
+ const w=7,d=6,h=10;
+ panelBox(g,w,h,d,0x00a1cb,0,h/2+.3,0);
+ panelBox(g,w-.18,1.3,d-.05,0x0083b0,0,h-.24,0);
+ panelBox(g,w-.14,h-1.5,.09,0x00add5,0,4.65,d/2+.07);
+ controlPanel(g,2.05,8.0,d/2+.2,1.55);
+ machineDoor(g,2.17,5,d/2+.12,0x0b1017);
+ panelBox(g,w-.25,.15,.18,0xb8bfc3,0,2.18,d/2+.2);
+ panelBox(g,3.9,1.46,.18,0x9da7ae,0,1.18,d/2+.16);
+ for(let i=0;i<6;i++)panelBox(g,2.3,.045,.02,0x3c4853,0,.82+i*.12,d/2+.27);
+ for(const x of [-w*.45,w*.45])for(const y of [2.5,7.4])screw(g,x,y,d/2+.2);addFeet(g,w,d);
 }
+
 function detailManganese(g){
- addMachineBase(g,9.4,7.2,0x2aa8ff); // 藍色底光
- for(const x of [-2.45,0,2.45]){
-  // 高亮藍色金屬水塔
-  const vessel=cyl(1.3,5.8,0x1e78d1,.95); 
-  vessel.material.roughness = 0.15; vessel.material.metalness = 0.85;
-  vessel.position.set(x,3.15,0);g.add(vessel);
-  
-  panelBox(g,1.95,.35,1.95,0x8ca4af,x,6.15,0,.92);
-  const gauge=cyl(.24,.12,0xffffff,.95);gauge.rotation.x=Math.PI/2;gauge.position.set(x,5.25,-1.32);g.add(gauge);
-  
-  // 銀色與紅銅色管線交錯
-  pipe(g,[x-1.0,.8,0],[x-1.0,6.0,0],.075,0xaeb8bc);
-  pipe(g,[x+1.0,.8,0],[x+1.0,6.0,0],.075,0xd49a6a); // 紅銅色
- }
- pipe(g,[-3.5,6.0,0],[3.5,6.0,0],.10,0xaeb8bc);
- pipe(g,[-3.5,1.0,0],[3.5,1.0,0],.10,0xd49a6a);
+ for(const x of [-2.3,2.3]){vessel(g,x,.5,0,1.55,5.25,0x006ed1);pipe(g,[x,5.85,0],[x,6.8,0],.12);pipe(g,[x-1.9,.7,.5],[x-1.9,6.2,.5],.075);}
+ pipe(g,[-4.2,6.2,.5],[4.2,6.2,.5],.08);pipe(g,[-4.2,.7,.5],[4.2,.7,.5],.08);
+ panelBox(g,1.7,3.5,1.4,0xcbd0d0,4.65,2.15,.2);controlPanel(g,4.65,3.1,1,1.1);
+ for(const x of [-2.3,2.3]){const gauge=cyl(.20,.09,0xeeeae0);gauge.rotation.x=Math.PI/2;gauge.position.set(x,6.15,.61);g.add(gauge);}
 }
 
 function detailVertical(g){
- const w=7,d=5.8,h=8;
- panelBox(g,w,h,d,0xd4dde1,0,h/2+.3,0);
- panelBox(g,w-1.0,h-.85,.16,0x184b85,0,h/2+.35,d/2+.11);
- for(const x of [-w/2+.23,w/2-.23])panelBox(g,.42,h,.3,0xe3e9ed,x,h/2+.3,d/2+.28);
- panelBox(g,w,.45,.4,0xdce5e9,0,h+.25,d/2+.2);
- machineDoor(g,2.0,4.3,d/2+.18,0x111e29);
- panelBox(g,4.5,.52,.2,0xe3e9ec,0,4.3,d/2+.95);
- panelBox(g,1.2,2.0,.55,0xcbd6dc,-w/2+.3,5.1,d/2+.55);
- panelBox(g,.72,.6,.08,0x163041,-w/2+.3,5.5,d/2+.87);
- for(let i=0;i<3;i++)panelBox(g,.12,.12,.08,[0x20965c,0xeace39,0xe44c41][i],-w/2+i*.3,4.65,d/2+.87);
- for(const x of [-2.5,2.5])for(const y of [1,2.5,6.6]){const bolt=cyl(.07,.1,0xc3cbd0);bolt.rotation.x=Math.PI/2;bolt.position.set(x,y,d/2+.26);g.add(bolt);}
- addFeet(g,w,d);
+ const w=7,d=6,h=8.3;
+ panelBox(g,w,h,d,0xbcc2c7,0,h/2+.3,0);
+ panelBox(g,w-.8,h-.9,.17,0x102d62,0,h/2+.35,d/2+.12);
+ for(const x of [-w/2+.19,w/2-.19])panelBox(g,.38,h,.42,0xd4d8dc,x,h/2+.3,d/2+.25);
+ for(const y of [.52,h+.1])panelBox(g,w,.35,.42,0xdadddf,0,y,d/2+.25);
+ machineDoor(g,2.03,4.5,d/2+.35,0x10151c);
+ panelBox(g,4.45,.57,.18,0xe4e7e7,0,4.5,d/2+.76);
+ panelBox(g,1.18,2.25,.72,0xc6cbd0,-3.15,5.2,d/2+.58);controlPanel(g,-3.15,5.48,d/2+1, .91);
+ const lock=panelBox(g,.33,1.5,.3,0xc4c5be,2.9,5.68,d/2+.61);
+ steelRail(g,[2.9,6.42,d/2+.79],[2.4,6.42,d/2+.79],.08);
+ for(const x of [-2.45,2.45])for(const y of [1.2,2.3,6.9,7.6])screw(g,x,y,d/2+.23);
+ seam(g,-w/2-.012,3,0,.012,3);addFeet(g,w,d);
 }
+
 function detailPress(g,variant='press'){
  const L=7.8,W=5.8;
  addMachineBase(g,L+1.2,W+1.1,0x985cff);
@@ -465,23 +441,16 @@ function detailPressZone(g){
 }
 function detailFolding(g){ detailLine(g,'folding'); }
 function detailShirt(g){
- const W=6.6,D=5.6,H=8.8;
- addMachineBase(g,W+1.2,D+1.0,0x14d8ff);
- panelBox(g,W,5.6,D,0xe4eaec,0,3.1,0,.98);
- panelBox(g,2.0,7.2,1.65,0x253c48,0,7.0,0,.96);
- panelBox(g,4.3,.28,1.0,0xffffff,0,8.6,0,.9);
- const torso=rbox(3.7,2.8,1.45,0xf2f4f5,.97,.18);torso.position.set(0,5.4,.15);g.add(torso);
- const neck=cyl(.42,.75,0xbfc8ce,.98);neck.position.set(0,7.0,.15);g.add(neck);
- const head=cyl(.58,.78,0xd5dde2,.98);head.position.set(0,7.72,.15);g.add(head);
- for(const s of [-1,1]){
-  pipe(g,[s*1.45,6.1,.15],[s*2.8,6.6,.15],.18,0xaeb8bc);
-  pipe(g,[s*2.8,6.6,.15],[s*3.1,5.7,.15],.16,0xaeb8bc);
-  panelBox(g,.75,1.35,1.05,0xcfd7da,s*3.0,5.55,.15,.96);
-  panelBox(g,.88,.22,.55,0xe24b4b,s*3.0,6.25,.15,.98);
- }
- pipe(g,[-1.2,8.0,-.15],[-2.1,8.4,-.15],.07,0x26aee6);pipe(g,[1.2,8.0,-.15],[2.1,8.4,-.15],.07,0x26aee6);
- panelBox(g,1.55,1.25,.68,0x182c39,-2.35,2.55,-2.82,.98);
- addFeet(g,W,D);
+ const w=6.6,d=5.7;
+ panelBox(g,w,2.8,d,0xbcc7ce,0,1.65,0);panelBox(g,w-.2,.2,d,0xe0e4e6,0,3.13,0);
+ for(const x of [-2.8,2.8]){controlPanel(g,x,2.6,d/2+.16,.9);panelBox(g,.65,2,.6,0xc4c9c9,x,4.25,1.4);}
+ panelBox(g,1.1,5.5,1.05,0x245782,0,5.9,-.85);
+ const torso=rbox(2.8,3.7,1.20,0x96b9df,1,.3);torso.position.set(0,5.85,.3);g.add(torso);
+ const shoulder=rbox(3.25,.85,1.1,0xa5c3e3,1,.3);shoulder.position.set(0,7.25,.3);g.add(shoulder);
+ const neck=cyl(.34,.50,0xe1e4e0);neck.position.set(0,7.9,.3);g.add(neck);
+ for(const sign of [-1,1]){const sleeve=rbox(.95,2.9,.8,0x98bde0,1,.25);sleeve.position.set(sign*2.18,6.36,.3);sleeve.rotation.z=sign*.38;g.add(sleeve);steelRail(g,[sign*2.8,4.2,.2],[sign*2.8,7.4,.2],.1);steelRail(g,[sign*2.8,7.4,.2],[sign*1.4,7.75,.2],.1);}
+ for(const y of [4.6,5.3,6,6.7])screw(g,0,y,.95);seam(g,0,5.9,.93,.035,2.8);
+ addFeet(g,w,d);
 }
 
 function detailCrane(g){
@@ -496,68 +465,73 @@ function detailCrane(g){
 
 function detailLine(g,variant='lineN5'){
  const enclosed=variant==='lineN5'||variant==='lineIRT';
- const w=variant==='lineICC'?20:variant==='lineSMF'?18:16,d=enclosed?6:7.5,h=enclosed?7:4.8;
- panelBox(g,w,.4,d,0x2b4051,0,.5,0);
+ const w=enclosed?21:variant==='lineICC'?20:18,d=enclosed?6.5:7,h=enclosed?6.3:5.2;
+ panelBox(g,w,.28,d,0x163a66,0,.48,0);
+ for(const x of [-w/2+.85,w/2-.85]){panelBox(g,1.7,h,d,0x16569a,x,h/2+.65,0);panelBox(g,1.6,.3,d-.16,0xd3d6d8,x,h+.73,0);controlPanel(g,x,h-.3,d/2+.13,1.2);}
  if(enclosed){
-  panelBox(g,w-1,h,d-.25,0x3c6694,0,h/2+.7,0);
-  for(let i=0;i<5;i++){const x=-w/2+1.6+i*(w-2)/5;
-   panelBox(g,(w-2)/5-.12,h-1,.16,0x4e779d,x,h/2+.65,d/2+.02);
-   panelBox(g,.08,.5,.18,0xd0d6da,x+.7,h*.65,d/2+.14);
-   for(let j=0;j<3;j++)panelBox(g,1.2,.06,.10,0x203c56,x,1.25+j*.18,d/2+.14);
+  // Closed side cabinets based on the supplied factory photograph. Plain rear shells remain genuine geometry.
+  panelBox(g,w-3,h-1.5,d-.3,0x516d93,0,(h-1.5)/2+.7,0);
+  for(let i=0;i<6;i++){const x=-(w-3)/2+(i+.5)*(w-3)/6;
+   panelBox(g,(w-3)/6-.10,h-1.65,.09,0x6683a5,x,(h-1.65)/2+.78,d/2-.05);
+   panelBox(g,.07,.45,.14,0xd1d5d8,x+.55,h*.57,d/2+.06);
+   seam(g,x+.9,h*.45,d/2+.02,.03,h-2);
   }
-  panelBox(g,w-.4,.3,d-.4,0xbdc9d0,0,h+.85,0);
-  for(const x of [-w*.4,0,w*.4])for(const z of [-d*.36,d*.36])pipe(g,[x,h+.9,z],[x,h+2.9,z],.055);
-  for(const z of [-d*.36,d*.36])pipe(g,[-w*.4,h+2.9,z],[w*.4,h+2.9,z],.055);
-  for(const x of [-w*.2,w*.2])panelBox(g,w*.37,1.9,.05,0x94b8cb,x,h+1.9,d*.36,.24);
-  panelBox(g,w*.72,.15,d*.60,0xa7b8c3,0,h+2.95,0);
-  // End cabinet, touchscreen and signal tower retain a recognizable front from every angle.
-  panelBox(g,.12,h,d,0x355d89,w/2,h/2+.7,0);
-  panelBox(g,.18,1.4,1.6,0xc1ccd2,w/2+.1,h*.65,0);
-  panelBox(g,.20,.75,1.0,0x142b3f,w/2+.18,h*.69,0);
-  pipe(g,[w/2-1,h+.9,1.5],[w/2-1,h+2,1.5],.09);
-  for(let i=0;i<3;i++)panelBox(g,.25,.25,.25,[0x28a66d,0xf0b92d,0xd6483e][i],w/2-1,h+2+i*.25,1.5);
+  // Upper stainless process line: visible rollers, rails and connected frame, without invented wings.
+  for(let i=0;i<6;i++){const x=-w*.36+i*w*.145;const roller=cyl(.38,d*.76,0xc9cdd1);roller.rotation.x=Math.PI/2;roller.position.set(x,h+.45,0);g.add(roller);}
+  for(const z of [-d*.34,d*.34]){steelRail(g,[-w*.40,h+.3,z],[w*.40,h+.3,z],.10);steelRail(g,[-w*.40,h+2.25,z],[w*.40,h+2.25,z],.075);}
+  for(const x of [-w*.40,-w*.15,w*.15,w*.40])for(const z of [-d*.34,d*.34])steelRail(g,[x,h+.3,z],[x,h+2.25,z],.065);
+  for(const x of [-w*.28,w*.02,w*.31]){panelBox(g,w*.14,.13,d*.32,0xb9bec1,x,h+2.27,0);panelBox(g,.08,1.55,d*.70,0xb7bfc5,x+.5,h+1.4,0);}
+  panelBox(g,2.2,2.1,d*.88,0x8b969f,-w*.43,h+1.33,0);
+  signalTower(g,w*.42,h+.8,2.15);
  }else{
-  for(const x of [-w/2+1,w/2-1]){panelBox(g,2,h,d,0x237ab9,x,h/2+.5,0);panelBox(g,1.6,.3,d-.3,0xd5dee3,x,h+.6,0);}
-  for(let i=0;i<5;i++){const r=cyl(i===2?.65:.3,w-3.5,0xd8e2e7);r.rotation.z=Math.PI/2;r.position.set(0,2.1+i*.48,.7-i*.75);g.add(r);}
-  panelBox(g,w-4,.28,2,0xcbd7de,0,h+.45,-d*.29);
-  for(let i=0;i<9;i++)panelBox(g,(w-4)/9-.06,.1,2,0x5f7e95,-(w-4)/2+(i+.5)*(w-4)/9,2,d*.15);
-  panelBox(g,1.5,1.1,.28,0xc9d4dd,w/2-1,4,d/2+.32);panelBox(g,.9,.45,.05,0x172e42,w/2-1,4.15,d/2+.49);
+  for(const y of [1.8,2.8,3.8]){const roller=cyl(.44,w-3.4,0xc9cdd0);roller.rotation.z=Math.PI/2;roller.position.set(0,y,1.2);g.add(roller);}
+  const top=cyl(.6,w-3.4,0xd4d7d7);top.rotation.z=Math.PI/2;top.position.set(0,4.45,-.3);g.add(top);
+  panelBox(g,w-3.4,.15,2.2,0xbfc5c9,0,4.85,-d*.30);
+  for(let i=0;i<13;i++)panelBox(g,(w-3.4)/13-.06,.09,2.25,0xeee2ca,-(w-3.4)/2+(i+.5)*(w-3.4)/13,2.13,d*.24);
+  steelRail(g,[-w*.42,h+.4,-d*.4],[w*.42,h+.4,-d*.4],.10);
+  panelBox(g,w-3.3,.20,1.0,0x315c8b,0,.9,d*.36);
  }
- for(const x of [-w/2+1,w/2-1])for(const z of [-d*.38,d*.38])panelBox(g,.4,.8,.4,0x364b5a,x,.4,z);
+ for(const x of [-w/2+.8,w/2-.8])for(const z of [-d*.37,d*.37]){panelBox(g,.40,.72,.4,0x495a66,x,.35,z);const foot=cyl(.29,.16,0xc4c7c9);foot.position.set(x,.1,z);g.add(foot);}
 }
 
 function detailPacker(g){
- addMachineBase(g,6.8,6.0,0x14c5ff);
- const body=rbox(2.2,4.8,2.2,0xd6dde0,.98,.16);body.position.y=2.8;g.add(body);
- const arch=new THREE.Mesh(new THREE.TorusGeometry(2.05,.18,14,42,Math.PI),mat(0xd9dfe2,.3,.55,.98));arch.rotation.z=Math.PI/2;arch.position.set(0,5.0,0);g.add(arch);
- panelBox(g,4.6,.24,.24,0xaeb8bc,0,1.1,0,.95);
- const table=box(4.3,.18,3.0,0xe5ebee,.95);table.position.set(0,2.3,.1);g.add(table);
- const reel=cyl(.85,.6,0xf4f6f7,.95);reel.rotation.z=Math.PI/2;reel.position.set(1.55,3.0,0);g.add(reel);
- const ctrl=panelBox(g,.65,1.35,.55,0x263844,-1.45,4.0,-1.0,.98);ctrl.material.emissive=new THREE.Color(0x12aaf6);ctrl.material.emissiveIntensity=.22;
- for(const x of [-2.2,2.2]){const wheel=cyl(.30,.18,0x4e5960,.96);wheel.rotation.z=Math.PI/2;wheel.position.set(x,.38,0);g.add(wheel);}
+ panelBox(g,3.7,2.3,3,0xb6bec4,0,1.45,0);panelBox(g,4.7,.16,3.4,0xd5d7d5,0,2.72,0);
+ for(const x of [-1.7,1.7]){panelBox(g,.23,3.2,.30,0xc7cbd0,x,4.35,-.65);panelBox(g,.35,.45,.9,0x1c4773,x,2.2,1.2);}
+ panelBox(g,3.6,.24,.3,0xbcc4cd,0,5.95,-.65);
+ panelBox(g,.12,2.7,.12,0x48586a,-1.37,4.33,-.65);panelBox(g,2.7,.12,.12,0x48586a,0,5.68,-.65);
+ const reel=cyl(.75,.50,0xe2e1d8);reel.rotation.z=Math.PI/2;reel.position.set(1.65,1.5,-.4);g.add(reel);
+ controlPanel(g,1,2.08,1.57,.8);
+ for(const x of [-1.5,1.5])for(const z of [-1.1,1.1]){const wheel=cyl(.22,.16,0x343d46);wheel.rotation.z=Math.PI/2;wheel.position.set(x,.26,z);g.add(wheel);}
 }
 
 function detailOffice(g){
- const w=13.5,d=10.5;
- addMachineBase(g,w+.8,d+.8,0xe4c385);
- panelBox(g,w,.24,d,0xb79b73,0,.42,0);
- // An open cutaway makes both the ground-floor desks and the upper landing visible.
- panelBox(g,w*.5,.28,d,0xddc9a4,-w*.25,5.25,0);
- for(const x of [-w/2,w/2])panelBox(g,.18,5.7,d,0x99bfcc,x,3.2,0,.25);
- panelBox(g,w,5.7,.18,0x95b9c9,0,3.2,-d/2,.28);
- for(const x of [-4.4,-1.1,3.7]){
-  panelBox(g,2.1,.2,1.4,0xf0dfbd,x,1.9,1.6);
-  for(const dx of [-.85,.85])panelBox(g,.12,1.35,.12,0x657b86,x+dx,1.12,1.6);
-  panelBox(g,.85,.64,.09,0x31495b,x,2.35,1.6);
-  panelBox(g,.8,.42,.8,0x586e7e,x,1.2,3.1);
-  panelBox(g,.8,1.0,.12,0x586e7e,x,1.7,3.47);
+ const w=13.5,d=11,h=5.4;
+ // Both storeys are open-front cutaways, not a flat symbol or half-floor.
+ for(const base of [0,h]){
+  panelBox(g,w,.22,d,0xbda98b,0,base+.2,0);
+  panelBox(g,w,h,.18,0xe4dac9,0,base+h/2,-d/2);
+  for(const x of [-w/2,w/2])panelBox(g,.18,h,d,0xb8c0c9,x,base+h/2,0);
+  for(const x of [-3.5,.7]){
+   panelBox(g,3.1,.20,1.8,0xd4b88a,x,base+1.95,-1.9);
+   for(const dx of [-1.25,1.25])panelBox(g,.12,1.6,.12,0x424c58,x+dx,base+1.1,-1.9);
+   panelBox(g,1.12,.7,.08,0x202631,x,base+2.38,-2.3);panelBox(g,.5,.08,.4,0x777f83,x,base+2.0,-1.85);
+   panelBox(g,.95,.15,.9,0x242b34,x,base+1.25,.2);panelBox(g,.95,1.2,.12,0x242b34,x,base+1.88,.55);
+   pipe(g,[x,base+.3,.2],[x,base+1.25,.2],.10,0x7f868c);
+   for(const a of [-1,1])steelRail(g,[x,base+.3,.2],[x+a*.6,base+.18,.2],.05);
+  }
+  panelBox(g,2.6,3.5,.85,0x9d794a,-4.6,base+1.95,-4.75);
+  for(const y of [1.1,2.2,3.2]){panelBox(g,2.5,.10,.8,0xd0b081,-4.6,base+y,-4.72);for(let j=0;j<6;j++)panelBox(g,.19,.6,.3,[0x79817a,0xc4b496,0x737d8c][j%3],-5.5+j*.32,base+y+.32,-4.62);}
+  panelBox(g,.8,.8,.8,0x8a6d4e,-5.65,base+.62,2.7);
+  for(let i=0;i<5;i++){const leaf=new THREE.Mesh(new THREE.SphereGeometry(.34,6,5),mat(0x537548,.85,0));leaf.scale.set(.5,2.6,.35);leaf.rotation.z=(i-2)*.38;leaf.position.set(-5.65+(i-2)*.16,base+1.45,2.7);g.add(leaf);}
+  panelBox(g,w-.25,.09,.16,0xf0ddab,0,base+h-.4,-d/2+.20);
  }
- panelBox(g,3.1,.2,1.5,0xf0dfbd,-3,6.6,-1.9);
- panelBox(g,1.05,.7,.1,0x31495b,-3,7.05,-1.9);
- for(let i=0;i<9;i++)panelBox(g,1.45,.52,1.0,0xc6b28e,4.9,.7+i*.52,-3.8+i*.65);
- for(const z of [-d/2+.2,d/2-.2])pipe(g,[-w/2,6.65,z],[0,6.65,z],.055,0xe4d5b7);
- for(const x of [-6.5,-3.2,-.1])pipe(g,[x,5.35,d/2-.2],[x,6.65,d/2-.2],.045,0xe4d5b7);
+ for(let i=0;i<11;i++)panelBox(g,1.8,.22,.85,0xb4a48b,5.25,.5+i*.47,4.8-i*.83);
+ steelRail(g,[4.22,1.4,4.8],[4.22,6.25,-3.5],.065);
+ for(const x of [-w/2,w/2])steelRail(g,[x,h+.4,d/2],[x,h+1.4,d/2],.07);
+ steelRail(g,[-w/2,h+1.4,d/2],[w/2,h+1.4,d/2],.07);
+ for(const x of [-5,-2,1,4])steelRail(g,[x,h+.2,d/2],[x,h+1.4,d/2],.05);
 }
+
 function detailWorktable(g){
  addMachineBase(g,11,5.4,0xa9bcc8);
  panelBox(g,10,.26,4.8,0xb7c9d3,0,2.75,0);
@@ -610,30 +584,19 @@ function detailBoiler(g){
 }
 
 function detailWater(g){
- addMachineBase(g,8.2,7.1,0x2aa8ff);
- for(const x of [-1.75,1.75]){
-  const vessel=cyl(1.36,5.2,0x187fcb,1);vessel.position.set(x,2.8,0);g.add(vessel);
-  panelBox(g,1.85,.35,1.85,0x86b7c7,x,5.55,0,.76);
-  pipe(g,[x-1.0,.8,0],[x-1.0,5.3,0],.07,0xaeb8bc);
- }
- panelBox(g,9,.3,4,0x798b98,0,.3,0);panelBox(g,2,4,2,0xd7dfe4,4,2.3,0);panelBox(g,1,.8,.1,0x18344b,4,3.3,1.1);
- pipe(g,[-3.0,5.4,0],[3.0,5.4,0],.1,0xaeb8bc);
+ panelBox(g,10,.19,4.6,0x7a858c,0,.25,0);
+ for(const x of [-2.6,.8]){vessel(g,x,.6,0,1.32,5.15,0x0479d0);pipe(g,[x,5.9,0],[x,6.6,0],.12);pipe(g,[x-1.6,.6,.5],[x-1.6,6.4,.5],.07,0xb69b6e);}
+ pipe(g,[-4.2,6.4,.5],[3.9,6.4,.5],.08,0xb69b6e);pipe(g,[-4.2,.65,.5],[3.9,.65,.5],.075);
+ panelBox(g,2.1,4.6,1.8,0xc6cbc9,3.65,2.65,0);controlPanel(g,3.65,3.9,1,1.25);
+ for(const x of [-3.8,3.8])for(const z of [-1.8,1.8])panelBox(g,.3,.25,.3,0x5f676b,x,.1,z);
 }
 
 function detailTank(g){
- const W=5.8,D=5.8,H=8.2;
- addMachineBase(g,W+1.0,D+1.0,0x2aa8ff);
- const legs=[[-1.8,-1.8],[1.8,-1.8],[-1.8,1.8],[1.8,1.8]];
- legs.forEach(([x,z])=>{const leg=box(.32,2.0,.32,0x8ca4af,.92);leg.position.set(x,1.15,z);g.add(leg);});
- const body=cyl(2.15,H,0xaeb8bc,.9);
- body.position.set(0,2.0+H/2,0);g.add(body);
- const dome=new THREE.Mesh(new THREE.SphereGeometry(2.15,32,16,0,Math.PI*2,0,Math.PI/2),mat(0xaeb8bc,.3,.7,.92));
- dome.position.set(0,2.0+H,0);g.add(dome);
- const ring=cyl(2.24,.12,0xffffff,.9);ring.position.set(0,5.0,0);g.add(ring);
- pipe(g,[-1.8,1.3,0],[-1.8,2.8,0],.10,0xd49a6a);
- pipe(g,[1.8,1.3,0],[1.8,2.8,0],.10,0xd49a6a);
- pipe(g,[0,1.2,0],[0,0.5,0],.12,0xaeb8bc);
- addFeet(g,W,D);
+ vessel(g,0,1.45,0,2.2,7.9,0xb9bdbe);
+ for(const y of [2,5.1,8.7]){const ring=cyl(2.25,.10,0xd4d7d5);ring.position.set(0,y,0);g.add(ring);}
+ for(const x of [-1.5,1.5])for(const z of [-1.5,1.5]){pipe(g,[x,.22,z],[x,2.3,z],.11);const foot=cyl(.24,.12,0xc1c7c9);foot.position.set(x,.1,z);g.add(foot);}
+ pipe(g,[0,9.3,0],[0,10.2,0],.22);const flange=cyl(.36,.1,0xe2e3df);flange.position.set(0,10.2,0);g.add(flange);
+ pipe(g,[1.9,1.2,0],[2.8,1.2,0],.12);pipe(g,[2.8,1.2,0],[2.8,.5,0],.12);
 }
 
 function detailToilet(g){
@@ -693,13 +656,14 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='固定地圖 V9 · 查檢清單 V5 · 同步 R3｜'+text;
+ if(version)version.textContent='立體地圖 V10 · 查檢清單 V5 · 同步 R3｜'+text;
 }
+function shortMapName(name){return String(name).replace(/^直式洗衣機\s*#/,"洗衣機 #").replace(/（L 型 (後段|末段)）/,"（L 型）");}
 function applyEquipmentName(root,name){
  if(typeof name!=='string'||!name.trim())return;
  root.userData.name=name.trim();
  const labelObject=root.children.find(o=>o.isCSS2DObject);
- if(labelObject)labelObject.element.textContent=root.userData.name;
+ if(labelObject)labelObject.element.textContent=shortMapName(root.userData.name);
  if(selected===root){
   document.getElementById('pn').textContent=root.userData.name;
   document.getElementById('eqName').value=root.userData.name;
@@ -878,7 +842,7 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓',fixedId=null,fixed
  root.userData.contactShadow=shadow;
  const bounds=new THREE.Box3().setFromObject(m);
  const color=visualKind==='office'?'#e4c385':type==='烘乾設備'?'#78dbb6':type==='整燙設備'?'#86b4e1':'#8bc8dd';
- const l=label(name,color);
+ const l=label(shortMapName(name),color);l.element.title=name;
  l.position.set(0,.25,root.userData.footprint.d/2+1.5);l.center.set(.5,0);root.add(l);root.userData.mapLabel=l;if(['COMP-01','MANG-01'].includes(id))l.element.classList.add('is-raised');
 
 
@@ -929,7 +893,7 @@ function frameFactory(overview=false){
   const bounds=new THREE.Box3();groups.forEach(r=>bounds.expandByObject(r));
   const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
   const availableW=(innerWidth-24)/innerWidth,availableH=Math.max(.3,(innerHeight-(innerWidth<1025?104:84)-164)/innerHeight);
-  const fit=Math.max((size.x+12)/(2*aspect*availableW),(size.z*.725+size.y*.69+12)/(2*availableH))*1.04;
+  const fit=Math.max((size.x+12)/(2*aspect*availableW),(size.z*.855+size.y*.519+12)/(2*availableH))*1.04;
   const base=100;
   camera.left=-base*aspect;
   camera.right=base*aspect;
@@ -939,7 +903,7 @@ function frameFactory(overview=false){
   camera.far=2000;
   camera.zoom=base/fit;
   camera.setViewOffset(innerWidth,innerHeight,0,(164-(innerWidth<1025?104:84))/2,innerWidth,innerHeight);
-  const dir=new THREE.Vector3(0,1.05,1).normalize();
+  const dir=new THREE.Vector3(0,1.65,1).normalize();
   camera.position.copy(new THREE.Vector3(center.x,center.y,center.z).addScaledVector(dir,260));
   controls.target.copy(center);
   controls.update();
@@ -964,12 +928,20 @@ function paletteIcon(kind,name){
  // Defer thumbnails until the first map frame; only draw visible library cards.
  const observer=new IntersectionObserver(entries=>{if(!entries.some(e=>e.isIntersecting))return;observer.disconnect();
   const run=()=>{try{if(!paletteThumbCache.has(visualKind)){
-   const rr=new EquipmentCanvasRenderer();rr.setPixelRatio(1);rr.setSize(120,80);
    const g=miniatureModel(visualKind),bounds=new THREE.Box3().setFromObject(g),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
-   const half=Math.max(size.x/3,size.y*.6,size.z*.45)+1;
+   const half=Math.max(size.x/3,size.y*.55+size.z*.25)+.7;
    const cam=new THREE.OrthographicCamera(-half*1.5,half*1.5,half,-half,.1,500);
    cam.position.copy(center).add(new THREE.Vector3(0,.8,1).normalize().multiplyScalar(100));cam.lookAt(center);cam.updateProjectionMatrix();
-   const ss=new THREE.Scene();ss.add(g);rr.render(ss,cam,true);paletteThumbCache.set(visualKind,rr.domElement.toDataURL());
+   const ss=new THREE.Scene();ss.add(g);const canvas=document.createElement('canvas');canvas.width=120;canvas.height=80;
+   if(renderer.isWebGLRenderer){
+    ss.environment=scene.environment;ss.environmentIntensity=.85;ss.add(new THREE.HemisphereLight(0xf2f0ee,0x4e5158,1.4));const light=new THREE.DirectionalLight(0xfff5e9,2);light.position.set(-20,40,50);ss.add(light);
+    const target=new THREE.WebGLRenderTarget(120,80),previous=renderer.getRenderTarget(),shadowEnabled=renderer.shadowMap.enabled;
+    renderer.shadowMap.enabled=false;renderer.setRenderTarget(target);renderer.setClearColor(0x000000,0);renderer.render(ss,cam);
+    const pixels=new Uint8Array(120*80*4);renderer.readRenderTargetPixels(target,0,0,120,80,pixels);
+    const context=canvas.getContext('2d'),data=context.createImageData(120,80);for(let row=0;row<80;row++)data.data.set(pixels.subarray(row*480,(row+1)*480),(79-row)*480);context.putImageData(data,0,0);
+    renderer.setRenderTarget(previous);renderer.shadowMap.enabled=shadowEnabled;renderer.setClearColor(scene.background,1);target.dispose();requestSceneRender();
+   }else{const rr=new EquipmentCanvasRenderer();rr.setPixelRatio(1);rr.setSize(120,80);rr.render(ss,cam,true);canvas.getContext('2d').drawImage(rr.domElement,0,0);}
+   paletteThumbCache.set(visualKind,canvas.toDataURL());
   }img.src=paletteThumbCache.get(visualKind);}catch(err){console.warn('Thumbnail',err);}};
   if('requestIdleCallback' in window)requestIdleCallback(run,{timeout:1200});else setTimeout(run,100);
  },{root:document.getElementById('items'),rootMargin:'80px'});observer.observe(icon);return icon;
@@ -1080,7 +1052,11 @@ renderer.domElement.addEventListener('pointermove',e=>{
  if(prev&&next){const before=groundPoint(prev);if(prev.distance>8&&next.distance>8){
   camera.zoom=THREE.MathUtils.clamp(camera.zoom*next.distance/prev.distance,controls.minZoom,controls.maxZoom);camera.updateProjectionMatrix();
   const delta=Math.atan2(Math.sin(next.angle-prev.angle),Math.cos(next.angle-prev.angle));turnMap(-delta);
- }controls.update();const after=groundPoint(next);if(before&&after){const shift=before.sub(after);camera.position.add(shift);controls.target.add(shift);controls.update();}requestSceneRender();}touchMetrics=next;
+  const offset=camera.position.clone().sub(controls.target),spherical=new THREE.Spherical().setFromVector3(offset);
+  spherical.phi=THREE.MathUtils.clamp(spherical.phi+(next.clientY-prev.clientY)*.004,controls.minPolarAngle,controls.maxPolarAngle);
+  spherical.theta-=(next.clientX-prev.clientX)*.004;
+  camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(spherical));
+ }controls.update();const after=groundPoint(next);if(touchPointers.size===1&&before&&after){const shift=before.sub(after);camera.position.add(shift);controls.target.add(shift);controls.update();}requestSceneRender();}touchMetrics=next;
 },{capture:true,passive:false});
 function endFixedPointer(e,cancelled=false){
  if(e.pointerType!=='mouse'){consumeTouch(e);touchPointers.delete(e.pointerId);touchMetrics=touchPairMetrics();}
@@ -1099,7 +1075,7 @@ document.getElementById('reloadNasBtn').onclick=async()=>{
   toast(ok?'已重新讀取 NAS':nasReadState.status);
  }finally{button.disabled=false;}
 };
-document.getElementById('saveEqBtn').onclick=async()=>{if(!selected)return;const commissioned=document.getElementById('eqCommissionedDate').value;if(commissioned&&(!validDay(commissioned)||commissioned>taipeiToday()))return toast('啟用日期不能晚於今天');selected.userData.commissionedDate=commissioned;selected.userData.name=document.getElementById('eqName').value.trim()||selected.userData.name;selected.userData.status=document.getElementById('eqStatus').value;selected.userData.cleaningLastDate=document.getElementById('eqCleaningDate').value;selected.userData.cleaningCycleDays=Math.max(0,Number(document.getElementById('eqCleaningCycle').value||0));selected.userData.maintenanceLastDate=document.getElementById('eqMaintenanceDate').value;selected.userData.maintenanceCycleDays=Math.max(0,Number(document.getElementById('eqMaintenanceCycle').value||0));selected.userData.notes=document.getElementById('eqNotes').value;const lbl=selected.children.find(o=>o.isCSS2DObject);if(lbl)lbl.element.textContent=selected.userData.name;document.getElementById('pn').textContent=selected.userData.name;dirtyMetadataIds.add(selected.userData.id);const saved=await savePositions();renderCategoryList();refreshEquipmentDates();renderInspectionMini(selected);toast(saved?'設備資料已同步至 NAS':nasReadState.status);};
+document.getElementById('saveEqBtn').onclick=async()=>{if(!selected)return;const commissioned=document.getElementById('eqCommissionedDate').value;if(commissioned&&(!validDay(commissioned)||commissioned>taipeiToday()))return toast('啟用日期不能晚於今天');selected.userData.commissionedDate=commissioned;selected.userData.name=document.getElementById('eqName').value.trim()||selected.userData.name;selected.userData.status=document.getElementById('eqStatus').value;selected.userData.cleaningLastDate=document.getElementById('eqCleaningDate').value;selected.userData.cleaningCycleDays=Math.max(0,Number(document.getElementById('eqCleaningCycle').value||0));selected.userData.maintenanceLastDate=document.getElementById('eqMaintenanceDate').value;selected.userData.maintenanceCycleDays=Math.max(0,Number(document.getElementById('eqMaintenanceCycle').value||0));selected.userData.notes=document.getElementById('eqNotes').value;const lbl=selected.children.find(o=>o.isCSS2DObject);if(lbl)lbl.element.textContent=shortMapName(selected.userData.name);document.getElementById('pn').textContent=selected.userData.name;dirtyMetadataIds.add(selected.userData.id);const saved=await savePositions();renderCategoryList();refreshEquipmentDates();renderInspectionMini(selected);toast(saved?'設備資料已同步至 NAS':nasReadState.status);};
 function syncQuickRotate(){}
 document.getElementById('close').onclick=closePanel;
 document.getElementById('resetBtn').onclick=()=>frameFactory();
