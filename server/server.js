@@ -16,6 +16,7 @@ const ensureSchema = async () => {
     ADD COLUMN IF NOT EXISTS maintenance_cycle_days INTEGER NOT NULL DEFAULT 180,
     ADD COLUMN IF NOT EXISTS commissioned_date DATE,
     ADD COLUMN IF NOT EXISTS notes TEXT NOT NULL DEFAULT ''`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS checklist_photos (id UUID PRIMARY KEY,equipment_id TEXT NOT NULL,task_id TEXT NOT NULL,name TEXT NOT NULL,width INTEGER NOT NULL,height INTEGER NOT NULL,image BYTEA NOT NULL,thumbnail BYTEA NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
 };
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -28,7 +29,7 @@ app.use((req, res, next) => {
 app.get('/api/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ ok: true, service: 'equipment-manager-api' });
+    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1 });
   } catch (error) {
     res.status(503).json({ ok: false, error: 'database_unavailable' });
   }
@@ -54,6 +55,32 @@ app.put('/api/checklists/:equipmentId', async (req,res)=>{
     res.json({ok:true,id:rows[0].id});
   }catch(error){res.status(500).json({error:'checklist_save_failed'});}
 });
+// Compressed JPEGs are stored in PostgreSQL's persistent NAS volume.
+const PHOTO_ID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function readPhotoJpeg(value,maxBytes){
+ if(typeof value!=='string'||value.length>Math.ceil(maxBytes/3)*4||!/^\/[A-Za-z0-9+/]*={0,2}$/.test(value)||value.length%4!==0)return null;
+ const bytes=Buffer.from(value,'base64');
+ if(bytes.length<4||bytes.length>maxBytes||bytes[0]!==255||bytes[1]!==216||bytes.at(-2)!==255||bytes.at(-1)!==217||bytes.toString('base64')!==value)return null;
+ return bytes;
+}
+app.post('/api/checklist-photos',async(req,res)=>{
+ const p=req.body||{},full=readPhotoJpeg(p.full,512*1024),thumb=readPhotoJpeg(p.thumbnail,80*1024);
+ if(!PHOTO_ID.test(p.id||'')||!full||!thumb||typeof p.machineId!=='string'||!p.machineId.trim()||p.machineId.length>100||typeof p.taskId!=='string'||!p.taskId.trim()||p.taskId.length>100||!Number.isInteger(p.width)||p.width<1||p.width>1600||!Number.isInteger(p.height)||p.height<1||p.height>1600)return res.status(400).json({error:'invalid_compressed_photo'});
+ try{
+  const name=String(p.name||'照片').slice(0,200);
+  const {rows}=await pool.query(`INSERT INTO checklist_photos (id,equipment_id,task_id,name,width,height,image,thumbnail)
+   VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING RETURNING id`,[p.id,p.machineId,p.taskId,name,p.width,p.height,full,thumb]);
+  if(!rows.length){const existing=await pool.query('SELECT equipment_id,task_id,image FROM checklist_photos WHERE id=$1',[p.id]);const row=existing.rows[0];if(!row||row.equipment_id!==p.machineId||row.task_id!==p.taskId||!row.image.equals(full))return res.status(409).json({error:'photo_id_conflict'});}
+  res.json({ok:true,id:p.id,photoVersion:1});
+ }catch(error){res.status(500).json({error:'photo_save_failed'});}
+});
+app.get('/api/checklist-photos/:id/:variant',async(req,res)=>{
+ if(!PHOTO_ID.test(req.params.id)||!['thumbnail','image'].includes(req.params.variant))return res.status(400).json({error:'invalid_photo_request'});
+ try{const column=req.params.variant==='thumbnail'?'thumbnail':'image';const {rows}=await pool.query(`SELECT ${column} AS bytes FROM checklist_photos WHERE id=$1`,[req.params.id]);if(!rows.length)return res.status(404).json({error:'photo_not_found'});
+  res.setHeader('Content-Type','image/jpeg');res.setHeader('Cache-Control','private, max-age=86400');res.setHeader('X-Content-Type-Options','nosniff');res.send(rows[0].bytes);
+ }catch(error){res.status(500).json({error:'photo_load_failed'});}
+});
+
 app.get('/api/layout', async (_req, res) => {
   try {
     await ensureSchema();
@@ -124,3 +151,4 @@ ensureSchema().then(()=>{
   console.error('Database schema initialization failed',error);
   process.exit(1);
 });
+
