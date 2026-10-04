@@ -144,7 +144,12 @@ body.panel-open .equipment-tools{display:none}
 #toast{pointer-events:none!important}#flatViewport{position:absolute;inset:88px 0 155px;overflow:hidden;touch-action:none;background:#323940;cursor:grab}#flatViewport.dragging{cursor:grabbing}#flatMap{position:absolute;width:1024px;height:1536px;transform-origin:0 0;will-change:transform;user-select:none}#flatImage{position:absolute;inset:0;width:1024px;height:1536px;pointer-events:none;max-width:none}#hotspots{position:absolute;inset:0;pointer-events:none}.map-hotspot{position:absolute;pointer-events:auto;background:transparent;border:0!important;box-shadow:none!important;padding:0;border-radius:4px;color:#0d3272;touch-action:none}.map-hotspot:hover,.map-hotspot:focus-visible{outline:calc(2px / var(--map-scale)) solid #6bccff;background:#51bfff18}.map-hotspot.selected{outline:calc(2px / var(--map-scale)) solid #61c9ff;background:#38b4ff14}.map-hotspot .live-name{display:none;position:absolute;left:50%;bottom:0;transform:translateX(-50%);background:#eef1f3;color:#153574;padding:2px 4px;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #8497a5}.map-hotspot.renamed .live-name{display:block}.map-hotspot.dimmed{background:#141e3080}.map-crop{position:relative;width:64px;height:38px;overflow:hidden;pointer-events:none}.map-crop img{position:absolute;max-width:none;pointer-events:none}.side{display:none!important}.panel{z-index:60}.top .logo{font-size:14px}.map-tools{bottom:120px!important}.map-tools .map-title{font-size:12px}#categoryDrawer{z-index:65}
 @media(max-width:1024px){#flatViewport{inset:108px 0 150px}.map-tools{bottom:105px!important}}body.panel-open #flatViewport{cursor:grab}
 </style>
-</head>
+<style>
+.map-hotspot .live-name{display:block;max-width:160px;min-width:54px;box-sizing:border-box;background:linear-gradient(#142638,#071421);color:white;padding:5px 9px;font-size:18px;line-height:1.2;border:2px solid #63ccff;border-radius:999px;box-shadow:0 0 9px #5bcaff88,0 3px 7px #0008;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.map-hotspot[data-equipment-id^="VERT-"] .live-name,.map-hotspot[data-equipment-id^="DRY-"] .live-name{max-width:112px;font-size:14px;padding:4px 6px}
+.map-hotspot.selected .live-name{border-color:#fff;box-shadow:0 0 13px #63ccff}
+#equipmentVendor{margin:4px 0 8px;color:#a9c6da;overflow-wrap:anywhere}.repair-entry{padding:14px 0;border-top:1px solid #31516a;overflow-wrap:anywhere}.repair-entry p{margin:7px 0;white-space:pre-wrap}.repair-entry small{color:#aac3d7}#repairForm input,#repairForm textarea{width:100%;box-sizing:border-box}#repairForm button{min-height:44px}.repair-actions{display:flex;gap:8px;margin-top:14px}.repair-actions button{flex:1}#repairSummary{margin:10px 0;color:#aac3d7}
+</style></head>
 <body>
 <div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">立體地圖 V10 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"><div id="flatViewport" aria-label="工廠設備地圖"><div id="flatMap"><img id="flatImage" src="approved-factory-map.svg" alt="已確認的工廠設備配置" width="1024" height="1536" draggable="false" decoding="async" fetchpriority="high"><div id="hotspots"></div></div></div></div>
 <div class="top">
@@ -158,7 +163,16 @@ body.panel-open .equipment-tools{display:none}
 <div class="palette"><h3>設備分類 · 點選分類查看機台</h3><div class="items" id="items"></div></div>
 <div class="map-tools" aria-label="地圖操作"><span>地圖</span><button id="mapZoomOut" aria-label="縮小地圖">－</button><button id="mapZoomIn" aria-label="放大地圖">＋</button><button id="mapHome">全圖</button></div>
 
-<div class="touch-help">單指拖曳 · 雙指縮放 · 點設備查看資料</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div class="muted" id="pt">設備</div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="inspectionMini"><button id="inspectionMachineEntry">開啟此機台查檢清單</button></div></div>
+<div class="touch-help">單指拖曳 · 雙指縮放 · 點設備查看資料</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div id="equipmentVendor">廠商：未填寫</div><div class="muted" id="pt">設備</div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>廠商</label><input id="eqVendor" placeholder="設備廠商名稱" maxlength="200" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="repairsCard"><h3>維修紀錄</h3><button id="addRepairBtn" type="button" style="width:100%">＋ 新增維修紀錄</button><form id="repairForm" hidden>
+<label>維修日期 *</label><input id="repairDate" type="date" required>
+<label>故障情形 *</label><textarea id="repairIssue" rows="2" required maxlength="4000" placeholder="例如：無法啟動、漏水、異常聲音"></textarea>
+<label>更換零件</label><input id="repairParts" maxlength="2000" placeholder="例如：軸承、皮帶；未更換可留白">
+<label>備註</label><textarea id="repairNotes" rows="2" maxlength="4000" placeholder="維修處理方式、後續注意事項"></textarea>
+<label>當次維修價格（新台幣）</label><input id="repairCost" type="number" inputmode="decimal" min="0" step="0.01" placeholder="未知可留白，免費填 0">
+<label>維修廠商</label><input id="repairVendor" maxlength="200">
+<label>記錄人</label><input id="repairRecorder" maxlength="100">
+<div class="repair-actions"><button id="cancelRepairBtn" type="button">取消</button><button id="saveRepairBtn" type="submit">儲存紀錄</button></div></form>
+<div id="repairSummary"></div><div id="repairList"></div><button id="moreRepairsBtn" type="button" hidden>顯示更多紀錄</button></div><div class="card" id="inspectionMini"><button id="inspectionMachineEntry">開啟此機台查檢清單</button></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <button id="inspectionEntry">✓ 查檢清單</button><section id="inspectionOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="inspectionTitle"><header class="ins-header"><button id="inspectionBack">返回地圖</button><h2 id="inspectionTitle">設備查檢清單</h2><button id="inspectionSettingsBtn">設定／備份</button></header><div class="ins-sync">查檢紀錄：此裝置儲存 · NAS 共用紀錄與手機自動通知尚未串接</div><main id="inspectionContent"></main><footer id="inspectionSaveBar" hidden><b id="inspectionProgress">已查檢 0 項</b><button id="inspectionSubmit" class="ins-primary">確認送出查檢</button></footer></section>
 <section id="categoryDrawer" hidden role="dialog" aria-labelledby="categoryTitle"><header><h2 id="categoryTitle">設備清單</h2><button id="categoryClose" aria-label="關閉設備清單">×</button></header><div id="categoryRows"></div></section>
@@ -178,7 +192,7 @@ function frameFactory(){const w=viewport.clientWidth,h=viewport.clientHeight;fit
 function zoomMap(factor,point){const rect=viewport.getBoundingClientRect(),px=point?point.clientX-rect.left:rect.width/2,py=point?point.clientY-rect.top:rect.height/2;const x=(px-view.x)/view.scale,y=(py-view.y)/view.scale;view.scale=Math.max(fitScale*.35,Math.min(8,view.scale*factor));view.x=px-x*view.scale;view.y=py-y*view.scale;applyView();}
 function focusEquipment(root){if(!root)return;document.getElementById('categoryDrawer').hidden=true;document.getElementById('search').value='';document.getElementById('filter').value='全部設備';const b=root.userData.region;view.scale=Math.max(fitScale,Math.min(1.6,viewport.clientWidth/(b[2]+150)));view.x=viewport.clientWidth/2-(b[0]+b[2]/2)*view.scale;view.y=viewport.clientHeight*.40-(b[1]+b[3]/2)*view.scale;applyView();requestSceneRender();select(root);}
 for(const row of instances){const [name,type,kind,x,y,z,level,id,rotation]=row;const rect=regions.find(r=>r[0]===id).slice(1);const button=document.createElement('button');button.type='button';button.className='map-hotspot';button.dataset.equipmentId=id;button.style.cssText=`left:${rect[0]}px;top:${rect[1]}px;width:${rect[2]}px;height:${rect[3]}px`;button.setAttribute('aria-label',name);button.title=name;const label=document.createElement('span');label.className='live-name';button.appendChild(label);document.getElementById('hotspots').appendChild(button);
- const root={userData:{id,name,originalName:name,type,kind,level,status:'正常',visualScale:1,cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,commissionedDate:'',notes:'',hotspot:button,region:rect},position:{x,y,z},rotation:{y:rotation||0},visible:true,children:[{isCSS2DObject:true,element:label}]};groups.set(id,root);button.addEventListener('click',e=>{if(e.detail===0)select(root);});}
+ const root={userData:{id,name,originalName:name,type,kind,level,status:'正常',visualScale:1,cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,commissionedDate:'',notes:'',vendor:'',repairs:[],hotspot:button,region:rect},position:{x,y,z},rotation:{y:rotation||0},visible:true,children:[{isCSS2DObject:true,element:label}]};groups.set(id,root);button.addEventListener('click',e=>{if(e.detail===0)select(root);});}
 let nasReadState={status:'尚未讀取 NAS',ok:false,positions:[],at:''};
 function renderNasReadDetails(){
  const el=document.getElementById('nasReadDetails');
@@ -201,7 +215,7 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='平面地圖 V11 · 查檢清單 V5 · 同步 R3｜'+text;
+ if(version)version.textContent='平面地圖 V12 · 查檢清單 V5 · 同步 R3｜'+text;
 }
 function shortMapName(name){return String(name).replace(/^直式洗衣機\s*#/,"洗衣機 #").replace(/（L 型 (後段|末段)）/,"（L 型）");}
 function applyEquipmentName(root,name){
@@ -214,6 +228,40 @@ function applyEquipmentName(root,name){
   document.getElementById('eqName').value=root.userData.name;
  }
 }
+
+
+// Backward-compatible metadata in the existing NAS notes column. Plain notes stay readable.
+const EQUIPMENT_METADATA_PREFIX='FACTORY_EQUIPMENT_METADATA_V1\n';
+function decodeEquipmentMetadata(root,value){
+ const text=String(value||'');let data=null;
+ if(text.startsWith(EQUIPMENT_METADATA_PREFIX))try{const parsed=JSON.parse(text.slice(EQUIPMENT_METADATA_PREFIX.length));if(parsed.version===1&&typeof parsed.notes==='string'&&Array.isArray(parsed.repairs))data=parsed;}catch{}
+ root.userData.metadataEnvelope=data;root.userData.notes=data?data.notes:text;root.userData.vendor=data&&typeof data.vendor==='string'?data.vendor:'';root.userData.repairs=data?data.repairs.filter(r=>r&&typeof r==='object'&&typeof r.id==='string'):[];
+}
+function encodeEquipmentMetadata(root){const d=root.userData;if(!d.metadataEnvelope&&!d.vendor&&!d.repairs?.length)return d.notes||'';return EQUIPMENT_METADATA_PREFIX+JSON.stringify({...d.metadataEnvelope,version:1,notes:d.notes||'',vendor:d.vendor||'',repairs:d.repairs||[]});}
+let repairLimit=20,repairEquipmentId=null;
+function renderEquipmentExtras(root){document.getElementById('eqVendor').value=root.userData.vendor||'';document.getElementById('equipmentVendor').textContent='廠商：'+(root.userData.vendor||'未填寫');document.getElementById('repairForm').hidden=true;repairEquipmentId=null;repairLimit=20;renderRepairHistory(root);}
+function repairAmount(r){return typeof r.cost==='number'&&Number.isFinite(r.cost)&&r.cost>=0?r.cost:null;}
+function renderRepairHistory(root){
+ const records=[...(root.userData.repairs||[])].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+ const sum=records.reduce((n,r)=>n+(repairAmount(r)??0),0),unknown=records.filter(r=>repairAmount(r)===null).length;
+ document.getElementById('repairSummary').textContent=records.length?`${records.length} 筆紀錄 · 已填金額合計 NT$ ${sum.toLocaleString('zh-TW',{maximumFractionDigits:2})}${unknown?' · '+unknown+' 筆價格未填':''}`:'尚無維修紀錄';
+ const list=document.getElementById('repairList');list.replaceChildren();
+ for(const r of records.slice(0,repairLimit)){const item=document.createElement('article');item.className='repair-entry';const title=document.createElement('strong');title.textContent=(r.date||'日期未填')+' · '+(repairAmount(r)===null?'價格未填':'NT$ '+r.cost.toLocaleString('zh-TW',{maximumFractionDigits:2}));item.append(title);
+ for(const [key,label]of [['issue','故障情形'],['parts','更換零件'],['notes','備註'],['vendor','維修廠商'],['recorder','記錄人']])if(r[key]){const p=document.createElement('p');p.textContent=label+'：'+String(r[key]);item.append(p);}list.append(item);}
+ document.getElementById('moreRepairsBtn').hidden=records.length<=repairLimit;
+}
+document.getElementById('moreRepairsBtn').onclick=()=>{if(selected){repairLimit+=20;renderRepairHistory(selected);}};
+document.getElementById('addRepairBtn').onclick=()=>{if(!selected)return;const form=document.getElementById('repairForm');form.reset();repairEquipmentId=selected.userData.id;document.getElementById('repairDate').value=taipeiToday();document.getElementById('repairDate').max=taipeiToday();document.getElementById('repairVendor').value=selected.userData.vendor||'';form.hidden=false;document.getElementById('repairIssue').focus();};
+document.getElementById('cancelRepairBtn').onclick=()=>{document.getElementById('repairForm').hidden=true;repairEquipmentId=null;};
+document.getElementById('repairForm').onsubmit=async e=>{
+ e.preventDefault();const root=groups.get(repairEquipmentId);if(!root||root!==selected)return;
+ const date=document.getElementById('repairDate').value,issue=document.getElementById('repairIssue').value.trim(),raw=document.getElementById('repairCost').value,cost=raw===''?null:Number(raw);
+ if(!validDay(date)||date>taipeiToday())return toast('請填寫有效的維修日期，不能晚於今天');if(!issue)return toast('請填寫故障情形');if(cost!==null&&(!Number.isFinite(cost)||cost<0))return toast('維修價格不能小於 0');
+ const val=id=>document.getElementById(id).value.trim();const record={id:crypto.randomUUID(),date,issue,parts:val('repairParts'),notes:val('repairNotes'),cost:cost===null?null:Math.round(cost*100)/100,currency:'TWD',vendor:val('repairVendor'),recorder:val('repairRecorder'),createdAt:new Date().toISOString()};
+ root.userData.repairs.push(record);dirtyMetadataIds.add(root.userData.id);document.getElementById('repairForm').hidden=true;repairEquipmentId=null;renderRepairHistory(root);
+ const button=document.getElementById('saveRepairBtn');button.disabled=true;
+ try{const saved=await savePositions();toast(saved?'維修紀錄已同步至 NAS':'紀錄已保留在此裝置，尚未同步 NAS');}finally{button.disabled=false;}
+};
 
 const layoutFields=['name','status','cleaningLastDate','cleaningCycleDays','maintenanceLastDate','maintenanceCycleDays','commissionedDate','notes'];
 const dirtyMetadataIds=new Set(JSON.parse(localStorage.getItem('factoryFixedPendingIds')||'[]'));
@@ -253,7 +301,7 @@ function reconcileNasRows(merged,snapshot){
    if(k==='name')applyEquipmentName(r,next[k]);
    else if(k==='x'||k==='z')r.position[k]=next[k];
    else if(k==='rotationY')r.rotation.y=next[k];
-   else r.userData[k]=next[k];
+   else if(k==='notes')decodeEquipmentMetadata(r,next[k]);else r.userData[k]=next[k];
   }
   syncEquipmentSprite(r);
  });
@@ -275,7 +323,7 @@ function applyMetadata(root,row){
   // Preserve custom names, but migrate former autogenerated numbering to the approved plan.
   if(/^直式洗衣機\s*#0[123]$|^烘乾機\s*#0[123]$|^錳砂過濾設備$|^L型桌$|^打包機$/.test(normalized.name||''))continue;
   applyEquipmentName(root,normalized.name);
- }else root.userData[k]=normalized[k];}
+ }else if(k==='notes')decodeEquipmentMetadata(root,normalized[k]);else root.userData[k]=normalized[k];}
 }
 async function loadRemoteLayout(){
  if(syncing)return false;
@@ -332,8 +380,8 @@ function saveRemoteLayout(){
  });
  return savePromise;
 }
-function setPanelEditable(){['eqName','eqCommissionedDate','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn'].forEach(id=>document.getElementById(id).disabled=false);}
-function openPanel(r){document.body.classList.add('panel-open');document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqCommissionedDate').value=r.userData.commissionedDate||'';document.getElementById('eqCommissionedDate').max=taipeiToday();document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setEquipmentScale(r,r.userData.visualScale||1);setPanelEditable(edit);document.getElementById('panel').classList.add('open');renderInspectionMini(r);refreshEquipmentDates();renderNasReadDetails();}
+function setPanelEditable(){['eqName','eqVendor','eqCommissionedDate','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn'].forEach(id=>document.getElementById(id).disabled=false);}
+function openPanel(r){document.body.classList.add('panel-open');document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqCommissionedDate').value=r.userData.commissionedDate||'';document.getElementById('eqCommissionedDate').max=taipeiToday();document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setEquipmentScale(r,r.userData.visualScale||1);setPanelEditable(edit);document.getElementById('panel').classList.add('open');renderInspectionMini(r);refreshEquipmentDates();renderNasReadDetails();renderEquipmentExtras(r);}
 function closePanel(){document.getElementById('panel').classList.remove('open');document.body.classList.remove('panel-open');}
 function toast(s){
  const t=document.getElementById('toast');
@@ -341,7 +389,7 @@ function toast(s){
  setTimeout(()=>t.classList.remove('show'),1500);
 }
 function getPositionData(){
- return [...groups.values()].map(r=>({id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,x:r.position.x,z:r.position.z,rotationY:r.rotation.y,visualScale:r.userData.visualScale||1,level:r.userData.level||'一樓',status:r.userData.status||'正常',cleaningLastDate:r.userData.cleaningLastDate||'',cleaningCycleDays:Number(r.userData.cleaningCycleDays||30),maintenanceLastDate:r.userData.maintenanceLastDate||'',maintenanceCycleDays:Number(r.userData.maintenanceCycleDays||180),commissionedDate:r.userData.commissionedDate||'',notes:r.userData.notes||''}));
+ return [...groups.values()].map(r=>({id:r.userData.id,name:r.userData.name,type:r.userData.type,kind:r.userData.kind,x:r.position.x,z:r.position.z,rotationY:r.rotation.y,visualScale:r.userData.visualScale||1,level:r.userData.level||'一樓',status:r.userData.status||'正常',cleaningLastDate:r.userData.cleaningLastDate||'',cleaningCycleDays:Number(r.userData.cleaningCycleDays||30),maintenanceLastDate:r.userData.maintenanceLastDate||'',maintenanceCycleDays:Number(r.userData.maintenanceCycleDays||180),commissionedDate:r.userData.commissionedDate||'',notes:encodeEquipmentMetadata(r)}));
 }
 function savePositions(){
  const data=JSON.stringify(getPositionData());
@@ -378,7 +426,15 @@ document.getElementById('reloadNasBtn').onclick=async()=>{
   toast(ok?'已重新讀取 NAS':nasReadState.status);
  }finally{button.disabled=false;}
 };
-document.getElementById('saveEqBtn').onclick=async()=>{if(!selected)return;const commissioned=document.getElementById('eqCommissionedDate').value;if(commissioned&&(!validDay(commissioned)||commissioned>taipeiToday()))return toast('啟用日期不能晚於今天');selected.userData.commissionedDate=commissioned;selected.userData.name=document.getElementById('eqName').value.trim()||selected.userData.name;selected.userData.status=document.getElementById('eqStatus').value;selected.userData.cleaningLastDate=document.getElementById('eqCleaningDate').value;selected.userData.cleaningCycleDays=Math.max(0,Number(document.getElementById('eqCleaningCycle').value||0));selected.userData.maintenanceLastDate=document.getElementById('eqMaintenanceDate').value;selected.userData.maintenanceCycleDays=Math.max(0,Number(document.getElementById('eqMaintenanceCycle').value||0));selected.userData.notes=document.getElementById('eqNotes').value;const lbl=selected.children.find(o=>o.isCSS2DObject);if(lbl)lbl.element.textContent=shortMapName(selected.userData.name);document.getElementById('pn').textContent=selected.userData.name;dirtyMetadataIds.add(selected.userData.id);const saved=await savePositions();renderCategoryList();refreshEquipmentDates();renderInspectionMini(selected);toast(saved?'設備資料已同步至 NAS':nasReadState.status);};
+document.getElementById('saveEqBtn').onclick=async()=>{
+ const root=selected;if(!root)return;const button=document.getElementById('saveEqBtn');
+ const commissioned=document.getElementById('eqCommissionedDate').value;
+ if(commissioned&&(!validDay(commissioned)||commissioned>taipeiToday()))return toast('啟用日期不能晚於今天');
+ const d=root.userData;d.commissionedDate=commissioned;d.name=document.getElementById('eqName').value.trim()||d.name;d.vendor=document.getElementById('eqVendor').value.trim();
+ d.status=document.getElementById('eqStatus').value;d.cleaningLastDate=document.getElementById('eqCleaningDate').value;d.cleaningCycleDays=Math.max(0,Number(document.getElementById('eqCleaningCycle').value||0));d.maintenanceLastDate=document.getElementById('eqMaintenanceDate').value;d.maintenanceCycleDays=Math.max(0,Number(document.getElementById('eqMaintenanceCycle').value||0));d.notes=document.getElementById('eqNotes').value;
+ requestSceneRender();if(selected===root){document.getElementById('pn').textContent=d.name;document.getElementById('equipmentVendor').textContent='廠商：'+(d.vendor||'未填寫');}dirtyMetadataIds.add(d.id);button.disabled=true;
+ try{const saved=await savePositions();renderCategoryList();if(selected===root){refreshEquipmentDates();renderInspectionMini(root);}toast(saved?'設備資料已同步至 NAS':'已保留在此裝置，尚未同步 NAS');}finally{button.disabled=false;}
+};
 
 const pointers=new Map();let previous=null,tap=null,multitouch=false;
 function metrics(){const p=[...pointers.values()];if(!p.length)return null;if(p.length===1)return {...p[0],distance:0};return {clientX:(p[0].clientX+p[1].clientX)/2,clientY:(p[0].clientY+p[1].clientY)/2,distance:Math.hypot(p[0].clientX-p[1].clientX,p[0].clientY-p[1].clientY)};}
