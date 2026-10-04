@@ -888,7 +888,7 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
 
 
  root.position.set(x,y,z);scene.add(root);groups.set(root.userData.id,root);setEquipmentScale(root,root.userData.visualScale||1);
- root.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
+ root.traverse(o=>{if(o.isMesh&&o.material!==contactMaterial){o.userData.root=root;o.userData.interactive=true;}});
  return root;
 }
 instances.forEach(v=>addEquipment(...v));
@@ -903,7 +903,7 @@ function attachRaisedPlatform(root){
  for(const x of [-w*.45,w*.45]){pipe(support,[x,0,-d*.45],[x,3.5,-d*.45],.18);pipe(support,[x,3.5,-d*.45],[x,3.5,d*.45],.18);pipe(support,[x,0,d*.45],[x,3.5,d*.45],.18);}
  pipe(support,[-w*.45,3.5,-d*.45],[w*.45,3.5,-d*.45],.18);
  const merged=mergeMiniatureParts(support);root.add(merged);root.userData.platform=merged;
- merged.traverse(o=>{if(o.isMesh){o.userData.root=root;o.userData.interactive=true;}});
+ merged.traverse(o=>{if(o.isMesh&&o.material!==contactMaterial){o.userData.root=root;o.userData.interactive=true;}});
  root.userData.contactShadow.position.y=-deckHeight+.025;
  root.userData.contactShadow.scale.set(w*1.3,d*1.3,1);
 }
@@ -1011,8 +1011,8 @@ function hitEquipment(e){
  const p=pointerNDC(e);ray.setFromCamera(new THREE.Vector2(p.x,p.y),camera);
  const hits=ray.intersectObjects(scene.children,true);
  for(const h of hits){let o=h.object;while(o){
-   if(o.userData?.root && groups.has(o.userData.root.userData?.id)) return o.userData.root;
-   if(o.userData?.interactive && groups.has(o.userData?.id)) return o;
+   if(o.userData?.root && o.userData.root.visible && groups.has(o.userData.root.userData?.id)) return o.userData.root;
+   if(o.userData?.interactive && o.visible && groups.has(o.userData?.id)) return o;
    o=o.parent;
  }}
  return null;
