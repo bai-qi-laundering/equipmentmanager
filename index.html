@@ -281,37 +281,19 @@ const palette=[
  ['襯衫機','整燙設備','shirt','▣'],['壓板機','整燙設備','longPress','▤'],['ICC','整燙設備','lineICC','▰'],['天車','周邊設備','crane','⚙'],['空壓機','周邊設備','compressor','◉'],['錳砂過濾設備','周邊設備','manganese','◒'],['鍋爐','周邊設備','boiler','♨'],['水設備','周邊設備','water','💧'],['水塔','周邊設備','tank','◯'],['打包機','周邊設備','packer','▣']
 ];
 const instances=[
- ['30K','洗衣設備','folding',-58,0,-28],
- ['60K','洗衣設備','folding',-58,0,-10],
- ['80K','洗衣設備','folding',-58,0,8],
- ['L型桌','周邊設備','office',-58,0,-48],
- ['襯衫機','整燙設備','shirt',-18,0,-20],
- ['壓板機','整燙設備','longPress',-18,0,0],
- ['整燙區','整燙設備','pressZone',-18,0,20],
- ['ICC','整燙設備','lineICC',-38,0,36],
- ['35kg','洗衣設備','washer',34,0,-44],
- ['50kg','洗衣設備','washer',50,0,-44],
- ['兩層辦公室','周邊設備','office',45,0,-10],
- ['直式洗衣機 #01','洗衣設備','vertical',72,0,-12],
- ['直式洗衣機 #02','洗衣設備','vertical',72,0,2],
- ['直式洗衣機 #03','洗衣設備','vertical',72,0,16],
- ['N5','整燙設備','lineN5',30,0,10],
- ['IRT','整燙設備','lineIRT',58,0,10],
- ['SMF','整燙設備','lineSMF',44,0,24],
- ['烘乾機 #01','烘乾設備','dryer',18,0,43],
- ['烘乾機 #02','烘乾設備','dryer',32,0,43],
- ['烘乾機 #03','烘乾設備','dryer',46,0,43],
- ['天車 #01','周邊設備','crane',-26,0,-4],
- ['天車 #02','周邊設備','crane',22,0,5],
- ['冷風區','周邊設備','fan',-2,0,42],
- ['鍋爐','周邊設備','boiler',-46,0,45],
- ['乾洗機','洗衣設備','dryclean',62,0,30],
- ['打包機','周邊設備','packer',-34,0,30],
- ['水設備','周邊設備','water',-28,0,45],
- ['水塔','周邊設備','tank',-42,0,48],
- ['空壓機','周邊設備','compressor',-2,7,42,'架高二層'],
- ['錳砂過濾設備','周邊設備','manganese',32,7,43,'架高二層']
+ ['30K','洗衣設備','folding',-125,0,-135],['60K','洗衣設備','folding',-125,0,-75],['80K','洗衣設備','folding',-125,0,-10],
+ ['L型桌','周邊設備','office',-85,0,-185],['打包機','周邊設備','packer',-135,0,-185],
+ ['襯衫機','整燙設備','shirt',-20,0,-145],['壓板機','整燙設備','longPress',-20,0,-90],['整燙區','整燙設備','pressZone',-20,0,-30],['平燙機','整燙設備','flat',-20,0,30],
+ ['N5','整燙設備','lineN5',45,0,-130],['IRT','整燙設備','lineIRT',45,0,-65],
+ ['35kg','洗衣設備','washer',95,0,-220],['50kg','洗衣設備','washer',130,0,-220],['兩層辦公室','周邊設備','office',120,0,-170],
+ ['直式洗衣機 #01','洗衣設備','vertical',140,0,-125],['直式洗衣機 #02','洗衣設備','vertical',140,0,-85],['直式洗衣機 #03','洗衣設備','vertical',140,0,-45],
+ ['乾洗機','洗衣設備','dryclean',-125,0,65],['SMF','整燙設備','lineSMF',-145,0,115],['ICC','整燙設備','lineICC',-90,0,115],
+ ['天車 #01','周邊設備','crane',85,0,-15],['天車 #02','周邊設備','crane',35,0,-15],
+ ['冷風區','周邊設備','fan',-2,0,80],['空壓機','周邊設備','compressor',-2,26,80,'架高二層'],
+ ['烘乾機 #01','烘乾設備','dryer',45,0,90],['烘乾機 #02','烘乾設備','dryer',80,0,90],['烘乾機 #03','烘乾設備','dryer',115,0,90],
+ ['錳砂過濾設備','周邊設備','manganese',80,26,90,'架高二層'],['鍋爐','周邊設備','boiler',145,0,110],['水塔','周邊設備','tank',70,0,180],['水設備','周邊設備','water',105,0,180]
 ];
+
 const MODEL_REVISION='2026-10-04-mobile-miniature-v7';
 const API_BASE = 'https://fileserver.tailbb066f.ts.net';
 const SYNC_KEY = 'factory3dPositions_C_STYLE_V2';
@@ -911,7 +893,7 @@ function addEquipment(name,type,kind,x,y=0,z=0,level='一樓'){
 }
 instances.forEach(v=>addEquipment(...v));
 function attachRaisedPlatform(root){
- const size=root.userData.footprint,deckHeight=20,w=Math.max(size.w+3,24),d=Math.max(size.d+3,20);
+ const size=root.userData.footprint,deckHeight=26,w=Math.max(size.w+3,24),d=Math.max(size.d+3,20);
  const support=new THREE.Group();support.userData.raisedSupport=true;
  const deck=box(w,.65,d,0x8599a8);deck.position.y=-.35;support.add(deck);
  for(const x of [-w*.43,w*.43])for(const z of [-d*.43,d*.43]){
@@ -931,7 +913,7 @@ for(const id of deletedIds){const root=groups.get(id);if(root){scene.remove(root
 function enforceKnownLevels(){
  const raised=new Set(['COMP-01','MANG-01']);
  groups.forEach(r=>{
-  if(raised.has(r.userData.id)){r.userData.level='架高二層';r.position.y=20;}
+  if(raised.has(r.userData.id)){r.userData.level='架高二層';r.position.y=26;}
   else {r.userData.level='一樓';r.position.y=0;}
  });
 }
@@ -954,7 +936,10 @@ function frameFactory(overview=false){
   const spanZ=Math.max(1,maxZ-minZ);
   const aspect=innerWidth/innerHeight;
   const portrait=aspect<0.82;
-  const fit=Math.max((spanX+58)/(2*aspect),(spanZ*.89+64)/2)*(portrait?1.08:1.08);
+  const bounds=new THREE.Box3();groups.forEach(r=>bounds.expandByObject(r));
+  const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+  const availableW=(innerWidth-24)/innerWidth,availableH=Math.max(.3,(innerHeight-(innerWidth<1025?104:84)-164)/innerHeight);
+  const fit=Math.max((size.x+12)/(2*aspect*availableW),(size.z*.725+size.y*.69+12)/(2*availableH))*1.04;
   const base=100;
   camera.left=-base*aspect;
   camera.right=base*aspect;
@@ -962,11 +947,11 @@ function frameFactory(overview=false){
   camera.bottom=-base;
   camera.near=-1000;
   camera.far=2000;
-  camera.zoom=base/fit*Math.min((innerWidth-24)/innerWidth,(innerHeight-(innerWidth<1025?104:84)-164)/innerHeight);
+  camera.zoom=base/fit;
   camera.setViewOffset(innerWidth,innerHeight,0,(164-(innerWidth<1025?104:84))/2,innerWidth,innerHeight);
   const dir=new THREE.Vector3(0,1.05,1).normalize();
-  camera.position.copy(new THREE.Vector3(cx,12,cz).addScaledVector(dir,260));
-  controls.target.set(cx,1.6,cz);
+  camera.position.copy(new THREE.Vector3(center.x,center.y,center.z).addScaledVector(dir,260));
+  controls.target.copy(center);
   controls.update();
   camera.updateProjectionMatrix();
 }
