@@ -154,30 +154,19 @@ body.panel-open .equipment-tools{display:none}
 .ins-photo-section{margin-top:16px;padding-top:14px;border-top:1px solid #d5e2ed}.ins-photo-actions{display:flex;gap:10px;flex-wrap:wrap}#inspectionOverlay .ins-photo-pick{display:flex;align-items:center;justify-content:center;position:relative;margin:0;padding:12px 16px;border:1px solid #74a8cd;border-radius:12px;background:#eef7ff;color:#174d74;font-weight:700;min-height:48px;cursor:pointer}.ins-photo-pick input{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}.ins-photo-section>small{display:block;margin:9px 0}.ins-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.ins-photo-tile{min-width:0;background:#f4f8fb;border:1px solid #cedfea;border-radius:12px;padding:7px}#inspectionOverlay .ins-photo-open{display:block;width:100%;border:0;background:transparent;padding:0;text-align:left}.ins-photo-open img{display:block;width:100%;height:104px;object-fit:cover;border-radius:7px;background:#dfe9f1}.ins-photo-open span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;margin-top:5px}.ins-photo-tile small{display:block;color:#456580;font-size:11px;line-height:1.5;margin-top:5px}.ins-photo-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}#inspectionOverlay .ins-photo-row button{padding:6px;font-size:11px;min-height:36px}.ins-photo-message{color:#246b98;font-size:13px;margin-top:8px}.ins-history-item{padding:12px 0;border-top:1px solid #e1eaf1}
 #photoViewer{pointer-events:auto;padding:12px;border:1px solid #577c9b;border-radius:16px;background:#071421;color:white;width:min(940px,calc(100vw - 20px));max-height:92dvh}#photoViewer::backdrop{background:#000b}#photoViewer header{display:flex;justify-content:space-between;align-items:center;gap:12px}#photoViewerImage{display:block;max-width:100%;max-height:74dvh;object-fit:contain;margin:12px auto}#photoViewerState{color:#bdd1e2;text-align:center}
 @media(max-width:450px){.ins-photo-grid{gap:6px}.ins-photo-tile{padding:5px}.ins-photo-open img{height:80px}}
-
-/* TRUE 3D VIEW V1 */
-#threeViewport{position:absolute;inset:88px 0 182px;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 35%,#21394d 0,#111d28 45%,#081019 100%)}
-#threeViewport canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
-#threeLabels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-.eq3d-label{pointer-events:none;padding:5px 8px;border-radius:8px;background:rgba(6,20,32,.88);border:1px solid rgba(112,202,255,.62);color:#fff;font-size:11px;font-weight:800;white-space:nowrap;box-shadow:0 3px 12px #0008;transform:translateY(-8px)}
-.eq3d-label.is-selected{background:#0a4970;border-color:#fff;box-shadow:0 0 16px #4fc3ff99}
-.eq3d-label.is-hidden{display:none}
-#threeHelp{position:fixed;z-index:31;left:50%;top:82px;transform:translateX(-50%);padding:5px 11px;border:1px solid rgba(83,174,228,.35);border-radius:999px;background:rgba(4,18,32,.62);color:#c6e7fa;font-size:11px;pointer-events:none;backdrop-filter:blur(10px)}
-@media(max-width:1024px){#threeViewport{inset:94px 0 150px}#threeHelp{top:92px;font-size:10px}.map-tools{bottom:105px!important}}
-@media(max-width:700px){#threeViewport{inset:94px 0 126px}#threeHelp{display:none}.eq3d-label{font-size:9px;padding:3px 5px}.palette{height:112px!important}.items{height:82px!important}}
 </style></head>
 <body>
-<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">真 3D 地圖 V7 · 除35/50kg外洗衣機改 NEO-100A · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"><div id="threeViewport" aria-label="工廠 360 度 3D 設備地圖"></div><div id="threeHelp">左鍵／單指旋轉 · 右鍵／雙指平移 · 滾輪／雙指縮放 · 點設備查看資料</div></div>
+<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">平面地圖 V16 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"><div id="flatViewport" aria-label="工廠設備地圖"><div id="flatMap"><img id="flatImage" src="factory-map-clean-v13.svg" alt="已確認的工廠設備配置" width="1024" height="1536" draggable="false" decoding="async" fetchpriority="high"><div id="hotspots"></div></div></div></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠設備地圖</div>
   <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>折疊設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
   <input class="search" id="search" placeholder="搜尋設備名稱…">
-  <div class="mode"><button id="resetBtn">全圖</button><button id="focusNeoBtn" type="button" style="border-color:#5ee7ff;background:#123e5b">定位 NEO-100A</button><button id="refreshAllBtn" type="button">同步資料</button></div>
+  <div class="mode"><button id="resetBtn">全圖</button><button id="refreshAllBtn" type="button">同步資料</button></div>
 </div>
-<div class="hint" id="hint">拖曳移動地圖 · 滾輪縮放 · 右鍵旋轉 · 點設備查看資料</div><div id="neoLoadBadge" style="position:fixed;z-index:80;left:14px;top:126px;padding:7px 10px;border-radius:10px;background:#102333dd;border:1px solid #55d9ff;color:#dff7ff;font-size:12px;pointer-events:none">NEO-100A：檢查中…</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
+<div class="hint" id="hint">拖曳移動地圖 · 滾輪縮放 · 右鍵旋轉 · 點設備查看資料</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
 <div class="side"><button>▧<br>地圖</button><button>⚙<br>設備</button><button>✓<br>清潔</button><button>◷<br>保養</button><button>⚒<br>維修</button></div>
 <div class="palette"><h3>設備分類 · 點選分類查看機台</h3><div class="items" id="items"></div></div>
-<div class="map-tools" aria-label="3D 地圖操作"><span>3D</span><button id="mapZoomOut" aria-label="拉遠">－</button><button id="mapZoomIn" aria-label="拉近">＋</button><button id="mapHome">全景</button></div>
+<div class="map-tools" aria-label="地圖操作"><span>地圖</span><button id="mapZoomOut" aria-label="縮小地圖">－</button><button id="mapZoomIn" aria-label="放大地圖">＋</button><button id="mapHome">全圖</button></div>
 
 <div class="touch-help">單指拖曳 · 雙指縮放 · 點設備查看資料</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div id="equipmentVendor">廠商：未填寫</div><div class="muted" id="pt">設備</div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>廠商</label><input id="eqVendor" placeholder="設備廠商名稱" maxlength="200" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="repairsCard"><h3>維修紀錄</h3><button id="addRepairBtn" type="button" style="width:100%">＋ 新增維修紀錄</button><form id="repairForm" hidden>
 <label>維修日期 *</label><input id="repairDate" type="date" required>
@@ -193,11 +182,7 @@ body.panel-open .equipment-tools{display:none}
 <button id="inspectionEntry">✓ 查檢清單</button><section id="inspectionOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="inspectionTitle"><header class="ins-header"><button id="inspectionBack">返回地圖</button><h2 id="inspectionTitle">設備查檢清單</h2><button id="inspectionSettingsBtn">設定／備份</button></header><div class="ins-sync"><span id="inspectionSyncStatus">正在連接 NAS…</span> <button id="inspectionSyncBtn" type="button">同步 NAS</button> <button id="inspectionConflictBtn" type="button" hidden>處理版本衝突</button></div><main id="inspectionContent"></main><footer id="inspectionSaveBar" hidden><b id="inspectionProgress">已查檢 0 項</b><button id="inspectionSubmit" class="ins-primary">確認送出查檢</button></footer></section>
 <section id="categoryDrawer" hidden role="dialog" aria-labelledby="categoryTitle"><header><h2 id="categoryTitle">設備清單</h2><button id="categoryClose" aria-label="關閉設備清單">×</button></header><div id="categoryRows"></div></section>
 <dialog id="photoViewer" aria-labelledby="photoViewerTitle"><header><b id="photoViewerTitle">查檢照片</b><button id="photoViewerClose" type="button">關閉 ×</button></header><p id="photoViewerState" role="status"></p><img id="photoViewerImage" alt="查檢照片大圖"></dialog>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 const API_BASE='https://fileserver.tailbb066f.ts.net:8443',SYNC_KEY='factory3dPositions_C_STYLE_V2';
 // An invitation activates this browser once; the key is never sent to GitHub.
 const accessStorageKey='equipment_api_access_v1';
@@ -224,215 +209,18 @@ async function apiImageUrl(url){
 let apiAvailable=false,syncing=false,selected=null,edit=true;
 const groups=new Map();const instances=[["不鏽鋼工作台 1", "周邊設備", "worktable", -185, 0, -226, "一樓", "DESK-01", 1.57079632679, 32], ["打包機 1", "周邊設備", "packer", -150, 0, -226, "一樓", "PACK-01", 0, 18], ["不鏽鋼工作台 2", "周邊設備", "worktable", -108, 0, -226, "一樓", "DESK-02", 0, 38], ["打包機 2", "周邊設備", "packer", -185, 0, -187, "一樓", "PACK-02", 0, 18], ["60K", "折疊設備", "folding", -185, 0, -130, "一樓", "60K-01", 1.57079632679, 46], ["80K", "折疊設備", "folding", -185, 0, -64, "一樓", "80K-01", 1.57079632679, 46], ["30K", "折疊設備", "folding", -185, 0, -10, "一樓", "30K-01", 0, 46], ["廁所 1", "周邊設備", "toilet", -185, 0, 45, "一樓", "WC-01", 0, 32], ["廁所 2", "周邊設備", "toilet", -185, 0, 92, "一樓", "WC-02", 0, 32], ["SMF", "燙床設備", "lineSMF", -195, 0, 151, "一樓", "SMF-01", 0, 48], ["ICC", "燙床設備", "lineICC", -132, 0, 151, "一樓", "ICC-01", 0, 50], ["襯衫機", "整燙設備", "shirt", -75, 0, -167, "一樓", "SHIRT-01", 0, 26], ["壓板機", "整燙設備", "longPress", -75, 0, -104, "一樓", "EQ-1", 0, 29], ["整燙區", "整燙設備", "pressZone", -75, 0, -39, "一樓", "FINISH-01", 0, 44], ["冷風區", "周邊設備", "fan", -75, 0, 76, "一樓", "FAN-01", 0, 23], ["空壓機", "周邊設備", "compressor", -75, 36, 76, "架高二層", "COMP-01", 0, 29], ["洗衣機", "洗衣設備", "washer", 0, 0, -228, "一樓", "WASH-EXTRA-01", 0, 23], ["N5", "燙床設備", "lineN5", 0, 0, -125, "一樓", "N5-01", 1.57079632679, 72], ["IRT", "燙床設備", "lineIRT", 0, 0, -53, "一樓", "IRT-01", 1.57079632679, 72], ["35kg", "洗衣設備", "washer", 167, 0, -216, "一樓", "W35-01", 0, 21], ["50kg", "洗衣設備", "washer", 196, 0, -216, "一樓", "W50-01", 0, 23], ["兩層辦公室", "周邊設備", "office", 182, 0, -159, "一樓", "OFFICE-01", 0, 59], ["直式洗衣機 #8", "洗衣設備", "vertical", 193, 0, -101, "一樓", "VERT-01", 0, 24], ["直式洗衣機 #7", "洗衣設備", "vertical", 193, 0, -60, "一樓", "VERT-02", 0, 24], ["直式洗衣機 #6", "洗衣設備", "vertical", 193, 0, -19, "一樓", "VERT-03", 0, 24], ["直式洗衣機 #5", "洗衣設備", "vertical", 193, 0, 22, "一樓", "VERT-05", 0, 24], ["直式洗衣機 #3", "洗衣設備", "vertical", 193, 0, 63, "一樓", "VERT-06", 0, 24], ["直式洗衣機 #2", "洗衣設備", "vertical", 193, 0, 104, "一樓", "VERT-07", 0, 24], ["直式洗衣機 #1", "洗衣設備", "vertical", 193, 0, 145, "一樓", "VERT-08", 0, 24], ["烘乾機 #3", "烘乾設備", "dryer", 62, 0, 101, "一樓", "DRY-03", 0, 26], ["烘乾機 #5", "烘乾設備", "dryer", 91, 0, 101, "一樓", "DRY-02", 0, 26], ["烘乾機 #6", "烘乾設備", "dryer", 120, 0, 101, "一樓", "DRY-01", 0, 26], ["烘乾機（L 型 後段）", "烘乾設備", "dryer", 62, 0, 144, "一樓", "DRY-04", 0, 26], ["烘乾機（L 型 末段）", "烘乾設備", "dryer", 62, 0, 187, "一樓", "DRY-05", 0, 26], ["猛沙過濾設備", "周邊設備", "manganese", 91, 36, 92, "架高二層", "MANG-01", 0, 47], ["天車 #1", "周邊設備", "crane", 59, 76, 73, "架高二層", "CRANE-01", 0, 25], ["天車 #2", "周邊設備", "crane", 123, 76, 73, "架高二層", "CRANE-02", 0, 25], ["鍋爐", "周邊設備", "boiler", 132, 0, 164, "一樓", "BOILER-01", 0, 33], ["水設備", "周邊設備", "water", -124, 0, 281, "一樓", "WATER-01", 0, 43], ["水塔", "周邊設備", "tank", -70, 0, 281, "一樓", "TANK-01", 0, 28]];
 const regions=[["DESK-01", 56, 65, 60, 100], ["PACK-01", 132, 39, 65, 105], ["DESK-02", 190, 72, 113, 80], ["PACK-02", 70, 173, 68, 90], ["60K-01", 71, 256, 67, 117], ["80K-01", 69, 374, 75, 72], ["30K-01", 41, 439, 132, 64], ["WC-01", 44, 512, 112, 100], ["WC-02", 9, 610, 147, 107], ["SMF-01", 19, 740, 169, 91], ["ICC-01", 196, 740, 159, 91], ["SHIRT-01", 291, 144, 120, 123], ["EQ-1", 287, 267, 127, 115], ["FINISH-01", 274, 386, 148, 87], ["FAN-01", 289, 617, 99, 83], ["COMP-01", 256, 529, 157, 90], ["WASH-EXTRA-01", 446, 30, 80, 100], ["N5-01", 456, 162, 91, 224], ["IRT-01", 456, 387, 94, 291], ["W35-01", 809, 129, 66, 76], ["W50-01", 877, 129, 66, 76], ["OFFICE-01", 789, 206, 198, 160], ["VERT-01", 876, 363, 104, 66], ["VERT-02", 876, 429, 104, 62], ["VERT-03", 876, 491, 104, 61], ["VERT-05", 876, 552, 104, 62], ["VERT-06", 876, 614, 104, 58], ["VERT-07", 876, 672, 104, 62], ["VERT-08", 876, 734, 104, 63], ["DRY-03", 598, 633, 79, 101], ["DRY-02", 677, 633, 77, 101], ["DRY-01", 754, 633, 74, 105], ["DRY-04", 598, 736, 83, 104], ["DRY-05", 598, 841, 87, 107], ["MANG-01", 616, 542, 184, 90], ["CRANE-01", 597, 491, 54, 90], ["CRANE-02", 777, 491, 57, 90], ["BOILER-01", 748, 756, 141, 120], ["WATER-01", 244, 1018, 195, 194], ["TANK-01", 442, 1014, 98, 196]];
-const viewport=document.getElementById('threeViewport');
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x0b1520);
-scene.fog=new THREE.Fog(0x0b1520,520,1050);
-const camera=new THREE.PerspectiveCamera(48,1,1,1800);
-camera.position.set(420,390,520);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-viewport.appendChild(renderer.domElement);
-const labelRenderer=new CSS2DRenderer();labelRenderer.setSize(1,1);labelRenderer.domElement.id='threeLabels';viewport.appendChild(labelRenderer.domElement);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.07;controls.minDistance=90;controls.maxDistance=1050;controls.maxPolarAngle=Math.PI*.49;controls.target.set(0,0,25);controls.screenSpacePanning=false;
-controls.mouseButtons.LEFT=THREE.MOUSE.ROTATE;controls.mouseButtons.MIDDLE=THREE.MOUSE.DOLLY;controls.mouseButtons.RIGHT=THREE.MOUSE.PAN;
-controls.touches.ONE=THREE.TOUCH.ROTATE;controls.touches.TWO=THREE.TOUCH.DOLLY_PAN;
-scene.add(new THREE.HemisphereLight(0xd7efff,0x314252,2.1));
-const sun=new THREE.DirectionalLight(0xffffff,2.7);sun.position.set(-180,420,220);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-400;sun.shadow.camera.right=400;sun.shadow.camera.top=430;sun.shadow.camera.bottom=-430;scene.add(sun);
-const fill=new THREE.DirectionalLight(0x7bc7ff,1.0);fill.position.set(300,160,-300);scene.add(fill);
-const floorMat=new THREE.MeshStandardMaterial({color:0x59636c,roughness:.86,metalness:.05});
-const floor=new THREE.Mesh(new THREE.BoxGeometry(520,8,640),floorMat);floor.position.set(0,-5,30);floor.receiveShadow=true;scene.add(floor);
-const grid=new THREE.GridHelper(640,32,0x7e96a8,0x65727c);grid.position.y=.05;scene.add(grid);
-function wall(x,z,w,d,h=55){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:0xaeb8bf,roughness:.8,metalness:.05}));m.position.set(x,h/2-1,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m;}
-wall(-257,30,6,640,42);wall(257,30,6,640,42);wall(0,-287,520,6,42);wall(0,347,520,6,42);
-function mat(color,metalness=.34,roughness=.42){return new THREE.MeshStandardMaterial({color,metalness,roughness});}
-const MAT={steel:mat(0xb7c1c8,.72,.28),dark:mat(0x27333d,.55,.34),blue:mat(0x2d79a8,.35,.35),green:mat(0x4a8b75,.3,.42),purple:mat(0x7865a8,.3,.4),white:mat(0xdde4e8,.38,.38),black:mat(0x111820,.35,.48),orange:mat(0xc77a2c,.25,.42),glass:new THREE.MeshPhysicalMaterial({color:0x6ac9ff,transparent:true,opacity:.34,roughness:.12,metalness:.05,transmission:.35})};
-function box(g,w,h,d,m=MAT.steel,x=0,y=h/2,z=0){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;g.add(o);return o;}
-function cyl(g,r,h,m=MAT.steel,x=0,y=h/2,z=0,rotX=0){const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,24),m);o.position.set(x,y,z);o.rotation.x=rotX;o.castShadow=true;o.receiveShadow=true;g.add(o);return o;}
-function torus(g,R,r,m,x=0,y=0,z=0,rx=Math.PI/2){const o=new THREE.Mesh(new THREE.TorusGeometry(R,r,16,32),m);o.position.set(x,y,z);o.rotation.x=rx;o.castShadow=true;g.add(o);return o;}
-function addFeet(g,w,d){for(const x of [-w*.36,w*.36])for(const z of [-d*.35,d*.35])box(g,3,4,3,MAT.dark,x,2,z);}
-function makeLabelTexture(text,bg='#f4f6f8',fg='#1552a1',accent='#7fc242'){
- const c=document.createElement('canvas');c.width=1024;c.height=256;const ctx=c.getContext('2d');
- ctx.fillStyle=bg;ctx.fillRect(0,0,c.width,c.height);
- ctx.fillStyle=accent;ctx.fillRect(28,42,72,172);
- ctx.fillStyle=fg;ctx.font='bold 112px Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,560,132);
- const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
-}
-function buildNeo100A(){
- const g=new THREE.Group(),pick=[];
- const W=52,H=54,D=66,frontZ=D/2;
- const white=mat(0xf0f2f3,.28,.33),blue=mat(0x0f3d98,.28,.3),steel=mat(0xbfc6ca,.8,.22),black=mat(0x171d22,.35,.42),orange=mat(0xe88a24,.2,.35),darkBlue=mat(0x173b74,.35,.4);
- const add=(o,selectable=true)=>{o.castShadow=true;o.receiveShadow=true;g.add(o);if(selectable)pick.push(o);return o;};
- const B=(w,h,d,m,x,y,z,s=true)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);return add(o,s);};
- const C=(r,h,m,x,y,z,rx=0,rz=0,s=true)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,32),m);o.position.set(x,y,z);o.rotation.x=rx;o.rotation.z=rz;return add(o,s)};
- // heavy rectangular white frame; body extends backward, front at +Z
- B(W,3,D,white,0,1.5,0);B(W,3,D,white,0,H-1.5,0);
- B(3,H,D,white,-W/2+1.5,H/2,0);B(3,H,D,white,W/2-1.5,H/2,0);
- // side rails/open structure, keeping the rear assembly at the BACK
- for(const z of [-20,-5,12]){B(W-6,2.2,2.2,white,0,10,z,false);B(W-6,2.2,2.2,white,0,30,z,false);}
- B(2.2,H-8,D-7,white,-W/2+5,H/2,-2,false);B(2.2,H-8,D-7,white,W/2-5,H/2,-2,false);
- // front blue plate
- B(W-8,H-10,2.3,blue,0,27,frontZ-.8);
- // top header beam and lower stainless trims
- B(W-3,5,3,white,0,H-4,frontZ-.2);B(W-8,4,2.2,steel,0,5.5,frontZ+.1);B(W-8,2.2,2.4,steel,0,12,frontZ+.2);
- // door: axis runs along Z
- const drum=C(11.8,3.8,black,0,23,frontZ+1.6,Math.PI/2);drum.material=black;
- torus(g,13.1,1.6,steel,0,23,frontZ+3.6);torus(g,10.9,.8,steel,0,23,frontZ+3.8);
- const glass=new THREE.Mesh(new THREE.CircleGeometry(10.3,48),new THREE.MeshPhysicalMaterial({color:0xaecbd6,transparent:true,opacity:.45,roughness:.18,metalness:.05,transmission:.28}));glass.position.set(0,23,frontZ+4.05);add(glass);
- // simplified linen volume behind glass
- for(let i=0;i<18;i++){const s=.85+(i%4)*.16;const m=new THREE.Mesh(new THREE.SphereGeometry(1.8*s,12,8),mat(0xdfe5df,.05,.9));m.scale.set(1.6,.55,.5);m.position.set(((i%6)-2.5)*2.2,18.5+Math.floor(i/6)*2.5,frontZ+3.2);add(m,false);}
- // door lock bar
- const lockMat=new THREE.MeshStandardMaterial({map:makeLabelTexture('NEO-100A'),metalness:.18,roughness:.34});B(31,5.8,3.4,lockMat,0,23,frontZ+5.2);
- // stainless chute under the door
- B(23,1.6,6,steel,0,11.8,frontZ+2.5);B(2,6,6,steel,-10.5,14.2,frontZ+2.5,false);B(2,6,6,steel,10.5,14.2,frontZ+2.5,false);
- // left-front control cabinet, protruding from the real left/front corner
- B(9.5,17,4.8,white,-W/2-2.7,27,frontZ-6);
- B(6.2,5.2,.65,black,-W/2-2.7,31.5,frontZ-3.3,false);
- // control buttons
- for(const [dx,clr] of [[-2,0x15191e],[0,0x28b85b],[2,0xd84334]]){const bm=new THREE.MeshStandardMaterial({color:clr,metalness:.15,roughness:.3});C(.48,.7,bm,-W/2-2.7+dx,27.3,frontZ-3.0,Math.PI/2,0,false)}
- C(.65,.8,new THREE.MeshStandardMaterial({color:0xe73427}),-W/2+.5,36.7,frontZ-3.0,Math.PI/2,0,false);
- // right-front emergency stop
- C(.65,.8,new THREE.MeshStandardMaterial({color:0xe73427}),W/2-1.2,31.5,frontZ+1.1,Math.PI/2,0,false);
- // pneumatic actuator on upper-right front
- B(8,3.2,3.2,steel,10.5,36.5,frontZ+3.3,false);C(1.05,7,orange,12.2,31.8,frontZ+3.0,0,0,false);C(.45,7,steel,12.2,27.5,frontZ+3.0,0,0,false);
- // orange foundation feet
- for(const x of [-W/2+4,W/2-4])for(const z of [-D/2+4,D/2-4])B(5,1.3,5,orange,x,.65,z,false);
- // side-visible internal drum and motor only; NOT a copied rear wall
- C(10.5,20,darkBlue,0,24,1,0,Math.PI/2,false);
- C(5,9,black,-10,12,-7,Math.PI/2,0,false);C(2.2,9,steel,-10,12,-1.5,Math.PI/2,0,false);
- // BACK/top-rear mechanical assembly: z stays near -D/2
- const rz=-D/2+6;
- B(W-10,6,4,white,0,37,rz,false);
- for(const x of [-11,-4,4,11])C(1.3,10,x%2?steel:darkBlue,x,44,rz,0,0,false);
- // rear horizontal/vertical pipes
- for(const y of [40,44]){const p=C(.75,W-10,steel,0,y,rz-1,0,Math.PI/2,false);}
- C(1.0,12,steel,-12,43,rz+1,0,0,false);C(1.0,12,steel,12,43,rz+1,0,0,false);
- // top brand panel
- const brandMat=new THREE.MeshStandardMaterial({map:makeLabelTexture('inamoto NEO-100A','#f2f3f4','#1d57a6','#f2f3f4'),metalness:.08,roughness:.4});B(29,3.8,.8,brandMat,3,H-4,frontZ+1.45,false);
- // large machine No. 7
- const sevenMat=new THREE.MeshStandardMaterial({map:makeLabelTexture('7','#f2f3f4','#163d9a','#f2f3f4'),metalness:.05,roughness:.4});B(5.2,8.5,.8,sevenMat,-W/2+5,H-8.5,frontZ+1.5,false);
- // front/side small structural covers
- B(7,31,3,white,-W/2+2,20,frontZ-.2,false);B(3,31,3,white,W/2-2,20,frontZ-.2,false);
- 
- // debug/locator marker: confirms the model exists even from a distant camera
- const locatorMat=new THREE.MeshStandardMaterial({color:0x2fdcff,emissive:0x0b91b7,emissiveIntensity:1.1,transparent:true,opacity:.42});
- const locator=new THREE.Mesh(new THREE.RingGeometry(33,36,64),locatorMat);locator.rotation.x=-Math.PI/2;locator.position.y=.12;g.add(locator);
- g.userData.pickMeshes=pick.length?pick:g.children.filter(c=>c.isMesh);return g;
-}
-function buildFrontLoadWasherPro(spec={}){
- const g=new THREE.Group(),pick=[];
- const W=spec.width||34,H=spec.height||35,D=28;
- const bodyMat=mat(0xf2f3f4,.28,.34),frontMat=mat(spec.frontColor||0x1850a7,.32,.32),frameMat=mat(0xe6ebee,.26,.38),steel=mat(0xbdc5cb,.8,.24),dark=mat(0x1a2026,.4,.42),accent=mat(0xe38828,.18,.38);
- const add=(o,selectable=true)=>{o.castShadow=true;o.receiveShadow=true;g.add(o);if(selectable)pick.push(o);return o;};
- const B=(w,h,d,m,x,y,z,s=true)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);return add(o,s);};
- const C=(r,h,m,x,y,z,rx=0,rz=0,s=true)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,28),m);o.position.set(x,y,z);o.rotation.x=rx;o.rotation.z=rz;return add(o,s)};
- B(W,2.2,D,frameMat,0,1.1,0,false);B(W,2.2,D,frameMat,0,H-1.1,0,false);
- B(2.2,H,D,frameMat,-W/2+1.1,H/2,0,false);B(2.2,H,D,frameMat,W/2-1.1,H/2,0,false);
- B(W-7,H-7,2.2,frontMat,0,H/2+1.2,D/2-1.1);
- B(W-2.2,3.1,2.5,frameMat,0,H-3.2,D/2-.2,false);
- B(W-8,2.2,3.2,steel,0,5.2,D/2+.4,false);B(W-8,1.4,2.2,steel,0,9.2,D/2+.4,false);
- const doorY=H*.53,doorR=spec.doorR||6.9;
- const door=C(doorR,2.6,dark,0,doorY,D/2+1.1,Math.PI/2,0);door.material=dark;
- torus(g,doorR+1.15,.88,steel,0,doorY,D/2+2.35);
- torus(g,doorR-1.05,.42,steel,0,doorY,D/2+2.45);
- const glass=new THREE.Mesh(new THREE.CircleGeometry(doorR-.95,40),new THREE.MeshPhysicalMaterial({color:0xaecad8,transparent:true,opacity:.42,roughness:.14,metalness:.04,transmission:.32}));glass.position.set(0,doorY,D/2+2.52);add(glass,false);
- for(let i=0;i<14;i++){const puff=new THREE.Mesh(new THREE.SphereGeometry(1.08+(i%3)*.15,10,8),mat(0xe7ece7,.04,.92));puff.scale.set(1.35,.62,.55);puff.position.set(((i%5)-2)*1.8,doorY-2.3+Math.floor(i/5)*2.1,D/2+1.85);add(puff,false);}
- const brandText=spec.frontText||'WASHER';
- const barW=Math.min(W-10,18.5);
- const lockMat=new THREE.MeshStandardMaterial({map:makeLabelTexture(brandText,'#f5f6f7',spec.textColor||'#1b53a6',spec.accentColor||'#7fc242'),metalness:.12,roughness:.36});
- B(barW,3.9,2.2,lockMat,0,doorY,D/2+3.45,false);
- B(barW*.78,1.2,4.3,steel,0,doorY-6.8,D/2+1.35,false);B(1.4,4.7,4.3,steel,-barW*.39,doorY-4.85,D/2+1.35,false);B(1.4,4.7,4.3,steel,barW*.39,doorY-4.85,D/2+1.35,false);
- const ctlX=-W/2-1.9;
- B(6.8,11.5,3.8,frameMat,ctlX,H*.61,D/2-4.2);B(4.5,3.8,.55,dark,ctlX,H*.68,D/2-2.2,false);
- for(const [dx,clr] of [[-1.3,0x1c1f23],[0,0x2ab95c],[1.3,0xd74235]]){const m=new THREE.MeshStandardMaterial({color:clr,metalness:.1,roughness:.32});const b=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.55,20),m);b.rotation.x=Math.PI/2;b.position.set(ctlX+dx,H*.57,D/2-1.95);add(b,false);} 
- const estop=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.7,24),new THREE.MeshStandardMaterial({color:0xe53626,metalness:.08,roughness:.32}));estop.rotation.x=Math.PI/2;estop.position.set(ctlX+2.0,H*.77,D/2-1.95);add(estop,false);
- const rightStop=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.7,24),new THREE.MeshStandardMaterial({color:0xe53626,metalness:.08,roughness:.32}));rightStop.rotation.x=Math.PI/2;rightStop.position.set(W/2-.9,H*.68,D/2+.4);add(rightStop,false);
- if(spec.withActuator!==false){B(5.8,2.2,2.2,steel,W*.23,H*.83,D/2+1.6,false);C(.75,4.8,accent,W*.27,H*.75,D/2+1.4,0,0,false);C(.34,4.6,steel,W*.27,H*.70,D/2+1.4,0,0,false);}
- // side body and internal structure
- B(W-4,H-8,D-8,frameMat,0,H/2,-1.5,false);
- B(1.8,H-8,D-8,frameMat,-W/2+4,H/2,-1.5,false);B(1.8,H-8,D-8,frameMat,W/2-4,H/2,-1.5,false);
- const windowW=spec.compact?7.4:8.8;
- const sideCut=new THREE.Mesh(new THREE.BoxGeometry(windowW,10.5,1.2),MAT.glass);sideCut.position.set(-W/2+2.2,H*.47,-D/2+5.7);add(sideCut,false);
- C(6.1,12,mat(0x3256af,.35,.33),0,H*.53,-2.2,0,Math.PI/2,false);
- C(3.25,7.6,dark,-6.2,8.8,-3.7,Math.PI/2,0,false);C(1.45,7.6,steel,-6.2,8.8,.4,Math.PI/2,0,false);
- B(10,1.2,2.1,steel,0,H-2.2,-D/2+1.1,false);
- for(const x of [-W/2+3.4,W/2-3.4])for(const z of [-D/2+3.4,D/2-3.4])B(3.2,1.1,3.2,accent,x,.55,z,false);
- const headText=spec.headText||brandText;
- const headMat=new THREE.MeshStandardMaterial({map:makeLabelTexture(headText,'#f3f4f6',spec.textColor||'#1b53a6','#f3f4f6'),metalness:.08,roughness:.45});
- B(Math.min(W-6,20),2.4,.6,headMat,1.2,H-3.1,D/2+.92,false);
- if(spec.sideBadge){const sideMat=new THREE.MeshStandardMaterial({map:makeLabelTexture(spec.sideBadge,'#eef2f4',spec.textColor||'#1b53a6','#eef2f4'),metalness:.04,roughness:.5});B(4.2,6.4,.55,sideMat,-W/2+2.6,H-6.4,D/2+1.0,false);}
- g.userData.pickMeshes=pick.length?pick:g.children.filter(c=>c.isMesh);return g;
-}
-function buildVerticalWasherPro(spec={}){
- const g=new THREE.Group(),pick=[];
- const W=20,H=34,D=22;
- const white=mat(0xf2f4f6,.3,.38),steel=mat(0xc0c8cf,.8,.24),dark=mat(0x1a2127,.42,.42),blue=mat(0x3566b6,.28,.36),accent=mat(0xe38828,.18,.38);
- const add=(o,selectable=true)=>{o.castShadow=true;o.receiveShadow=true;g.add(o);if(selectable)pick.push(o);return o;};
- const B=(w,h,d,m,x,y,z,s=true)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);return add(o,s);};
- const C=(r,h,m,x,y,z,rx=0,rz=0,s=true)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,28),m);o.position.set(x,y,z);o.rotation.x=rx;o.rotation.z=rz;return add(o,s)};
- B(W,2,D,white,0,1,0,false);B(W,2,D,white,0,H-1,0,false);B(2,H,D,white,-W/2+1,H/2,0,false);B(2,H,D,white,W/2-1,H/2,0,false);
- B(W-4,H-6,D-5,white,0,H/2,.5);
- const drum=C(5.4,2.3,dark,0,H*.56,D/2+.8,Math.PI/2,0);torus(g,6.3,.9,steel,0,H*.56,D/2+1.9);torus(g,4.3,.35,steel,0,H*.56,D/2+2.0);
- const glass=new THREE.Mesh(new THREE.CircleGeometry(4.7,32),new THREE.MeshPhysicalMaterial({color:0xaecad8,transparent:true,opacity:.35,roughness:.15,metalness:.05,transmission:.28}));glass.position.set(0,H*.56,D/2+2.02);add(glass,false);
- B(10.8,3.1,1.6,blue,0,H-4.7,D/2+.25,false);
- const pMat=new THREE.MeshStandardMaterial({map:makeLabelTexture(spec.label||'VERT','#edf1f4','#1a4da2','#edf1f4'),metalness:.04,roughness:.45});
- B(7.8,2.1,.45,pMat,0,H-4.7,D/2+1.1,false);
- B(5.6,4.4,3.2,white,-W/2-1.0,H*.67,D/2-2.8,false);B(3.4,2.1,.55,dark,-W/2-1.0,H*.70,D/2-1.45,false);
- for(const [dx,clr] of [[-1.0,0x1f2327],[0,0x24b55a],[1.0,0xde4a37]]){const m=new THREE.MeshStandardMaterial({color:clr,metalness:.12,roughness:.32});const b=new THREE.Mesh(new THREE.CylinderGeometry(.26,.26,.45,18),m);b.rotation.x=Math.PI/2;b.position.set(-W/2-1.0+dx,H*.62,D/2-1.2);add(b,false);} 
- C(.55,.65,new THREE.MeshStandardMaterial({color:0xe53626}),W/2-.7,H*.69,D/2+.4,Math.PI/2,0,false);
- B(1.2,H-9,D-7,white,-W/2+2.5,H/2,-1.1,false);B(1.2,H-9,D-7,white,W/2-2.5,H/2,-1.1,false);
- C(4.8,9.0,mat(0x2b4a8d,.35,.34),0,H*.48,-2.2,0,Math.PI/2,false);
- C(2.5,5.4,dark,-4.2,7.0,-2.2,Math.PI/2,0,false);
- for(const x of [-W/2+2.7,W/2-2.7])for(const z of [-D/2+3.0,D/2-3.0])B(2.6,1.0,2.6,accent,x,.5,z,false);
- g.userData.pickMeshes=pick.length?pick:g.children.filter(c=>c.isMesh);return g;
-}
-function buildMachine(kind,id){
- if(id==='WASH-EXTRA-01')return buildNeo100A();
- if(id==='W35-01')return buildFrontLoadWasherPro({headText:'35kg',frontText:'35kg',sideBadge:'35',frontColor:0x214d9f,compact:true,withActuator:false});
- if(id==='W50-01')return buildFrontLoadWasherPro({headText:'50kg',frontText:'50kg',sideBadge:'50',frontColor:0x1a4da7,compact:true,withActuator:false});
- if(kind==='vertical')return buildNeo100A();
- const g=new THREE.Group();let pick=[];
- const body=(w,h,d,m)=>{const o=box(g,w,h,d,m);pick.push(o);addFeet(g,w,d);return o;};
- if(kind==='washer'){return buildNeo100A();}
- else if(kind==='dryer'){body(26,34,26,MAT.green);const door=new THREE.Mesh(new THREE.CylinderGeometry(8.4,8.4,2.2,32),MAT.dark);door.rotation.x=Math.PI/2;door.position.set(0,19,14);g.add(door);pick.push(door);torus(g,9.4,1.2,MAT.steel,0,19,15);box(g,17,5,1.5,MAT.black,0,30,13.8);}
- else if(kind==='folding'){body(46,20,26,MAT.blue);for(let i=-2;i<=2;i++)cyl(g,2.1,38,MAT.steel,i*5,21,0,Math.PI/2);box(g,42,3,17,MAT.white,0,25,0);}
- else if(['lineN5','lineIRT','lineICC','lineSMF'].includes(kind)){body(68,18,25,MAT.purple);for(let x=-26;x<=26;x+=13)cyl(g,2,22,MAT.steel,x,20,0,Math.PI/2);box(g,64,3,19,MAT.white,0,25,0);box(g,9,24,8,MAT.dark,30,30,-7);}
- else if(kind==='longPress'||kind==='pressZone'||kind==='shirt'){body(kind==='shirt'?28:42,18,24,MAT.purple);box(g,kind==='shirt'?20:35,4,18,MAT.white,0,22,0);if(kind==='shirt')cyl(g,3,20,MAT.steel,0,34,0);}
- else if(kind==='compressor'){body(32,22,24,MAT.blue);cyl(g,6,28,MAT.dark,-8,27,0);cyl(g,6,28,MAT.dark,8,27,0);}
- else if(kind==='manganese'||kind==='tank'||kind==='water'){const n=kind==='water'?3:2;for(let i=0;i<n;i++){const x=(i-(n-1)/2)*14;cyl(g,6.5,30,kind==='tank'?MAT.blue:MAT.steel,x,15,0);torus(g,6.5,.55,MAT.dark,x,26,0,0);}pick.push(...g.children.filter(c=>c.isMesh));}
- else if(kind==='boiler'){cyl(g,12,34,MAT.orange,0,17,0);box(g,26,7,26,MAT.dark,0,3.5,0);cyl(g,3,20,MAT.dark,7,42,0);pick.push(...g.children.filter(c=>c.isMesh));}
- else if(kind==='crane'){box(g,34,4,5,MAT.orange,0,38,0);box(g,4,38,4,MAT.dark,-14,19,0);box(g,4,38,4,MAT.dark,14,19,0);box(g,3,22,3,MAT.orange,0,27,0);pick.push(...g.children.filter(c=>c.isMesh));}
- else if(kind==='office'){body(55,34,42,MAT.white);for(const x of [-15,0,15])box(g,9,10,1,MAT.glass,x,20,21.2);box(g,8,20,1.3,MAT.dark,-20,10,21.4);}
- else if(kind==='worktable'){box(g,34,3,18,MAT.steel,0,18,0);for(const x of [-14,14])for(const z of [-7,7])box(g,2,18,2,MAT.dark,x,9,z);pick.push(...g.children.filter(c=>c.isMesh));}
- else if(kind==='packer'){body(20,18,18,MAT.dark);box(g,15,3,16,MAT.steel,0,20,0);}
- else if(kind==='toilet'){body(22,26,22,MAT.white);box(g,8,18,1,MAT.blue,0,9,11.5);}
- else if(kind==='fan'){cyl(g,9,8,MAT.dark,0,17,0,Math.PI/2);torus(g,10,1,MAT.steel,0,17,5);box(g,20,3,12,MAT.dark,0,1.5,0);pick.push(...g.children.filter(c=>c.isMesh));}
- else {body(28,24,24,MAT.steel);box(g,18,5,1,MAT.blue,0,18,12.5);}
- if(!pick.length)pick=g.children.filter(c=>c.isMesh);g.userData.pickMeshes=pick;return g;}
-function statusColor(status){return status==='維修中'?0xff4f5e:status==='待保養'?0xffbf47:status==='停用'?0x77818a:0x4ee3a4;}
-function updateStatusBeacon(root){if(root.userData.beacon){root.userData.beacon.material.color.setHex(statusColor(root.userData.status));root.userData.beacon.material.emissive.setHex(statusColor(root.userData.status));}}
-function setEquipmentScale(root,value=1){if(!root)return;const v=Math.max(.5,Math.min(2.2,Number(value)||1));root.userData.visualScale=v;root.scale.setScalar(v);}
-function syncEquipmentTools(){}function syncQuickRotate(){}function syncEquipmentSprite(root){if(root){root.position.y=root.userData.baseY||0;setEquipmentScale(root,root.userData.visualScale||1);updateStatusBeacon(root);}requestSceneRender();}
-function setSelectedVisual(root,on){if(!root)return;root.userData.labelEl?.classList.toggle('is-selected',on);for(const m of root.userData.pickMeshes||[]){if(!m.material||Array.isArray(m.material))continue;if(on){if(m.userData.oldEmissive===undefined)m.userData.oldEmissive=m.material.emissive?.getHex?.()??0;if(m.material.emissive)m.material.emissive.setHex(0x165a7d);}else if(m.material.emissive&&m.userData.oldEmissive!==undefined)m.material.emissive.setHex(m.userData.oldEmissive);}}
-function select(root){if(selected&&selected!==root)setSelectedVisual(selected,false);selected=root||null;if(selected)setSelectedVisual(selected,true);if(root)openPanel(root);else closePanel();}
-function requestSceneRender(){applyFilters();groups.forEach(root=>{root.userData.labelEl.textContent=shortMapName(root.userData.name);root.userData.labelEl.classList.toggle('is-selected',root===selected);updateStatusBeacon(root);});}
-function applyFilters(){const q=document.getElementById('search').value.trim().toLowerCase(),type=document.getElementById('filter').value;groups.forEach(r=>{r.visible=(!q||r.userData.name.toLowerCase().includes(q))&&(type==='全部設備'||r.userData.type===type);r.userData.labelEl.classList.toggle('is-hidden',!r.visible);});}
-function frameFactory(){camera.position.set(420,390,520);controls.target.set(0,0,25);controls.update();}
-function zoomMap(factor){const dir=new THREE.Vector3().subVectors(camera.position,controls.target);const dist=dir.length()/factor;dir.setLength(Math.max(controls.minDistance,Math.min(controls.maxDistance,dist)));camera.position.copy(controls.target).add(dir);controls.update();}
-function focusEquipment(root){if(!root)return;document.getElementById('categoryDrawer').hidden=true;document.getElementById('search').value='';document.getElementById('filter').value='全部設備';requestSceneRender();const target=new THREE.Vector3(root.position.x,18,root.position.z);controls.target.copy(target);camera.position.set(target.x+95,target.y+78,target.z+120);controls.update();select(root);}
-for(const row of instances){const [name,type,kind,x,y,z,level,id,rotation,visualScale]=row;const root=buildMachine(kind,id);root.position.set(x,y,z);root.rotation.y=rotation||0;scene.add(root);const label=document.createElement('div');label.className='eq3d-label';label.textContent=shortMapName(name);const labelObj=new CSS2DObject(label);const isHiWasher=id==='WASH-EXTRA-01'||id==='W35-01'||id==='W50-01'||kind==='vertical';labelObj.position.set(0,id==='WASH-EXTRA-01'?63:(kind==='vertical'?40:(isHiWasher?44:44)),0);root.add(labelObj);const beacon=new THREE.Mesh(new THREE.SphereGeometry(1.9,16,12),new THREE.MeshStandardMaterial({color:0x4ee3a4,emissive:0x4ee3a4,emissiveIntensity:1.2}));beacon.position.set(0,id==='WASH-EXTRA-01'?57:(kind==='vertical'?34:(isHiWasher?38:37)),0);root.add(beacon);
- const washerScale=id==='WASH-EXTRA-01'?1.15:(id==='W35-01'?0.98:(id==='W50-01'?1.05:(kind==='vertical'?0.72:(kind==='washer'?1.0:null))));
- root.userData={...root.userData,id,name,originalName:name,type,kind,level,status:'正常',visualScale:washerScale??(visualScale?Math.max(.6,Math.min(1.5,visualScale/35)):1),cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,commissionedDate:'',notes:'',vendor:'',repairs:[],labelEl:label,labelObj,beacon,baseY:y,pickMeshes:root.userData.pickMeshes||[]};
- for(const mesh of root.userData.pickMeshes){mesh.userData.equipmentRoot=root;}setEquipmentScale(root,root.userData.visualScale);groups.set(id,root);if(id==='WASH-EXTRA-01'){console.info('[NEO-100A] 3D model loaded',root.position,root.scale);const b=document.getElementById('neoLoadBadge');if(b){b.textContent='NEO-100A：已建立 · 位置 '+x+', '+z;b.style.borderColor='#37e6a4';b.style.color='#aaf9d8';}}}
-const raycaster=new THREE.Raycaster(),pointer3d=new THREE.Vector2();let downPoint=null,orbitMoved=false;
-renderer.domElement.addEventListener('pointerdown',e=>{if(e.button!==0)return;downPoint={x:e.clientX,y:e.clientY};orbitMoved=false;});
-controls.addEventListener('change',()=>{if(downPoint)orbitMoved=true;});
-renderer.domElement.addEventListener('pointerup',e=>{if(e.button!==0||!downPoint)return;const moved=Math.hypot(e.clientX-downPoint.x,e.clientY-downPoint.y)>6;downPoint=null;if(moved||orbitMoved)return;const rect=renderer.domElement.getBoundingClientRect();pointer3d.x=((e.clientX-rect.left)/rect.width)*2-1;pointer3d.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer3d,camera);const hits=raycaster.intersectObjects(scene.children,true);const hit=hits.find(h=>h.object.userData.equipmentRoot?.visible);select(hit?.object.userData.equipmentRoot||null);});
-function resize3D(){const w=Math.max(1,viewport.clientWidth),h=Math.max(1,viewport.clientHeight);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);labelRenderer.setSize(w,h);}
-function animate3D(){requestAnimationFrame(animate3D);controls.update();renderer.render(scene,camera);labelRenderer.render(scene,camera);}resize3D();animate3D();
-const initBadge=document.getElementById('neoLoadBadge');if(initBadge&&groups.has('WASH-EXTRA-01')){initBadge.textContent='NEO-100A：3D 場景已啟動';initBadge.style.borderColor='#37e6a4';initBadge.style.color='#aaf9d8';}
+const viewport=document.getElementById('flatViewport'),flatMap=document.getElementById('flatMap');
+const view={scale:1,x:0,y:0};let fitScale=1;
+function setEquipmentScale(){}function syncEquipmentTools(){}function syncQuickRotate(){}function syncEquipmentSprite(){requestSceneRender();}
+function select(root){selected=root||null;groups.forEach(r=>r.userData.hotspot.classList.toggle('selected',r===selected));if(root)openPanel(root);else closePanel();}
+function requestSceneRender(){applyFilters();groups.forEach(root=>{const el=root.userData.hotspot;el.setAttribute('aria-label',root.userData.name);const changed=root.userData.name!==root.userData.originalName;el.classList.toggle('renamed',changed);el.querySelector('.live-name').textContent=root.userData.name;});}
+function applyFilters(){const q=document.getElementById('search').value.trim().toLowerCase(),type=document.getElementById('filter').value;groups.forEach(r=>{r.visible=(!q||r.userData.name.toLowerCase().includes(q))&&(type==='全部設備'||r.userData.type===type);r.userData.hotspot.classList.toggle('dimmed',!r.visible);r.userData.hotspot.disabled=!r.visible;});}
+function applyView(){flatMap.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.scale})`;flatMap.style.setProperty('--map-scale',view.scale);}
+function frameFactory(){const w=viewport.clientWidth,h=viewport.clientHeight;fitScale=Math.min((w-20)/1024,(h-20)/1220);view.scale=fitScale;view.x=(w-1024*view.scale)/2;view.y=(h-1220*view.scale)/2;applyView();}
+function zoomMap(factor,point){const rect=viewport.getBoundingClientRect(),px=point?point.clientX-rect.left:rect.width/2,py=point?point.clientY-rect.top:rect.height/2;const x=(px-view.x)/view.scale,y=(py-view.y)/view.scale;view.scale=Math.max(fitScale*.35,Math.min(8,view.scale*factor));view.x=px-x*view.scale;view.y=py-y*view.scale;applyView();}
+function focusEquipment(root){if(!root)return;document.getElementById('categoryDrawer').hidden=true;document.getElementById('search').value='';document.getElementById('filter').value='全部設備';const b=root.userData.region;view.scale=Math.max(fitScale,Math.min(1.6,viewport.clientWidth/(b[2]+150)));view.x=viewport.clientWidth/2-(b[0]+b[2]/2)*view.scale;view.y=viewport.clientHeight*.40-(b[1]+b[3]/2)*view.scale;applyView();requestSceneRender();select(root);}
+for(const row of instances){const [name,type,kind,x,y,z,level,id,rotation]=row;const rect=regions.find(r=>r[0]===id).slice(1);const button=document.createElement('button');button.type='button';button.className='map-hotspot';button.dataset.equipmentId=id;button.style.cssText=`left:${rect[0]}px;top:${rect[1]}px;width:${rect[2]}px;height:${rect[3]}px`;button.setAttribute('aria-label',name);button.title=name;const label=document.createElement('span');label.className='live-name';button.appendChild(label);document.getElementById('hotspots').appendChild(button);
+ const root={userData:{id,name,originalName:name,type,kind,level,status:'正常',visualScale:1,cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,commissionedDate:'',notes:'',vendor:'',repairs:[],hotspot:button,region:rect},position:{x,y,z},rotation:{y:rotation||0},visible:true,children:[{isCSS2DObject:true,element:label}]};groups.set(id,root);button.addEventListener('click',e=>{if(e.detail===0)select(root);});}
 let nasReadState={status:'尚未讀取 NAS',ok:false,positions:[],at:''};
 function renderNasReadDetails(){
  const el=document.getElementById('nasReadDetails');
@@ -455,7 +243,7 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='真 3D 地圖 V7 · 除35/50kg外洗衣機改 NEO-100A · 查檢清單 V5 · 同步 R3｜'+text;
+ if(version)version.textContent='平面地圖 V16 · 查檢清單 V5 · 同步 R3｜'+text;
 }
 function shortMapName(name){return String(name).replace(/^直式洗衣機\s*#/,"洗衣機 #").replace(/（L 型 (後段|末段)）/,"（L 型）");}
 function applyEquipmentName(root,name){
@@ -679,8 +467,14 @@ document.getElementById('saveEqBtn').onclick=async()=>{
  try{const saved=await savePositions();renderCategoryList();if(selected===root){refreshEquipmentDates();renderInspectionMini(root);}toast(saved?'設備資料已同步至 NAS':'已保留在此裝置，尚未同步 NAS');}finally{button.disabled=false;}
 };
 
-document.getElementById('mapZoomIn').onclick=()=>zoomMap(1.3);document.getElementById('mapZoomOut').onclick=()=>zoomMap(1/1.3);document.getElementById('mapHome').onclick=frameFactory;document.getElementById('resetBtn').onclick=frameFactory;document.getElementById('focusNeoBtn').onclick=()=>{const neo=groups.get('WASH-EXTRA-01');if(!neo){toast('NEO-100A 模型沒有建立成功');const b=document.getElementById('neoLoadBadge');if(b){b.textContent='NEO-100A：建立失敗';b.style.borderColor='#ff6b6b';}return;}focusEquipment(neo);toast('已定位 NEO-100A');};document.getElementById('close').onclick=closePanel;document.getElementById('search').oninput=requestSceneRender;document.getElementById('filter').onchange=requestSceneRender;addEventListener('resize',resize3D);
-restoreSavedPositions();requestSceneRender();frameFactory();setTimeout(loadRemoteLayout,0);setInterval(()=>refreshEquipmentFromNas(),15000);
+const pointers=new Map();let previous=null,tap=null,multitouch=false;
+function metrics(){const p=[...pointers.values()];if(!p.length)return null;if(p.length===1)return {...p[0],distance:0};return {clientX:(p[0].clientX+p[1].clientX)/2,clientY:(p[0].clientY+p[1].clientY)/2,distance:Math.hypot(p[0].clientX-p[1].clientX,p[0].clientY-p[1].clientY)};}
+viewport.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();pointers.set(e.pointerId,{clientX:e.clientX,clientY:e.clientY});viewport.setPointerCapture(e.pointerId);if(pointers.size===1){multitouch=false;const el=e.target.closest('.map-hotspot');tap={id:e.pointerId,x:e.clientX,y:e.clientY,root:el&&!el.disabled?groups.get(el.dataset.equipmentId):null,moved:false};}else{multitouch=true;tap=null;}previous=metrics();});
+viewport.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;e.preventDefault();if(tap&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>7)tap.moved=true;pointers.set(e.pointerId,{clientX:e.clientX,clientY:e.clientY});const next=metrics();if(previous&&next){if(previous.distance>8&&next.distance>8){zoomMap(next.distance/previous.distance,previous);}view.x+=next.clientX-previous.clientX;view.y+=next.clientY-previous.clientY;applyView();}viewport.classList.add('dragging');previous=next;});
+function endPointer(e,cancel=false){if(!pointers.has(e.pointerId))return;e.preventDefault();if(tap&&tap.id===e.pointerId&&!tap.moved&&!multitouch&&!cancel)select(tap.root);pointers.delete(e.pointerId);if(tap?.id===e.pointerId)tap=null;previous=metrics();if(!pointers.size){multitouch=false;viewport.classList.remove('dragging');}}
+viewport.addEventListener('pointerup',e=>endPointer(e));viewport.addEventListener('pointercancel',e=>endPointer(e,true));viewport.addEventListener('wheel',e=>{e.preventDefault();zoomMap(Math.exp(-e.deltaY*.0015),e);},{passive:false});viewport.addEventListener('contextmenu',e=>e.preventDefault());addEventListener('blur',()=>{pointers.clear();previous=null;tap=null;viewport.classList.remove('dragging');});
+document.getElementById('mapZoomIn').onclick=()=>zoomMap(1.3);document.getElementById('mapZoomOut').onclick=()=>zoomMap(1/1.3);document.getElementById('mapHome').onclick=frameFactory;document.getElementById('resetBtn').onclick=frameFactory;document.getElementById('close').onclick=closePanel;document.getElementById('search').oninput=requestSceneRender;document.getElementById('filter').onchange=requestSceneRender;addEventListener('resize',frameFactory);
+restoreSavedPositions();requestSceneRender();frameFactory();document.getElementById('flatImage').addEventListener('load',frameFactory);setTimeout(loadRemoteLayout,0);setInterval(()=>refreshEquipmentFromNas(),15000);
 const INSPECTION_TEMPLATES=[{"id":"Te5c39b9c8e12","machine":"錳砂","period":"weekly","item":"倍量再生","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["洗滌!3","每周!3"]},{"id":"T7bc88fdb6ad2","machine":"水設備","period":"weekly","item":"加藥機管線清理","cleaning":true,"weekday":3,"firstTuesday":false,"sources":["洗滌!4","每周!6"]},{"id":"Td00b0c35d3e4","machine":"水設備","period":"weekly","item":"電箱外觀清理","cleaning":true,"weekday":null,"firstTuesday":false,"sources":["洗滌!5"]},{"id":"T951483aba186","machine":"空壓機","period":"weekly","item":"外觀清理","cleaning":true,"weekday":3,"firstTuesday":false,"sources":["洗滌!6","每周!7"]},{"id":"T4026dfb9ac06","machine":"空壓機","period":"weekly","item":"內部清理","cleaning":true,"weekday":3,"firstTuesday":false,"sources":["洗滌!7","每周!8"]},{"id":"Td21ba4280dc9","machine":"空壓機","period":"weekly","item":"冷凍機清洗","cleaning":true,"weekday":3,"firstTuesday":false,"sources":["洗滌!8","每周!9"]},{"id":"T59127e05a178","machine":"洗衣機","period":"weekly","item":"皮帶","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["洗滌!9","每周!12"]},{"id":"T5d073302177e","machine":"洗衣機","period":"weekly","item":"煞車來令片","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["洗滌!10","每周!13"]},{"id":"T46ffc5acc75b","machine":"洗衣機","period":"weekly","item":"打油、加油","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["洗滌!11","每周!14"]},{"id":"T8b74cd389b9c","machine":"鍋爐","period":"weekly","item":"外觀擦拭","cleaning":true,"weekday":null,"firstTuesday":false,"sources":["洗滌!12"]},{"id":"Tedf025fd939b","machine":"鍋爐","period":"weekly","item":"濾網清理","cleaning":true,"weekday":4,"firstTuesday":false,"sources":["洗滌!13","每周!25"]},{"id":"Ta65309971210","machine":"烘乾機","period":"weekly","item":"鏈條","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["洗滌!14","每周!28"]},{"id":"Tc649ee84d549","machine":"烘乾機","period":"weekly","item":"打油","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["洗滌!15","每周!29"]},{"id":"Tc0c1d42495c3","machine":"烘乾機","period":"weekly","item":"抽風皮帶","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["洗滌!16","每周!30"]},{"id":"T5793c9472405","machine":"烘乾機","period":"weekly","item":"輔助輪","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["洗滌!17","每周!31"]},{"id":"Td31dc9f1cc82","machine":"烘乾機","period":"weekly","item":"滾輪","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["洗滌!18","每周!32"]},{"id":"T9780b1f6c011","machine":"烘乾機","period":"weekly","item":"馬達清理","cleaning":true,"weekday":5,"firstTuesday":false,"sources":["洗滌!19","每周!33"]},{"id":"T45da530aca55","machine":"移載車","period":"weekly","item":"鏈條","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["洗滌!20","每周!34"]},{"id":"T7770e95e4ec0","machine":"水塔","period":"monthly","item":"管線檢查","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["洗滌!25","洗滌!29","洗滌!33","每月!3"]},{"id":"Tcab1fe3cf03a","machine":"軟水","period":"monthly","item":"倍量再生","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["洗滌!26","洗滌!30","洗滌!34","每月!4"]},{"id":"T80515c903e40","machine":"鍋爐","period":"quarterly","item":"定期檢查保養","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["洗滌!38","每年!32","每年!37","每年!42","每年!47"]},{"id":"Te184d985b443","machine":"發電機","period":"halfyear","item":"發動","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["洗滌!42","洗滌!50","每年!14","每年!22"]},{"id":"T085c4652359a","machine":"整燙區","period":"halfyear","item":"軟墊更換","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["洗滌!43","洗滌!51","摺疊!67","摺疊!70","每年!15","每年!23"]},{"id":"T5fb8b7649b09","machine":"乾洗機","period":"halfyear","item":"濾心更換","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["洗滌!44","洗滌!52","每年!16","每年!24"]},{"id":"T5880d1ac9261","machine":"洗衣機","period":"halfyear","item":"注藥機清潔","cleaning":true,"weekday":null,"firstTuesday":false,"sources":["洗滌!45","洗滌!53","每年!17","每年!25"]},{"id":"T3635a0aa5497","machine":"鍋爐","period":"halfyear","item":"1號鍋爐保養","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["洗滌!46","洗滌!54","每年!18","每年!26"]},{"id":"Te74855b319a2","machine":"烘乾機","period":"halfyear","item":"熱交換器清理","cleaning":true,"weekday":null,"firstTuesday":false,"sources":["洗滌!47","洗滌!55","每年!19","每年!27"]},{"id":"T6e1a91aeac1a","machine":"洗衣機","period":"yearly","item":"補漆","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["洗滌!59","每年!4"]},{"id":"T3f58c2dc9db3","machine":"洗衣機","period":"yearly","item":"更換輔助輪軸承","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["洗滌!60","每年!5"]},{"id":"Te2d8bfdfbc71","machine":"天車","period":"yearly","item":"保養檢修","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["洗滌!61","每年!9"]},{"id":"T213b0f69a3b4","machine":"TB-80K","period":"weekly","item":"皮帶","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["摺疊!3","摺疊!15","每周!21"]},{"id":"T518592ee1fab","machine":"TB-80K","period":"weekly","item":"鏈條","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["摺疊!4","摺疊!16","每周!22"]},{"id":"Tb1894c31f15f","machine":"TB-60K","period":"weekly","item":"皮帶","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["摺疊!5","摺疊!17","每周!23"]},{"id":"T75e460642048","machine":"TB-60K","period":"weekly","item":"鏈條","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["摺疊!6","摺疊!18","每周!24"]},{"id":"T408a1bd3ad6c","machine":"SMF","period":"weekly","item":"皮帶","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["摺疊!7","摺疊!19","每周!35"]},{"id":"T35a1500576c3","machine":"SMF","period":"weekly","item":"鏈條","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["摺疊!8","摺疊!20","每周!36"]},{"id":"T6d9e75423a05","machine":"ICC","period":"weekly","item":"皮帶","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["摺疊!9","摺疊!21","每周!37"]},{"id":"T46056341f3b7","machine":"ICC","period":"weekly","item":"鏈條","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["摺疊!10","摺疊!22","每周!38"]},{"id":"T70c96580cf5f","machine":"ICC","period":"weekly","item":"時歸皮帶","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["摺疊!11","摺疊!23","每周!39"]},{"id":"T2cf342427d22","machine":"ICC","period":"weekly","item":"毛刷鬆緊","cleaning":false,"weekday":5,"firstTuesday":false,"sources":["摺疊!12","摺疊!24","每周!40"]},{"id":"T8284d25a4a7d","machine":"SMF","period":"monthly","item":"計數輪O環","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["摺疊!29","摺疊!41","每月!5"]},{"id":"T3c3909a5fd7f","machine":"SMF","period":"monthly","item":"空壓油","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["摺疊!30","摺疊!42","每月!6"]},{"id":"T2620ce85746c","machine":"襯衫機","period":"monthly","item":"打油","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["摺疊!31","摺疊!43","每月!16"]},{"id":"T07c613c37b14","machine":"襯衫機","period":"monthly","item":"氣缸","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["摺疊!32","摺疊!44","每月!17"]},{"id":"T14443f04759f","machine":"TB-80K","period":"monthly","item":"空壓油","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["摺疊!33","摺疊!45","每月!18"]},{"id":"T32768b985c69","machine":"TB-60K","period":"monthly","item":"空壓油","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["摺疊!34","摺疊!46","每月!19"]},{"id":"Tfcd9a135deb7","machine":"ICC","period":"monthly","item":"計數輪O環","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["摺疊!35","摺疊!47","每月!20"]},{"id":"T3261472b6771","machine":"ICC","period":"monthly","item":"抽風扇清理","cleaning":true,"weekday":null,"firstTuesday":true,"sources":["摺疊!36","摺疊!48","每月!21"]},{"id":"T633d06f6617c","machine":"ICC","period":"monthly","item":"輸送板軸承(8個點位)","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["摺疊!37","摺疊!49","每月!22"]},{"id":"T41133e81d296","machine":"ICC","period":"monthly","item":"空壓油","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["摺疊!38","摺疊!50","每月!23"]},{"id":"Tb6ac57ba2ef6","machine":"ICC","period":"quarterly","item":"抽風口清理","cleaning":true,"weekday":null,"firstTuesday":false,"sources":["摺疊!54","摺疊!57","摺疊!60","摺疊!63","每年!31","每年!36","每年!41","每年!46"]},{"id":"Ta550dd24e14d","machine":"襯衫機","period":"yearly","item":"包布更換","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["摺疊!74","每年!7"]},{"id":"T7f4ebb772886","machine":"壓板機","period":"yearly","item":"包布更換","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["摺疊!75","每年!8"]},{"id":"Tecdf8569d1c8","machine":"ICC","period":"yearly","item":"升降軸承更換油","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["摺疊!76","每年!3"]},{"id":"T89c0f1a96289","machine":"IRT","period":"weekly","item":"旋轉接頭","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["撐開!3","撐開!12","撐開!21","撐開!30","每周!15"]},{"id":"T117182b9e9ba","machine":"IRT","period":"weekly","item":"鏈條","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["撐開!4","撐開!13","撐開!22","撐開!31","每周!16"]},{"id":"Tb9ddaebd9c58","machine":"N5","period":"weekly","item":"皮帶","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["撐開!5","撐開!14","撐開!23","撐開!32","每周!17"]},{"id":"T53d6bafd6285","machine":"N5","period":"weekly","item":"鏈條","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["撐開!6","撐開!15","撐開!24","撐開!33","每周!18"]},{"id":"T0e73b076eab5","machine":"IRT","period":"weekly","item":"時歸皮帶","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["撐開!7","撐開!16","撐開!25","撐開!34","每周!19"]},{"id":"Tf8f8996d95ee","machine":"IRT","period":"weekly","item":"毛刷","cleaning":false,"weekday":4,"firstTuesday":false,"sources":["撐開!8","撐開!17","撐開!26","撐開!35","每周!20"]},{"id":"T2bd7a4bf801f","machine":"IRT","period":"weekly","item":"電箱清理","cleaning":true,"weekday":null,"firstTuesday":false,"sources":["撐開!9","撐開!18","撐開!27","撐開!36"]},{"id":"T489f7666a7f8","machine":"IRT","period":"monthly","item":"計數輪","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["撐開!40","撐開!51","撐開!62","每月!7"]},{"id":"T0a7ae476eb31","machine":"IRT","period":"monthly","item":"抽風扇清理","cleaning":true,"weekday":null,"firstTuesday":true,"sources":["撐開!41","撐開!52","撐開!63","每月!8"]},{"id":"T85ce5f6b3e33","machine":"IRT","period":"monthly","item":"輸送板軸承(8個點位)","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["撐開!42","撐開!53","撐開!64","每月!9"]},{"id":"T204e186f6bc8","machine":"IRT","period":"monthly","item":"空壓油","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["撐開!43","撐開!54","撐開!65","每月!10"]},{"id":"T30829f776ae8","machine":"IRT","period":"monthly","item":"所有軸承","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["撐開!44","撐開!55","撐開!66","每月!14"]},{"id":"T22562122b9ab","machine":"IRT","period":"monthly","item":"皮帶鬆緊","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["撐開!45","撐開!56","撐開!67","每月!15"]},{"id":"T23003e7a7a01","machine":"N5","period":"monthly","item":"計數輪O環","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["撐開!46","撐開!57","撐開!68","每月!11"]},{"id":"T0c2f840b1b2d","machine":"N5","period":"monthly","item":"偵測機白板上蠟","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["撐開!47","撐開!58","撐開!69","每月!13"]},{"id":"Tc08abc40f8ba","machine":"N5","period":"monthly","item":"空壓油","cleaning":false,"weekday":null,"firstTuesday":true,"sources":["撐開!48","撐開!59","撐開!70","每月!12"]},{"id":"T73cf80a3ae42","machine":"IRT","period":"quarterly","item":"Y型過濾器清理","cleaning":true,"weekday":null,"firstTuesday":false,"sources":["撐開!74","每年!33","每年!38","每年!43","每年!48"]},{"id":"T1249f813ebba","machine":"N5","period":"yearly","item":"偵測機燈管更換","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["每年!6"]},{"id":"T2450e5e6ca64","machine":"IRT","period":"yearly","item":"空壓油","cleaning":false,"weekday":null,"firstTuesday":false,"sources":["每年!10"]}];
 // 查檢資料使用獨立儲存空間；不改動 NAS 版位 API。
 const INSPECTION_KEY='factory-inspection-v1';
