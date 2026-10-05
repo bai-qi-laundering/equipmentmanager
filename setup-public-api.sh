@@ -36,6 +36,9 @@ until curl -fsS http://127.0.0.1:3000/api/health >/dev/null; do
 done
 status=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/layout)
 if [ "$status" != 401 ]; then echo "停止：未授權請求應回 401，實際 $status"; exit 1; fi
+key=$(sed -n 's/^API_ACCESS_KEYS=//p' public-api.env | cut -d, -f1)
+authorized=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $key" http://127.0.0.1:3000/api/layout)
+if [ "$authorized" != 200 ]; then echo "停止：授權讀取應回 200，實際 $authorized"; exit 1; fi
 echo 'API 已啟動，未授權讀取被拒絕。'
 echo '接著才可以在 NAS 上啟用 Tailscale Funnel；請勿公開 DSM 或資料庫連接埠。'
 echo '啟用連結含存取金鑰，請只傳給要使用設備系統的人，不要貼到公開群組或截圖分享。'
