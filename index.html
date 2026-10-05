@@ -179,7 +179,7 @@ body.panel-open .equipment-tools{display:none}
 <div class="repair-actions"><button id="cancelRepairBtn" type="button">取消</button><button id="saveRepairBtn" type="submit">儲存紀錄</button></div></form>
 <div id="repairSummary"></div><div id="repairList"></div><button id="moreRepairsBtn" type="button" hidden>顯示更多紀錄</button></div><div class="card" id="inspectionMini"><button id="inspectionMachineEntry">開啟此機台查檢清單</button></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<button id="inspectionEntry">✓ 查檢清單</button><section id="inspectionOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="inspectionTitle"><header class="ins-header"><button id="inspectionBack">返回地圖</button><h2 id="inspectionTitle">設備查檢清單</h2><button id="inspectionSettingsBtn">設定／備份</button></header><div class="ins-sync">文字紀錄保留於此裝置 · 照片壓縮後上傳 NAS，連線失敗時保留待上傳</div><main id="inspectionContent"></main><footer id="inspectionSaveBar" hidden><b id="inspectionProgress">已查檢 0 項</b><button id="inspectionSubmit" class="ins-primary">確認送出查檢</button></footer></section>
+<button id="inspectionEntry">✓ 查檢清單</button><section id="inspectionOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="inspectionTitle"><header class="ins-header"><button id="inspectionBack">返回地圖</button><h2 id="inspectionTitle">設備查檢清單</h2><button id="inspectionSettingsBtn">設定／備份</button></header><div class="ins-sync"><span id="inspectionSyncStatus">正在連接 NAS…</span> <button id="inspectionSyncBtn" type="button">同步 NAS</button> <button id="inspectionConflictBtn" type="button" hidden>處理版本衝突</button></div><main id="inspectionContent"></main><footer id="inspectionSaveBar" hidden><b id="inspectionProgress">已查檢 0 項</b><button id="inspectionSubmit" class="ins-primary">確認送出查檢</button></footer></section>
 <section id="categoryDrawer" hidden role="dialog" aria-labelledby="categoryTitle"><header><h2 id="categoryTitle">設備清單</h2><button id="categoryClose" aria-label="關閉設備清單">×</button></header><div id="categoryRows"></div></section>
 <dialog id="photoViewer" aria-labelledby="photoViewerTitle"><header><b id="photoViewerTitle">查檢照片</b><button id="photoViewerClose" type="button">關閉 ×</button></header><p id="photoViewerState" role="status"></p><img id="photoViewerImage" alt="查檢照片大圖"></dialog>
 <script type="module">
@@ -221,7 +221,7 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='平面地圖 V13 · 查檢清單 V5 · 同步 R3｜'+text;
+ if(version)version.textContent='平面地圖 V14 · 查檢清單 V5 · 同步 R3｜'+text;
 }
 function shortMapName(name){return String(name).replace(/^直式洗衣機\s*#/,"洗衣機 #").replace(/（L 型 (後段|末段)）/,"（L 型）");}
 function applyEquipmentName(root,name){
@@ -491,7 +491,7 @@ function validateInspectionState(s){
 }
 let inspectionState=newInspectionState(),inspectionLoadError=false;
 try{const raw=localStorage.getItem(INSPECTION_KEY);if(raw)inspectionState=validateInspectionState(JSON.parse(raw));}catch(e){inspectionLoadError=true;}
-function persistInspection(next){if(inspectionLoadError){toast('原資料無法讀取，請先在設定匯出原始備份，避免覆蓋');return false;}try{localStorage.setItem(INSPECTION_KEY,JSON.stringify(next));inspectionState=next;return true;}catch(e){toast('儲存失敗：空間不足或瀏覽器限制，請先匯出備份');return false;}}
+function persistInspection(next,fromNas=false){if(inspectionLoadError){toast('原資料無法讀取，請先在設定匯出原始備份，避免覆蓋');return false;}try{if(!fromNas)queueInspectionChanges(inspectionState,next);localStorage.setItem(INSPECTION_KEY,JSON.stringify(next));inspectionState=next;if(!fromNas)scheduleInspectionSync();return true;}catch(e){toast('儲存失敗：空間不足或瀏覽器限制，請先匯出備份');return false;}}
 function editInspection(fn){const next=JSON.parse(JSON.stringify(inspectionState));fn(next);return persistInspection(next);}
 function machineCategory(m){const n=m.name.replace(/\s/g,'').toUpperCase(),id=m.id||'',k=m.kind||'';
  if(/^60K(?:-|$)/.test(id)||n==='60K'||n==='TB-60K')return 'TB-60K';if(/^80K(?:-|$)/.test(id)||n==='80K'||n==='TB-80K')return 'TB-80K';if(/^30K(?:-|$)/.test(id)||n==='30K')return '';
@@ -543,7 +543,7 @@ function releasePhotoPreviews(){photoObserver?.disconnect();for(const url of pho
 async function hydratePhotoThumb(el){const id=el.dataset.photoThumb;try{const local=await photoRead('thumb',id);if(!el.isConnected)return;if(local?.blob){const url=URL.createObjectURL(local.blob);photoObjectUrls.add(url);el.src=url;}else el.src=API_BASE+'/api/checklist-photos/'+encodeURIComponent(id)+'/thumbnail';}catch{if(el.isConnected)el.alt='照片無法讀取';}}
 function activatePhotoPreviews(){releasePhotoPreviews();photoObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){photoObserver.unobserve(entry.target);hydratePhotoThumb(entry.target);}}, {root:inspectContent,rootMargin:'120px'});
  for(const img of inspectContent.querySelectorAll('[data-photo-thumb]'))photoObserver.observe(img);
- for(const el of inspectContent.querySelectorAll('[data-photo-status]'))photoRead('meta',el.dataset.photoStatus).then(meta=>{if(!el.isConnected)return;el.textContent=meta?.status==='uploaded'?'已上傳 NAS':meta?'保留在此裝置 · 待上傳 NAS'+(meta.reason?'：'+meta.reason:''):'此裝置沒有照片檔案';const retry=el.parentElement.querySelector('[data-photo-retry]');if(retry)retry.hidden=meta?.status==='uploaded'||!meta;}).catch(()=>{if(el.isConnected)el.textContent='照片儲存空間無法讀取';});
+ for(const el of inspectContent.querySelectorAll('[data-photo-status]'))photoRead('meta',el.dataset.photoStatus).then(meta=>{if(!el.isConnected)return;el.textContent=meta?.status==='uploaded'?'已上傳 NAS':meta?'保留在此裝置 · 待上傳 NAS'+(meta.reason?'：'+meta.reason:''):'從 NAS 讀取照片（若未上傳則無法顯示）';const retry=el.parentElement.querySelector('[data-photo-retry]');if(retry)retry.hidden=meta?.status==='uploaded'||!meta;}).catch(()=>{if(el.isConnected)el.textContent='照片儲存空間無法讀取';});
 }
 async function handlePhotoSelection(input,machineId){const taskId=input.dataset.photoPick,files=[...input.files];input.value='';if(!files.length)return;if(photoBusy)return toast('正在處理照片，請稍候');if(!saveInspectionDraft())return;
  const prior=inspectionState.drafts[machineId]?.answers?.[taskId]?.photos||[];if(files.length+prior.length>3)return toast('每個查檢項目最多 3 張照片');photoBusy=true;document.getElementById('inspectionSubmit').disabled=true;
@@ -615,9 +615,9 @@ function submitInspection(){if(photoBusy)return toast('照片正在處理，請�
  // 僅沿用既有日期欄位；詳細查檢紀錄不送往未確認支援的 NAS API。
  const completedCleaning=active.filter(t=>t.cleaning&&d.answers[t.id].result==='normal');
  if(completedCleaning.length){const root=groups.get(m.id);if(root&&(!root.userData.cleaningLastDate||root.userData.cleaningLastDate<=record.date)){root.userData.cleaningLastDate=record.date;const days=completedCleaning.map(t=>t.period==='custom'?t.days:({weekly:7,monthly:30,quarterly:90,halfyear:180,yearly:365}[t.period])).filter(n=>n>0);if(days.length)root.userData.cleaningCycleDays=Math.min(...days);try{dirtyMetadataIds.add(root.userData.id);savePositions();if(selected===root){document.getElementById('eqCleaningDate').value=root.userData.cleaningLastDate;document.getElementById('eqCleaningCycle').value=root.userData.cleaningCycleDays;refreshEquipmentDates();}}catch(e){toast('查檢已存於本機；地圖日期同步失敗');}}}
- toast('查檢紀錄已保存於本機');inspectionPeriod='history';renderInspection();
+ toast('查檢已保存，正在同步 NAS');inspectionPeriod='history';renderInspection();
 }
-function renderInspectionSettings(){inspectContent.innerHTML=`<form id="inspectionSettings" class="ins-card"><h3>現場人員與提醒偏好</h3><label>查檢人員姓名<input name="operator" autocomplete="name" value="${I(inspectionState.profile)}"></label><label>提醒時間（台灣時間）<input name="time" type="time" required value="${I(inspectionState.reminder.time)}"></label><label>提前提醒<select name="lead">${[[0,'到期當天'],[1,'提前 1 天'],[3,'提前 3 天']].map(([v,l])=>`<option value="${v}" ${Number(inspectionState.reminder.lead)===v?'selected':''}>${l}</option>`).join('')}</select></label><button class="ins-primary" type="submit">儲存偏好</button><p class="ins-muted">目前不會自動傳送手機通知。可匯出未來 90 天的行事曆；匯入行事曆後，提醒由行事曆 App 管理。排程修改後需重新匯出。跨手機共用紀錄及自動推播，需再串接 NAS 服務。</p></form><div class="ins-card"><h3>備份與行事曆</h3><div class="ins-actions">${inspectButton('匯出查檢備份','export')}${inspectButton('匯出提醒行事曆','calendar')}</div><label class="ins-file">合併匯入查檢備份<input id="inspectionImport" type="file" accept="application/json,.json"></label><p class="ins-muted">紀錄依 ID 合併；本機同 ID 紀錄優先保留。備份含文字紀錄及照片索引，不含照片檔案；照片保留於此裝置或已上傳的 NAS。排程、姓名及提醒偏好以本機為準。提醒行事曆是一次性檔案，不會自動更新。</p></div><div class="ins-card"><h3>排程依據</h3><p class="ins-muted">依原檢查表整理 73 個不重複項目。週三／四／五依「每周」表；月排程依「每月」表第一個週二。季、半年、年度及未指定星期的項目，請在各機台設定首次到期日。30K 原表無項目；移載車、軟水、發電機保留為清單設備。初次建立日期：${I(inspectionState.baseline)}。</p></div>`;
+function renderInspectionSettings(){inspectContent.innerHTML=`<form id="inspectionSettings" class="ins-card"><h3>現場人員與提醒偏好</h3><label>查檢人員姓名<input name="operator" autocomplete="name" value="${I(inspectionState.profile)}"></label><label>提醒時間（台灣時間）<input name="time" type="time" required value="${I(inspectionState.reminder.time)}"></label><label>提前提醒<select name="lead">${[[0,'到期當天'],[1,'提前 1 天'],[3,'提前 3 天']].map(([v,l])=>`<option value="${v}" ${Number(inspectionState.reminder.lead)===v?'selected':''}>${l}</option>`).join('')}</select></label><button class="ins-primary" type="submit">儲存偏好</button><p class="ins-muted">目前不會自動傳送手機通知。可匯出未來 90 天的行事曆；匯入行事曆後，提醒由行事曆 App 管理。排程修改後需重新匯出。查檢紀錄與排程透過 NAS 共用；草稿及查檢人員姓名保留在各自裝置。LINE 提醒對象：設備組組長「簡通延」，自動發訊尚未啟用。</p></form><div class="ins-card"><h3>備份與行事曆</h3><div class="ins-actions">${inspectButton('匯出查檢備份','export')}${inspectButton('匯出提醒行事曆','calendar')}</div><label class="ins-file">合併匯入查檢備份<input id="inspectionImport" type="file" accept="application/json,.json"></label><p class="ins-muted">紀錄依 ID 合併；本機同 ID 紀錄優先保留。備份含文字紀錄及照片索引，不含照片檔案；照片保留於此裝置或已上傳的 NAS。排程及提醒偏好同步 NAS，姓名及草稿以本機為準。提醒行事曆是一次性檔案，不會自動更新。</p></div><div class="ins-card"><h3>排程依據</h3><p class="ins-muted">依原檢查表整理 73 個不重複項目。週三／四／五依「每周」表；月排程依「每月」表第一個週二。季、半年、年度及未指定星期的項目，請在各機台設定首次到期日。30K 原表無項目；移載車、軟水、發電機保留為清單設備。初次建立日期：${I(inspectionState.baseline)}。</p></div>`;
  document.getElementById('inspectionSettings').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);if(editInspection(st=>{st.profile=f.get('operator').trim();st.reminder={time:f.get('time'),lead:Number(f.get('lead'))};}))toast('偏好已儲存；自動通知尚未啟用');};
  document.getElementById('inspectionImport').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>15*1024*1024)throw Error('備份超過 15MB');const incoming=validateInspectionState(JSON.parse(await f.text()));const ids=new Set(inspectionState.records.map(r=>r.id));const extra=incoming.records.filter(r=>!ids.has(r.id));if(editInspection(st=>st.records.push(...extra))){toast('已合併 '+extra.length+' 筆紀錄');renderInspection();}}catch(err){toast('匯入失敗：'+err.message);}};
 }
@@ -646,4 +646,53 @@ document.addEventListener('keydown',e=>{if(inspectEl.hidden)return;if(e.key==='E
 function renderInspectionMini(root){const el=document.getElementById('inspectionMini');if(!el||typeof inspectionState==='undefined')return;const m={...root.userData,onMap:true},s=machineSummary(m);el.innerHTML=`<b>清潔與查檢</b><p>${I(equipmentServiceAge(m.commissionedDate))}<br>上次清潔：${I(s.clean||'尚無紀錄')}<br>下次查檢：${I(s.due||'待設定')}${s.issues?'<br><span class="ins-danger">'+s.issues+' 項異常待處理</span>':''}</p><button id="inspectionMachineEntry" style="width:100%;min-height:48px">開啟此機台查檢清單</button>`;document.getElementById('inspectionMachineEntry').onclick=()=>openInspection(root.userData.id);}
 document.querySelectorAll('.side button').forEach((b,index)=>{if(index===1)b.onclick=()=>{activeCategory='all';renderCategoryList();document.getElementById('categoryDrawer').hidden=false;};if(index===2||index===3)b.onclick=()=>openInspection();if(index===4)b.onclick=()=>{inspectionFilter='issue';openInspection();};});
 if(inspectionLoadError)toast('原查檢資料無法讀取，已暫停寫入；請在設定匯出原始備份');
+function inspectionCanonical(v){return JSON.stringify(v,(_,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);}
+// V14: journal and records saved together so interrupted/offline writes survive reload.
+let inspectionSyncBusy=false,inspectionSyncTimer,inspectionSyncMessage='正在連接 NAS…';
+const inspectionEntityKey=(kind,id)=>JSON.stringify([kind,id]);
+function inspectionShared(s){const out={};for(const r of s.records)out[inspectionEntityKey('record',r.id)]=r;for(const [id,cfg] of Object.entries(s.settings))out[inspectionEntityKey('setting',id)]=cfg;out[inspectionEntityKey('meta','baseline')]={date:s.baseline};out[inspectionEntityKey('meta','reminder')]={...s.reminder,recipient:'簡通延'};return out;}
+function inspectionJournal(s){return s.nasSync||={version:1,revisions:{},pending:{},conflicts:{}};}
+function queueInspectionChanges(before,next){const journal=inspectionJournal(next),old=inspectionShared(before),now=inspectionShared(next);for(const [key,data] of Object.entries(now)){if(inspectionCanonical(data)!==inspectionCanonical(old[key]))journal.pending[key]={data,expectedRevision:journal.revisions[key]??null};}}
+function inspectionSyncStatus(){const el=document.getElementById('inspectionSyncStatus');if(!el)return;const j=inspectionJournal(inspectionState),n=Object.keys(j.pending).length,c=Object.keys(j.conflicts).length;el.textContent=inspectionSyncMessage+(n?' · '+n+' 筆待同步':'')+(c?' · '+c+' 筆版本衝突':'');document.getElementById('inspectionConflictBtn').hidden=!c;}
+function scheduleInspectionSync(){clearTimeout(inspectionSyncTimer);inspectionSyncTimer=setTimeout(syncInspectionNas,700);inspectionSyncStatus();}
+function applyInspectionEntity(s,e){if(e.kind==='record'){const i=s.records.findIndex(r=>r.id===e.id);if(i<0)s.records.push(e.data);else s.records[i]=e.data;}else if(e.kind==='setting')s.settings[e.id]=e.data;else if(e.id==='baseline')s.baseline=e.data.date;else if(e.id==='reminder')s.reminder={time:e.data.time,lead:e.data.lead};}
+async function inspectionRequest(method,body){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);try{const res=await fetch(API_BASE+'/api/inspection-sync',{method,cache:'no-store',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined,signal:controller.signal});if(res.status===404)throw Error('NAS 尚未更新查檢服務');const data=await res.json();if(!res.ok&&res.status!==409)throw Error('NAS 查檢服務回傳 '+res.status);return {res,data};}finally{clearTimeout(timer);}}
+function saveInspectionSyncState(next){validateInspectionState(next);return persistInspection(next,true);}
+async function syncInspectionNas(){
+ if(inspectionSyncBusy||inspectionLoadError)return;inspectionSyncBusy=true;inspectionSyncMessage='正在同步 NAS…';inspectionSyncStatus();
+ try{
+  const {data}=await inspectionRequest('GET');if(data.inspectionVersion!==1||!Array.isArray(data.entities))throw Error('NAS 查檢服務版本不符');
+  const next=JSON.parse(JSON.stringify(inspectionState)),j=inspectionJournal(next),shared=inspectionShared(next),remote=new Map(data.entities.map(e=>[inspectionEntityKey(e.kind,e.id),e]));
+  // Import pre-V14 records once. Existing NAS schedule wins for previously untracked devices.
+  for(const [key,value] of Object.entries(shared))if(!Object.hasOwn(j.revisions,key)&&!j.pending[key]&&(!remote.has(key)||(['record','setting'].includes(JSON.parse(key)[0])&&inspectionCanonical(value)!==inspectionCanonical(remote.get(key).data))))j.pending[key]={data:value,expectedRevision:null};
+  for(const e of data.entities){const key=inspectionEntityKey(e.kind,e.id);if(typeof e.revision!=='string'||!e.data)throw Error('NAS 查檢資料格式不符');if(j.pending[key]){if(inspectionCanonical(j.pending[key].data)===inspectionCanonical(e.data)){delete j.pending[key];delete j.conflicts[key];applyInspectionEntity(next,e);j.revisions[key]=e.revision;}else if(j.pending[key].expectedRevision!==e.revision)j.conflicts[key]=e;}else{applyInspectionEntity(next,e);j.revisions[key]=e.revision;}}
+  if(!saveInspectionSyncState(next))throw Error('本機儲存失敗，已停止同步');
+  for(const key of Object.keys(inspectionJournal(inspectionState).pending)){
+   const current=inspectionJournal(inspectionState),p=current.pending[key];if(!p||current.conflicts[key])continue;
+   const [kind,id]=JSON.parse(key),sent=JSON.stringify(p.data),{res,data:reply}=await inspectionRequest('POST',{inspectionVersion:1,kind,id,data:p.data,expectedRevision:p.expectedRevision});
+   const updated=JSON.parse(JSON.stringify(inspectionState)),uj=inspectionJournal(updated);
+   if(res.status===409){uj.conflicts[key]=reply.entity;saveInspectionSyncState(updated);continue;}
+   if(!reply.ok||reply.inspectionVersion!==1||!reply.entity?.revision)throw Error('NAS 未確認查檢儲存');
+   uj.revisions[key]=reply.entity.revision;
+   if(JSON.stringify(uj.pending[key]?.data)===sent){delete uj.pending[key];delete uj.conflicts[key];}else if(uj.pending[key])uj.pending[key].expectedRevision=reply.entity.revision;
+   if(!saveInspectionSyncState(updated))throw Error('本機儲存失敗');
+  }
+  // Only uploaded thumbnails are fetched on other devices; local full images stay in IndexedDB.
+  let pendingPhotos=0;const ids=new Set(inspectionState.records.flatMap(r=>r.items.flatMap(i=>(i.photos||[]).map(p=>p.id))));
+  for(const id of ids){const meta=await photoRead('meta',id);if(meta&&meta.status!=='uploaded'){if(!await uploadInspectionPhoto(id))pendingPhotos++;}}
+  inspectionSyncMessage='NAS 已同步 · '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})+(pendingPhotos?' · '+pendingPhotos+' 張照片待上傳':'');
+  if(!inspectEl.hidden&&!document.getElementById('inspectionForm')&&inspectionView!=='settings')renderInspection();if(selected)renderInspectionMini(selected);
+ }catch(e){inspectionSyncMessage=(e.name==='AbortError'?'NAS 同步逾時':e.name==='TypeError'?'NAS 連線失敗':e.message)+' · 本機資料保留';}finally{inspectionSyncBusy=false;inspectionSyncStatus();}
+}
+document.getElementById('inspectionSyncBtn').onclick=()=>{saveInspectionDraft();syncInspectionNas();};
+document.getElementById('inspectionConflictBtn').onclick=()=>{
+ const j=inspectionJournal(inspectionState),key=Object.keys(j.conflicts)[0];if(!key)return;
+ const [kind,id]=JSON.parse(key),e=j.conflicts[key];
+ const keep=confirm('「'+(kind==='record'?'查檢紀錄':id==='reminder'?'提醒偏好':'排程')+'」已被另一台裝置修改。\n按「確定」保留本機版本；按「取消」選擇是否採用 NAS 版本。');if(!keep){if(!e||!confirm('採用 NAS 版本？本機版本會先留存於衝突備份。取消則保留兩份稍後處理。'))return;const next=JSON.parse(JSON.stringify(inspectionState)),nj=inspectionJournal(next);(nj.archivedConflicts||=[]).push({key,data:nj.pending[key].data,at:new Date().toISOString()});delete nj.pending[key];delete nj.conflicts[key];nj.revisions[key]=e.revision;applyInspectionEntity(next,e);if(saveInspectionSyncState(next)){renderInspection();syncInspectionNas();}return;}
+ const next=JSON.parse(JSON.stringify(inspectionState)),nj=inspectionJournal(next);nj.pending[key].expectedRevision=e?.revision??null;delete nj.conflicts[key];if(saveInspectionSyncState(next))syncInspectionNas();
+};
+window.addEventListener('online',syncInspectionNas);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncInspectionNas();});
+setInterval(()=>{if(document.visibilityState==='visible'&&!photoBusy)syncInspectionNas();},30000);
+setTimeout(syncInspectionNas,1000);
+
 </script></div></body></html>
