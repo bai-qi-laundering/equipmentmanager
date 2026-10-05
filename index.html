@@ -156,7 +156,7 @@ body.panel-open .equipment-tools{display:none}
 @media(max-width:450px){.ins-photo-grid{gap:6px}.ins-photo-tile{padding:5px}.ins-photo-open img{height:80px}}
 </style></head>
 <body>
-<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">平面地圖 V15 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"><div id="flatViewport" aria-label="工廠設備地圖"><div id="flatMap"><img id="flatImage" src="factory-map-clean-v13.svg" alt="已確認的工廠設備配置" width="1024" height="1536" draggable="false" decoding="async" fetchpriority="high"><div id="hotspots"></div></div></div></div>
+<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">平面地圖 V16 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"><div id="flatViewport" aria-label="工廠設備地圖"><div id="flatMap"><img id="flatImage" src="factory-map-clean-v13.svg" alt="已確認的工廠設備配置" width="1024" height="1536" draggable="false" decoding="async" fetchpriority="high"><div id="hotspots"></div></div></div></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠設備地圖</div>
   <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>折疊設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
@@ -243,7 +243,7 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='平面地圖 V15 · 查檢清單 V5 · 同步 R3｜'+text;
+ if(version)version.textContent='平面地圖 V16 · 查檢清單 V5 · 同步 R3｜'+text;
 }
 function shortMapName(name){return String(name).replace(/^直式洗衣機\s*#/,"洗衣機 #").replace(/（L 型 (後段|末段)）/,"（L 型）");}
 function applyEquipmentName(root,name){
