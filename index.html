@@ -183,7 +183,7 @@ body.panel-open .equipment-tools{display:none}
 <section id="categoryDrawer" hidden role="dialog" aria-labelledby="categoryTitle"><header><h2 id="categoryTitle">設備清單</h2><button id="categoryClose" aria-label="關閉設備清單">×</button></header><div id="categoryRows"></div></section>
 <dialog id="photoViewer" aria-labelledby="photoViewerTitle"><header><b id="photoViewerTitle">查檢照片</b><button id="photoViewerClose" type="button">關閉 ×</button></header><p id="photoViewerState" role="status"></p><img id="photoViewerImage" alt="查檢照片大圖"></dialog>
 <script type="module">
-const API_BASE='https://fileserver.tailbb066f.ts.net',SYNC_KEY='factory3dPositions_C_STYLE_V2';
+const API_BASE='https://fileserver.tailbb066f.ts.net:8443',SYNC_KEY='factory3dPositions_C_STYLE_V2';
 // An invitation activates this browser once; the key is never sent to GitHub.
 const accessStorageKey='equipment_api_access_v1';
 const invitation=new URLSearchParams(location.hash.slice(1)).get('access');
