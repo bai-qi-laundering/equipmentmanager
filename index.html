@@ -167,7 +167,7 @@ body.panel-open .equipment-tools{display:none}
 @media(max-width:700px){#threeViewport{inset:94px 0 126px}#threeHelp{display:none}.eq3d-label{font-size:9px;padding:3px 5px}.palette{height:112px!important}.items{height:82px!important}}
 </style></head>
 <body>
-<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">真 3D 地圖 V1 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"><div id="threeViewport" aria-label="工廠 360 度 3D 設備地圖"></div><div id="threeHelp">左鍵／單指旋轉 · 右鍵／雙指平移 · 滾輪／雙指縮放 · 點設備查看資料</div></div>
+<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">真 3D 地圖 V2 · NEO-100A 實機版 · 查檢清單 V5 · 同步 R3</div><div id="app"><div id="canvas"><div id="threeViewport" aria-label="工廠 360 度 3D 設備地圖"></div><div id="threeHelp">左鍵／單指旋轉 · 右鍵／雙指平移 · 滾輪／雙指縮放 · 點設備查看資料</div></div>
 <div class="top">
   <div class="logo">▱ 洗滌廠設備地圖</div>
   <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>折疊設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
@@ -253,7 +253,71 @@ function box(g,w,h,d,m=MAT.steel,x=0,y=h/2,z=0){const o=new THREE.Mesh(new THREE
 function cyl(g,r,h,m=MAT.steel,x=0,y=h/2,z=0,rotX=0){const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,24),m);o.position.set(x,y,z);o.rotation.x=rotX;o.castShadow=true;o.receiveShadow=true;g.add(o);return o;}
 function torus(g,R,r,m,x=0,y=0,z=0,rx=Math.PI/2){const o=new THREE.Mesh(new THREE.TorusGeometry(R,r,16,32),m);o.position.set(x,y,z);o.rotation.x=rx;o.castShadow=true;g.add(o);return o;}
 function addFeet(g,w,d){for(const x of [-w*.36,w*.36])for(const z of [-d*.35,d*.35])box(g,3,4,3,MAT.dark,x,2,z);}
-function buildMachine(kind,id){const g=new THREE.Group();let pick=[];
+function makeLabelTexture(text,bg='#f4f6f8',fg='#1552a1',accent='#7fc242'){
+ const c=document.createElement('canvas');c.width=1024;c.height=256;const ctx=c.getContext('2d');
+ ctx.fillStyle=bg;ctx.fillRect(0,0,c.width,c.height);
+ ctx.fillStyle=accent;ctx.fillRect(28,42,72,172);
+ ctx.fillStyle=fg;ctx.font='bold 112px Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,560,132);
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
+}
+function buildNeo100A(){
+ const g=new THREE.Group(),pick=[];
+ const W=44,H=46,D=56,frontZ=D/2;
+ const white=mat(0xf0f2f3,.28,.33),blue=mat(0x0f3d98,.28,.3),steel=mat(0xbfc6ca,.8,.22),black=mat(0x171d22,.35,.42),orange=mat(0xe88a24,.2,.35),darkBlue=mat(0x173b74,.35,.4);
+ const add=(o,selectable=true)=>{o.castShadow=true;o.receiveShadow=true;g.add(o);if(selectable)pick.push(o);return o;};
+ const B=(w,h,d,m,x,y,z,s=true)=>add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m),{position:new THREE.Vector3(x,y,z)}),s);
+ const C=(r,h,m,x,y,z,rx=0,rz=0,s=true)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,32),m);o.position.set(x,y,z);o.rotation.x=rx;o.rotation.z=rz;return add(o,s)};
+ // heavy rectangular white frame; body extends backward, front at +Z
+ B(W,3,D,white,0,1.5,0);B(W,3,D,white,0,H-1.5,0);
+ B(3,H,D,white,-W/2+1.5,H/2,0);B(3,H,D,white,W/2-1.5,H/2,0);
+ // side rails/open structure, keeping the rear assembly at the BACK
+ for(const z of [-20,-5,12]){B(W-6,2.2,2.2,white,0,10,z,false);B(W-6,2.2,2.2,white,0,30,z,false);}
+ B(2.2,H-8,D-7,white,-W/2+5,H/2,-2,false);B(2.2,H-8,D-7,white,W/2-5,H/2,-2,false);
+ // front blue plate
+ B(W-7,H-9,2.1,blue,0,23,frontZ-.8);
+ // top header beam and lower stainless trims
+ B(W-3,5,3,white,0,H-4,frontZ-.2);B(W-8,4,2.2,steel,0,5.5,frontZ+.1);B(W-8,2.2,2.4,steel,0,12,frontZ+.2);
+ // door: axis runs along Z
+ const drum=C(11.8,3.8,black,0,23,frontZ+1.6,Math.PI/2);drum.material=black;
+ torus(g,13.1,1.6,steel,0,23,frontZ+3.6);torus(g,10.9,.8,steel,0,23,frontZ+3.8);
+ const glass=new THREE.Mesh(new THREE.CircleGeometry(10.3,48),new THREE.MeshPhysicalMaterial({color:0xaecbd6,transparent:true,opacity:.45,roughness:.18,metalness:.05,transmission:.28}));glass.position.set(0,23,frontZ+4.05);add(glass);
+ // simplified linen volume behind glass
+ for(let i=0;i<18;i++){const s=.85+(i%4)*.16;const m=new THREE.Mesh(new THREE.SphereGeometry(1.8*s,12,8),mat(0xdfe5df,.05,.9));m.scale.set(1.6,.55,.5);m.position.set(((i%6)-2.5)*2.2,18.5+Math.floor(i/6)*2.5,frontZ+3.2);add(m,false);}
+ // door lock bar
+ const lockMat=new THREE.MeshStandardMaterial({map:makeLabelTexture('NEO-100A'),metalness:.18,roughness:.34});B(31,5.8,3.4,lockMat,0,23,frontZ+5.2);
+ // stainless chute under the door
+ B(23,1.6,6,steel,0,11.8,frontZ+2.5);B(2,6,6,steel,-10.5,14.2,frontZ+2.5,false);B(2,6,6,steel,10.5,14.2,frontZ+2.5,false);
+ // left-front control cabinet, protruding from the real left/front corner
+ B(9.5,17,4.8,white,-W/2-2.7,27,frontZ-6);
+ B(6.2,5.2,.65,black,-W/2-2.7,31.5,frontZ-3.3,false);
+ // control buttons
+ for(const [dx,clr] of [[-2,0x15191e],[0,0x28b85b],[2,0xd84334]]){const bm=new THREE.MeshStandardMaterial({color:clr,metalness:.15,roughness:.3});C(.48,.7,bm,-W/2-2.7+dx,27.3,frontZ-3.0,Math.PI/2,0,false)}
+ C(.65,.8,new THREE.MeshStandardMaterial({color:0xe73427}),-W/2+.5,36.7,frontZ-3.0,Math.PI/2,0,false);
+ // right-front emergency stop
+ C(.65,.8,new THREE.MeshStandardMaterial({color:0xe73427}),W/2-1.2,31.5,frontZ+1.1,Math.PI/2,0,false);
+ // pneumatic actuator on upper-right front
+ B(8,3.2,3.2,steel,10.5,36.5,frontZ+3.3,false);C(1.05,7,orange,12.2,31.8,frontZ+3.0,0,0,false);C(.45,7,steel,12.2,27.5,frontZ+3.0,0,0,false);
+ // orange foundation feet
+ for(const x of [-W/2+4,W/2-4])for(const z of [-D/2+4,D/2-4])B(5,1.3,5,orange,x,.65,z,false);
+ // side-visible internal drum and motor only; NOT a copied rear wall
+ C(10.5,20,darkBlue,0,24,1,0,Math.PI/2,false);
+ C(5,9,black,-10,12,-7,Math.PI/2,0,false);C(2.2,9,steel,-10,12,-1.5,Math.PI/2,0,false);
+ // BACK/top-rear mechanical assembly: z stays near -D/2
+ const rz=-D/2+6;
+ B(W-10,6,4,white,0,37,rz,false);
+ for(const x of [-11,-4,4,11])C(1.3,10,x%2?steel:darkBlue,x,44,rz,0,0,false);
+ // rear horizontal/vertical pipes
+ for(const y of [40,44]){const p=C(.75,W-10,steel,0,y,rz-1,0,Math.PI/2,false);}
+ C(1.0,12,steel,-12,43,rz+1,0,0,false);C(1.0,12,steel,12,43,rz+1,0,0,false);
+ // top brand panel
+ const brandMat=new THREE.MeshStandardMaterial({map:makeLabelTexture('inamoto NEO-100A','#f2f3f4','#1d57a6','#f2f3f4'),metalness:.08,roughness:.4});B(29,3.8,.8,brandMat,3,H-4,frontZ+1.45,false);
+ // large machine No. 7
+ const sevenMat=new THREE.MeshStandardMaterial({map:makeLabelTexture('7','#f2f3f4','#163d9a','#f2f3f4'),metalness:.05,roughness:.4});B(5.2,8.5,.8,sevenMat,-W/2+5,H-8.5,frontZ+1.5,false);
+ // front/side small structural covers
+ B(7,31,3,white,-W/2+2,20,frontZ-.2,false);B(3,31,3,white,W/2-2,20,frontZ-.2,false);
+ g.userData.pickMeshes=pick.length?pick:g.children.filter(c=>c.isMesh);return g;
+}
+function buildMachine(kind,id){if(id==='WASH-EXTRA-01')return buildNeo100A();const g=new THREE.Group();let pick=[];
  const body=(w,h,d,m)=>{const o=box(g,w,h,d,m);pick.push(o);addFeet(g,w,d);return o;};
  if(kind==='washer'||kind==='vertical'){const w=kind==='vertical'?22:30,h=kind==='vertical'?30:32,d=22;body(w,h,d,MAT.white);const door=new THREE.Mesh(new THREE.CylinderGeometry(7,7,2,32),MAT.dark);door.rotation.x=Math.PI/2;door.position.set(0,h*.55,d/2+1);g.add(door);pick.push(door);torus(g,7.7,1,MAT.steel,0,h*.55,d/2+2);box(g,w*.72,4,1.4,MAT.blue,0,h-5,d/2+.8);}
  else if(kind==='dryer'){body(26,34,26,MAT.green);const door=new THREE.Mesh(new THREE.CylinderGeometry(8.4,8.4,2.2,32),MAT.dark);door.rotation.x=Math.PI/2;door.position.set(0,19,14);g.add(door);pick.push(door);torus(g,9.4,1.2,MAT.steel,0,19,15);box(g,17,5,1.5,MAT.black,0,30,13.8);}
@@ -313,7 +377,7 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='真 3D 地圖 V1 · 查檢清單 V5 · 同步 R3｜'+text;
+ if(version)version.textContent='真 3D 地圖 V2 · NEO-100A 實機版 · 查檢清單 V5 · 同步 R3｜'+text;
 }
 function shortMapName(name){return String(name).replace(/^直式洗衣機\s*#/,"洗衣機 #").replace(/（L 型 (後段|末段)）/,"（L 型）");}
 function applyEquipmentName(root,name){
