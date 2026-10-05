@@ -1,4 +1,15 @@
 services:
-  api:
+  gateway:
+    image: node:22-alpine
+    container_name: equipment-public-gateway
+    restart: unless-stopped
+    depends_on:
+      - api
     env_file:
       - ./public-api.env
+    volumes:
+      - ./public-gateway.mjs:/app/gateway.mjs:ro
+    working_dir: /app
+    command: ["node", "gateway.mjs"]
+    ports:
+      - "127.0.0.1:3001:3001"
