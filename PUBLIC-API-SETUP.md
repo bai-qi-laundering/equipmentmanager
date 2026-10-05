@@ -4,8 +4,8 @@
 
 ## 啟用順序
 
-1. 將新版 `server/server.js`、`docker-compose.public.yml`、`setup-public-api.sh` 放到 NAS 的 `/volume1/docker/equipment-manager` 對應位置。不要覆蓋 `data/postgres`，不要用倉庫內的範例資料庫密碼覆蓋 NAS 現有設定。
-2. 在 NAS 上執行 `sh setup-public-api.sh`。它會建立 `public-api.env`（保留在 NAS，不上傳 GitHub），並使用 Compose overlay 重建 API。沒有金鑰時，新版 API 會拒絕啟動。
+1. 將 `setup-public-api.sh` 放到 NAS 的 `/volume1/docker/equipment-manager`。不要覆蓋 `data/postgres`，不要用倉庫內的範例資料庫密碼覆蓋 NAS 現有設定。
+2. 在 NAS 上執行 `sh setup-public-api.sh`。它會下載固定提交的新版後端與 Compose overlay、備份舊後端、建立 `public-api.env`（保留在 NAS，不上傳 GitHub），再重建 API。沒有金鑰時，新版 API 會拒絕啟動。
 3. 確認本機 `GET /api/health` 回 200；`GET /api/layout` 未附金鑰回 401、附金鑰回 200。**完成這一步之後**，才設定 HTTPS 公開入口。
 4. 在 NAS 的 Tailscale CLI 執行 `tailscale funnel --bg 3000`，如 CLI 所示完成 tailnet 管理員核准。Funnel 與 Serve 在同一個 HTTPS port 不可並用，切換後再從一支沒有 Tailscale 的手機測 `https://fileserver.tailbb066f.ts.net/api/health`。不要對外發布 5432、DSM 5000/5001 或其他 NAS 連接埠。
 5. 開啟 GitHub Pages 網頁的啟用連結：`https://bai-qi-laundering.github.io/equipmentmanager/?v=16#access=這台手機的64碼金鑰`。網頁將金鑰保存在這支裝置，並從網址列移除。別把啟用連結張貼在公開地方；設備系統網址本身不含金鑰。
