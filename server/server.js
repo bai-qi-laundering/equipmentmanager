@@ -8,6 +8,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 app.use(express.json({ limit: '2mb' }));
 const ensureSchema = async () => {
+  await pool.query(`CREATE TABLE IF NOT EXISTS inspection_sync_entities(kind TEXT NOT NULL,id TEXT NOT NULL,data JSONB NOT NULL,revision BIGINT NOT NULL DEFAULT 1,updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),PRIMARY KEY(kind,id))`);
   await pool.query(`ALTER TABLE equipment
     ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT '正常',
     ADD COLUMN IF NOT EXISTS cleaning_last_date DATE,
@@ -29,7 +30,7 @@ app.use((req, res, next) => {
 app.get('/api/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1 });
+    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1,inspectionVersion:1 });
   } catch (error) {
     res.status(503).json({ ok: false, error: 'database_unavailable' });
   }
@@ -79,6 +80,44 @@ app.get('/api/checklist-photos/:id/:variant',async(req,res)=>{
  try{const column=req.params.variant==='thumbnail'?'thumbnail':'image';const {rows}=await pool.query(`SELECT ${column} AS bytes FROM checklist_photos WHERE id=$1`,[req.params.id]);if(!rows.length)return res.status(404).json({error:'photo_not_found'});
   res.setHeader('Content-Type','image/jpeg');res.setHeader('Cache-Control','private, max-age=86400');res.setHeader('X-Content-Type-Options','nosniff');res.send(rows[0].bytes);
  }catch(error){res.status(500).json({error:'photo_load_failed'});}
+});
+
+function inspectionApiCanonical(v){return JSON.stringify(v,(_,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);}
+// Versioned entities keep offline records independent; drafts and operator names remain local.
+const inspectionDay=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v;
+const inspectionObject=v=>v&&typeof v==='object'&&!Array.isArray(v);
+function validInspectionEntity(kind,id,d){
+ if(typeof id!=='string'||!id||id.length>160||!inspectionObject(d)||JSON.stringify(d).length>200000)return false;
+ if(kind==='record')return d.id===id&&typeof d.machineId==='string'&&d.machineId.length<=100&&inspectionDay(d.date)&&d.date<=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei'}).format(new Date())&&typeof d.operator==='string'&&d.operator.trim()&&d.operator.length<=200&&Number.isFinite(Date.parse(d.createdAt))&&Array.isArray(d.items)&&d.items.length>0&&d.items.length<=150&&d.items.every(i=>inspectionObject(i)&&typeof i.taskId==='string'&&typeof i.item==='string'&&['normal','abnormal','na'].includes(i.result)&&(!i.due||inspectionDay(i.due))&&(i.result==='normal'||typeof i.note==='string'&&i.note.trim())&&(!i.photos||Array.isArray(i.photos)&&i.photos.length<=3&&i.photos.every(p=>inspectionObject(p)&&PHOTO_ID.test(p.id||''))));
+ if(kind==='setting')return inspectionObject(d.dues)&&Object.entries(d.dues).every(([p,v])=>['weekly','monthly','quarterly','halfyear','yearly'].includes(p)&&(!v||inspectionDay(v)))&&(!d.customCleaningDue||inspectionDay(d.customCleaningDue))&&(d.customCleaningDays===undefined||Number.isInteger(d.customCleaningDays)&&d.customCleaningDays>=1&&d.customCleaningDays<=3660);
+ if(kind==='meta'&&id==='baseline')return inspectionDay(d.date);
+ if(kind==='meta'&&id==='reminder')return /^([01]\d|2[0-3]):[0-5]\d$/.test(d.time||'')&&[0,1,3].includes(d.lead)&&d.recipient==='簡通延';
+ return false;
+}
+app.get('/api/inspection-sync',async(_req,res)=>{
+ try{const {rows}=await pool.query('SELECT kind,id,data,revision::text AS revision FROM inspection_sync_entities ORDER BY kind,id');res.setHeader('Cache-Control','no-store');res.json({inspectionVersion:1,entities:rows});}catch{res.status(500).json({error:'inspection_load_failed'});}
+});
+app.post('/api/inspection-sync',async(req,res)=>{
+ const c=req.body||{};
+ if(c.inspectionVersion!==1||!validInspectionEntity(c.kind,c.id,c.data)||(c.expectedRevision!==null&&!/^\d+$/.test(c.expectedRevision||'')))return res.status(400).json({error:'invalid_inspection_entity'});
+ const client=await pool.connect();
+ try{
+  await client.query('BEGIN');
+  // Serialize writes, including first insert when a row does not yet exist.
+  await client.query('LOCK TABLE inspection_sync_entities IN SHARE ROW EXCLUSIVE MODE');
+  const {rows}=await client.query('SELECT kind,id,data,revision::text AS revision FROM inspection_sync_entities WHERE kind=$1 AND id=$2 FOR UPDATE',[c.kind,c.id]);
+  const old=rows[0];
+  if((old?.revision??null)!==c.expectedRevision){
+   await client.query('ROLLBACK');
+   // Retrying the same acknowledged data after a network timeout is safe.
+   if(old&&inspectionApiCanonical(old.data)===inspectionApiCanonical(c.data))return res.json({ok:true,inspectionVersion:1,entity:old});
+   return res.status(409).json({error:'inspection_conflict',entity:old||null});
+  }
+  const saved=await client.query(`INSERT INTO inspection_sync_entities(kind,id,data) VALUES($1,$2,$3::jsonb)
+   ON CONFLICT(kind,id) DO UPDATE SET data=EXCLUDED.data,revision=inspection_sync_entities.revision+1,updated_at=clock_timestamp()
+   RETURNING kind,id,data,revision::text AS revision`,[c.kind,c.id,JSON.stringify(c.data)]);
+  await client.query('COMMIT');res.json({ok:true,inspectionVersion:1,entity:saved.rows[0]});
+ }catch{await client.query('ROLLBACK');res.status(500).json({error:'inspection_save_failed'});}finally{client.release();}
 });
 
 app.get('/api/layout', async (_req, res) => {
