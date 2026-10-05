@@ -1,5 +1,6 @@
 import express from 'express';
 import pg from 'pg';
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 const { Pool } = pg;
 const app = express();
@@ -20,11 +21,29 @@ const ensureSchema = async () => {
   await pool.query(`CREATE TABLE IF NOT EXISTS checklist_photos (id UUID PRIMARY KEY,equipment_id TEXT NOT NULL,task_id TEXT NOT NULL,name TEXT NOT NULL,width INTEGER NOT NULL,height INTEGER NOT NULL,image BYTEA NOT NULL,thumbnail BYTEA NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
 };
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin=req.get('Origin');
+  if(origin==='https://bai-qi-laundering.github.io'){
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary','Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') return origin==='https://bai-qi-laundering.github.io'?res.sendStatus(204):res.sendStatus(403);
+  if(origin&&origin!=='https://bai-qi-laundering.github.io')return res.status(403).json({error:'origin_not_allowed'});
   next();
+});
+
+// Required before the API starts: no key means the service fails closed.
+// Multiple keys allow revoking one browser without changing database records.
+const accessKeys=(process.env.API_ACCESS_KEYS||'').split(',').map(s=>s.trim()).filter(s=>/^[0-9a-f]{64}$/i.test(s)).map(s=>createHash('sha256').update(s.toLowerCase()).digest());
+if(!accessKeys.length)throw Error('API_ACCESS_KEYS is required');
+app.use('/api',(req,res,next)=>{
+ if(req.path==='/health')return next();
+ const match=/^Bearer ([0-9a-f]{64})$/i.exec(req.get('Authorization')||'');
+ if(!match)return res.status(401).json({error:'access_required'});
+ const digest=createHash('sha256').update(match[1].toLowerCase()).digest();
+ if(!accessKeys.some(key=>timingSafeEqual(key,digest)))return res.status(401).json({error:'access_required'});
+ next();
 });
 
 app.get('/api/health', async (_req, res) => {
