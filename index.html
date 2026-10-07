@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes">
 <title>洗滌廠設備地圖</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#071a2d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="百麒設備">
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle at 50% 30%,#163b60 0,#091a2b 38%,#030913 82%,#01050a 100%);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC",sans-serif}
 #app{position:fixed;inset:0}#canvas{position:absolute;inset:0;touch-action:none;background:radial-gradient(circle at 50% 45%,rgba(20,85,132,.10),transparent 48%)}
@@ -738,4 +743,52 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
  }finally{b.disabled=false;}
 };
 
-</script></div></body></html>
+</script></div>
+<style>
+#pushSetupBtn{position:fixed;z-index:38;right:14px;top:126px;min-height:38px;padding:8px 11px;border-color:#4fb9ef;background:#0d527d;font-size:12px}
+#pushSetup[hidden]{display:none!important}#pushSetup{position:fixed;inset:0;z-index:260;background:#06111dcc;display:grid;place-items:center;padding:18px}
+.push-card{width:min(460px,100%);max-height:90dvh;overflow:auto;background:#f7fbfe;color:#17364d;border-radius:20px;padding:22px;box-shadow:0 24px 70px #0008}
+.push-card h2{margin:0 0 8px}.push-card p{line-height:1.65;color:#557084}.push-card label{display:block;font-weight:700;margin:16px 0 6px}.push-card input{width:100%;min-height:48px;background:white;color:#17364d;border:1px solid #aac5d7}
+.push-actions{display:flex;gap:8px;margin-top:18px}.push-actions button{flex:1;min-height:48px}.push-primary{background:#0e679d!important;border-color:#0e679d!important;color:white!important}.push-status{margin-top:12px;padding:10px;border-radius:10px;background:#e9f2f8;font-size:13px}
+@media(max-width:1024px){#pushSetupBtn{top:148px;right:8px}}@media(max-width:700px){#pushSetupBtn{top:184px;font-size:11px;padding:7px 9px}}
+</style>
+<button id="pushSetupBtn" type="button">🔔 通知設定</button>
+<div id="pushSetup" hidden>
+ <section class="push-card" role="dialog" aria-modal="true" aria-labelledby="pushTitle">
+  <h2 id="pushTitle">iPhone 巡檢提醒</h2>
+  <p>第一次請先用 Safari 將這個網站「加入主畫面」，再從主畫面的「百麒設備」開啟並啟用通知。每支 iPhone / iPad 只需要設定一次。</p>
+  <label for="pushMemberName">這支裝置是誰使用？</label>
+  <input id="pushMemberName" maxlength="80" autocomplete="name" placeholder="例如：簡通延">
+  <div id="pushStatus" class="push-status">尚未檢查通知狀態</div>
+  <div class="push-actions"><button id="pushClose" type="button">稍後</button><button id="pushEnable" class="push-primary" type="button">啟用這支裝置</button></div>
+  <div class="push-actions"><button id="pushTest" type="button">傳送測試通知</button></div>
+ </section>
+</div>
+<script>
+(()=>{
+ const box=document.getElementById('pushSetup'),status=document.getElementById('pushStatus'),name=document.getElementById('pushMemberName');
+ const key='baiqiPushMemberV1';let member=null;try{member=JSON.parse(localStorage.getItem(key)||'null');}catch{}
+ if(member?.name)name.value=member.name;
+ const installed=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ const b64=s=>{const p='='.repeat((4-s.length%4)%4),v=(s+p).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(v),a=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i);return a;};
+ async function config(){const r=await apiFetch(API_BASE+'/api/push-config?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('通知服務尚未更新到 NAS');return r.json();}
+ async function state(){if(!('serviceWorker'in navigator)||!('PushManager'in window)){status.textContent='這個瀏覽器不支援網頁通知';return;}const reg=await navigator.serviceWorker.register('./sw.js');const sub=await reg.pushManager.getSubscription();status.textContent=(installed()?'已從主畫面開啟':'請先加入 iPhone 主畫面')+' · '+(Notification.permission==='granted'&&sub?'此裝置已啟用通知':'通知尚未啟用');}
+ document.getElementById('pushSetupBtn').onclick=()=>{box.hidden=false;state().catch(e=>status.textContent=e.message);};
+ document.getElementById('pushClose').onclick=()=>box.hidden=true;
+ document.getElementById('pushEnable').onclick=async()=>{
+  try{
+   if(!installed())throw Error('iPhone 請先用 Safari「加入主畫面」，再從主畫面圖示開啟');
+   const memberName=name.value.trim();if(!memberName)throw Error('請先填寫使用這支裝置的人員姓名');
+   const cfg=await config();if(!cfg.ready||!cfg.publicKey)throw Error('NAS 尚未設定 Web Push 金鑰');
+   const permission=await Notification.requestPermission();if(permission!=='granted')throw Error('通知權限沒有允許');
+   const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(cfg.publicKey)});
+   member=member||{id:(crypto.randomUUID?crypto.randomUUID():'member-'+Date.now())};member.name=memberName;localStorage.setItem(key,JSON.stringify(member));
+   const r=await apiFetch(API_BASE+'/api/push-subscriptions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:member.id,memberName,subscription:sub.toJSON()})});if(!r.ok)throw Error('裝置註冊失敗');
+   status.textContent='✅ '+memberName+' 的這支裝置已啟用巡檢通知';
+  }catch(e){status.textContent='⚠️ '+e.message;}
+ };
+ document.getElementById('pushTest').onclick=async()=>{try{if(!member?.id)throw Error('請先啟用這支裝置');status.textContent='正在傳送測試通知…';const r=await apiFetch(API_BASE+'/api/push-test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:member.id})});const d=await r.json();if(!r.ok)throw Error(d.error||'測試失敗');status.textContent=d.sent?'✅ 測試通知已送出':'⚠️ 找不到這位人員已啟用的裝置';}catch(e){status.textContent='⚠️ '+e.message;}};
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
+</script>
+</body></html>
