@@ -1,10 +1,16 @@
 import express from 'express';
 import pg from 'pg';
+import webpush from 'web-push';
 
 const { Pool } = pg;
 const app = express();
 const port = Number(process.env.PORT || 3000);
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const vapidPublicKey=String(process.env.VAPID_PUBLIC_KEY||'').trim();
+const vapidPrivateKey=String(process.env.VAPID_PRIVATE_KEY||'').trim();
+const vapidSubject=String(process.env.VAPID_SUBJECT||'mailto:equipment@baiqi.local').trim();
+const pushReady=/^[A-Za-z0-9_-]{80,100}$/.test(vapidPublicKey)&&/^[A-Za-z0-9_-]{40,60}$/.test(vapidPrivateKey);
+if(pushReady)webpush.setVapidDetails(vapidSubject,vapidPublicKey,vapidPrivateKey);
 
 app.use(express.json({ limit: '2mb' }));
 const ensureSchema = async () => {
@@ -17,6 +23,10 @@ const ensureSchema = async () => {
     ADD COLUMN IF NOT EXISTS maintenance_cycle_days INTEGER NOT NULL DEFAULT 180,
     ADD COLUMN IF NOT EXISTS commissioned_date DATE,
     ADD COLUMN IF NOT EXISTS notes TEXT NOT NULL DEFAULT ''`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS push_members (id TEXT PRIMARY KEY,name TEXT NOT NULL,active BOOLEAN NOT NULL DEFAULT true,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS push_subscriptions (endpoint TEXT PRIMARY KEY,member_id TEXT NOT NULL REFERENCES push_members(id) ON DELETE CASCADE,subscription JSONB NOT NULL,user_agent TEXT NOT NULL DEFAULT '',enabled BOOLEAN NOT NULL DEFAULT true,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS push_subscriptions_member_idx ON push_subscriptions(member_id) WHERE enabled`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS equipment_assignments (equipment_id TEXT NOT NULL,member_id TEXT NOT NULL REFERENCES push_members(id) ON DELETE CASCADE,PRIMARY KEY(equipment_id,member_id))`);
   await pool.query(`CREATE TABLE IF NOT EXISTS checklist_photos (id UUID PRIMARY KEY,equipment_id TEXT NOT NULL,task_id TEXT NOT NULL,name TEXT NOT NULL,width INTEGER NOT NULL,height INTEGER NOT NULL,image BYTEA NOT NULL,thumbnail BYTEA NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
 };
 app.use((req, res, next) => {
@@ -30,7 +40,7 @@ app.use((req, res, next) => {
 app.get('/api/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1,inspectionVersion:1 });
+    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1,inspectionVersion:1,pushVersion:1,pushReady });
   } catch (error) {
     res.status(503).json({ ok: false, error: 'database_unavailable' });
   }
@@ -119,6 +129,23 @@ app.post('/api/inspection-sync',async(req,res)=>{
   await client.query('COMMIT');res.json({ok:true,inspectionVersion:1,entity:saved.rows[0]});
  }catch{await client.query('ROLLBACK');res.status(500).json({error:'inspection_save_failed'});}finally{client.release();}
 });
+
+
+const MEMBER_ID=/^[a-zA-Z0-9_-]{8,80}$/;
+app.get('/api/push-config',(_req,res)=>res.json({pushVersion:1,ready:pushReady,publicKey:pushReady?vapidPublicKey:null}));
+app.get('/api/push-members',async(_req,res)=>{try{await ensureSchema();const {rows}=await pool.query('SELECT id,name,active FROM push_members WHERE active=true ORDER BY name');res.json({members:rows});}catch{res.status(500).json({error:'push_members_load_failed'});}});
+app.post('/api/push-subscriptions',async(req,res)=>{
+ const b=req.body||{},sub=b.subscription;
+ if(!MEMBER_ID.test(b.memberId||'')||typeof b.memberName!=='string'||!b.memberName.trim()||b.memberName.length>80||!sub||typeof sub.endpoint!=='string'||!sub.endpoint.startsWith('https://')||typeof sub.keys?.p256dh!=='string'||typeof sub.keys?.auth!=='string')return res.status(400).json({error:'invalid_push_subscription'});
+ try{await ensureSchema();const client=await pool.connect();try{await client.query('BEGIN');await client.query(`INSERT INTO push_members(id,name) VALUES($1,$2) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name,active=true,updated_at=now()`,[b.memberId,b.memberName.trim()]);await client.query(`INSERT INTO push_subscriptions(endpoint,member_id,subscription,user_agent) VALUES($1,$2,$3::jsonb,$4) ON CONFLICT(endpoint) DO UPDATE SET member_id=EXCLUDED.member_id,subscription=EXCLUDED.subscription,user_agent=EXCLUDED.user_agent,enabled=true,updated_at=now()`,[sub.endpoint,b.memberId,JSON.stringify(sub),String(req.headers['user-agent']||'').slice(0,500)]);await client.query('COMMIT');res.json({ok:true,pushVersion:1});}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}catch{res.status(500).json({error:'push_subscription_save_failed'});}
+});
+app.post('/api/push-test',async(req,res)=>{
+ if(!pushReady)return res.status(503).json({error:'push_not_configured'});
+ const memberId=String(req.body?.memberId||'');if(!MEMBER_ID.test(memberId))return res.status(400).json({error:'invalid_member'});
+ try{const {rows}=await pool.query('SELECT endpoint,subscription FROM push_subscriptions WHERE member_id=$1 AND enabled=true',[memberId]);let sent=0;for(const row of rows){try{await webpush.sendNotification(row.subscription,JSON.stringify({title:'百麒設備管理',body:'iPhone 巡檢通知測試成功 🔔',url:'./?inspection=mine',badge:1}),{TTL:300});sent++;}catch(e){if([404,410].includes(e.statusCode))await pool.query('UPDATE push_subscriptions SET enabled=false,updated_at=now() WHERE endpoint=$1',[row.endpoint]);}}res.json({ok:true,sent});}catch{res.status(500).json({error:'push_test_failed'});}
+});
+app.get('/api/push-assignments',async(_req,res)=>{try{const {rows}=await pool.query(`SELECT a.equipment_id,m.id AS member_id,m.name FROM equipment_assignments a JOIN push_members m ON m.id=a.member_id WHERE m.active=true ORDER BY a.equipment_id,m.name`);res.json({assignments:rows});}catch{res.status(500).json({error:'push_assignments_load_failed'});}});
+app.put('/api/push-assignments/:equipmentId',async(req,res)=>{const ids=Array.isArray(req.body?.memberIds)?req.body.memberIds:[];if(ids.some(x=>!MEMBER_ID.test(x)))return res.status(400).json({error:'invalid_assignment'});const client=await pool.connect();try{await client.query('BEGIN');await client.query('DELETE FROM equipment_assignments WHERE equipment_id=$1',[String(req.params.equipmentId)]);for(const id of [...new Set(ids)])await client.query('INSERT INTO equipment_assignments(equipment_id,member_id) VALUES($1,$2)',[String(req.params.equipmentId),id]);await client.query('COMMIT');res.json({ok:true});}catch{await client.query('ROLLBACK');res.status(500).json({error:'assignment_save_failed'});}finally{client.release();}});
 
 app.get('/api/layout', async (_req, res) => {
   try {
