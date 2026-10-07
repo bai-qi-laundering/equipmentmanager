@@ -1,0 +1,11 @@
+{
+  "name": "百麒設備管理",
+  "short_name": "設備管理",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#071a2d",
+  "theme_color": "#071a2d",
+  "lang": "zh-Hant",
+  "icons": []
+}
