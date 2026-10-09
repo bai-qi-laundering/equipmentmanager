@@ -745,78 +745,98 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
 
 </script></div>
 <style>
-#pushSetupBtn{position:fixed;z-index:38;right:14px;top:126px;min-height:38px;padding:8px 11px;border-color:#4fb9ef;background:#0d527d;font-size:12px}
-#pushSetup[hidden],#pushActivateWrap[hidden]{display:none!important}#pushSetup{position:fixed;inset:0;z-index:260;background:#06111dcc;display:grid;place-items:center;padding:18px}
-.push-card{width:min(460px,100%);max-height:90dvh;overflow:auto;background:#f7fbfe;color:#17364d;border-radius:20px;padding:22px;box-shadow:0 24px 70px #0008}
-.push-card h2{margin:0 0 8px}.push-card p{line-height:1.65;color:#557084}.push-card label{display:block;font-weight:700;margin:16px 0 6px}.push-card input{width:100%;min-height:48px;background:white;color:#17364d;border:1px solid #aac5d7}
-.push-actions{display:flex;gap:8px;margin-top:18px}.push-actions button{flex:1;min-height:48px}.push-primary{background:#0e679d!important;border-color:#0e679d!important;color:white!important}.push-status{margin-top:12px;padding:10px;border-radius:10px;background:#e9f2f8;font-size:13px}
-@media(max-width:1024px){#pushSetupBtn{top:148px;right:8px}}@media(max-width:700px){#pushSetupBtn{top:184px;font-size:11px;padding:7px 9px}}
+#pushSetupBtn{position:fixed;z-index:38;right:14px;top:126px;padding:9px 12px;background:#0d527d;color:white}
+#pushSetup[hidden],#pushAdminPanel[hidden],#pushScanArea[hidden]{display:none!important}
+#pushSetup{position:fixed;inset:0;z-index:260;background:#06111dcc;display:grid;place-items:center;padding:14px}
+.push-card{width:min(480px,100%);max-height:92dvh;overflow:auto;background:#f7fbfe;color:#17364d;border-radius:18px;padding:22px}
+.push-card input{box-sizing:border-box;width:100%;min-height:46px;margin:5px 0 10px;padding:8px;border:1px solid #aac5d7;background:white;color:#17364d}
+.push-card label{display:block;margin-top:10px;font-weight:650}
+.push-card button{padding:10px 12px;min-height:42px;margin:5px 4px 5px 0}
+.push-status{margin:12px 0;padding:10px;background:#e9f2f8;border-radius:10px;white-space:pre-wrap}
+#pushQrCanvas{max-width:100%;height:auto;display:block;margin:10px auto}
+#pushAdminEntry{margin-top:20px;padding-top:14px;border-top:1px solid #ccd}
+@media(max-width:700px){#pushSetupBtn{top:184px;font-size:11px;padding:7px 9px}#pushAdminEntry{display:none!important}}
 </style>
 <button id="pushSetupBtn" type="button">🔔 通知設定</button>
-<div id="pushSetup" hidden>
- <section class="push-card" role="dialog" aria-modal="true" aria-labelledby="pushTitle">
-  <h2 id="pushTitle">iPhone 巡檢提醒</h2>
-  <p>第一次請先用 Safari 將這個網站「加入主畫面」，再從主畫面的「百麒設備」開啟並啟用通知。每支 iPhone / iPad 只需要設定一次。</p>
-  <label for="pushMemberName">這支裝置是誰使用？</label>
-  <input id="pushMemberName" maxlength="80" autocomplete="name" placeholder="例如：簡通延">
-  <div id="pushStatus" class="push-status">尚未檢查通知狀態</div>
-  <div class="push-actions"><button id="pushClose" type="button">稍後</button><button id="pushEnable" class="push-primary" type="button">啟用這支裝置</button></div>
-  <div class="push-actions"><button id="pushTest" type="button">傳送測試通知</button></div>
- </section>
+<div id="pushSetup" hidden><section class="push-card" role="dialog" aria-modal="true" aria-labelledby="pushTitle">
+<h2 id="pushTitle">設備巡檢通知</h2>
+<p>員工請先將設備管理網站加入 iPhone 主畫面，從主畫面開啟後，到辦公室掃描管理員提供的註冊 QR Code。每個 QR Code 只能成功使用一次。</p>
+<label for="pushMemberName">員工姓名</label><input id="pushMemberName" maxlength="80" autocomplete="name" placeholder="請輸入姓名">
+<div id="pushStatus" class="push-status">尚未啟用通知</div>
+<div><button id="pushScan" type="button">📷 掃描辦公室 QR Code</button><button id="pushClose" type="button">關閉</button></div>
+<div id="pushScanArea" hidden><div id="pushScanner" style="width:100%"></div><button id="pushStopScan" type="button">停止掃描</button></div>
+<div><button id="pushTest" type="button">傳送測試通知</button></div>
+<div id="pushAdminEntry" hidden>
+<h3>辦公室管理員 · 一次性註冊碼</h3>
+<label for="pushAdminToken">管理員授權碼（僅保留在此頁面）</label><input id="pushAdminToken" type="password" autocomplete="off" placeholder="NAS PUSH_ADMIN_TOKEN">
+<button id="pushGenerate" type="button">產生一次性 QR Code（10 分鐘）</button>
+<div id="pushAdminPanel" hidden><canvas id="pushQrCanvas"></canvas><p id="pushQrExpiry"></p></div>
 </div>
+</section></div>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js" defer></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 <script>
 (()=>{
- const box=document.getElementById('pushSetup'),status=document.getElementById('pushStatus'),name=document.getElementById('pushMemberName');
- const API_BASE='https://fileserver.tailbb066f.ts.net:8443';
- async function apiFetch(url,options={}){
-  const key=localStorage.getItem('equipment_api_access_v1');
-  const headers=new Headers(options.headers||{});
-  if(key)headers.set('Authorization','Bearer '+key);
-  const response=await fetch(url,{...options,headers});
-  if(response.status===401)throw Error('此裝置尚未啟用設備系統，請開啟管理員提供的啟用連結');
-  return response;
- }
- const accessKeyName='equipment_api_access_v1';
- const activateWrap=document.createElement('div');
- activateWrap.id='pushActivateWrap';
- activateWrap.innerHTML='<label for="pushAccessKey">首次啟用：貼上管理員提供的 64 碼連線金鑰</label><input id="pushAccessKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="只貼 #access= 後面的 64 碼"><button id="pushActivate" type="button">儲存連線金鑰</button><p style="font-size:12px">金鑰只儲存在這支裝置，不會上傳到 GitHub。請勿將金鑰傳給其他人。</p>';
- document.getElementById('pushStatus').before(activateWrap);
- const accessInput=document.getElementById('pushAccessKey');
- function refreshActivation(){activateWrap.hidden=!!localStorage.getItem(accessKeyName);}
- refreshActivation();
- document.getElementById('pushActivate').onclick=async()=>{
-  const raw=accessInput.value.trim();
-  const match=raw.match(/(?:^|[#?&])access=([0-9a-f]{64})(?:$|&)/i);
-  const candidate=match?match[1]:raw;
-  if(!/^[0-9a-f]{64}$/i.test(candidate)){status.textContent='請貼上啟用網址中 #access= 後面的完整 64 碼金鑰';return;}
-  try{
-   const r=await fetch(API_BASE+'/api/push-config',{headers:{Authorization:'Bearer '+candidate.toLowerCase()},cache:'no-store'});
-   if(!r.ok)throw Error('金鑰驗證失敗，請確認是否為最新啟用連結');
-   localStorage.setItem(accessKeyName,candidate.toLowerCase());
-   accessInput.value='';refreshActivation();status.textContent='✅ 裝置已連接 NAS，現在可以啟用通知';
-  }catch(e){status.textContent='⚠️ '+e.message;}
- };
- const key='baiqiPushMemberV1';let member=null;try{member=JSON.parse(localStorage.getItem(key)||'null');}catch{}
- if(member?.name)name.value=member.name;
- const installed=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ const base='https://fileserver.tailbb066f.ts.net:8443';
+ const el=id=>document.getElementById(id),status=el('pushStatus'),box=el('pushSetup');
+ const installed=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ const memberKey='baiqiPushMemberV2',pendingKey='baiqiPendingEnrollV2';
+ let member=null,scanner=null,scanning=false;
+ try{member=JSON.parse(localStorage.getItem(memberKey)||'null');}catch{}
+ if(member?.name)el('pushMemberName').value=member.name;
+ const mobile=matchMedia('(max-width:700px)').matches||/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+ if(!mobile)el('pushAdminEntry').hidden=false;
+ function message(t){status.textContent=t;}
  const b64=s=>{const p='='.repeat((4-s.length%4)%4),v=(s+p).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(v),a=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i);return a;};
- async function config(){const r=await apiFetch(API_BASE+'/api/push-config?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('通知服務尚未更新到 NAS');return r.json();}
- async function state(){if(!('serviceWorker'in navigator)||!('PushManager'in window)){status.textContent='這個瀏覽器不支援網頁通知';return;}const reg=await navigator.serviceWorker.register('./sw.js');const sub=await reg.pushManager.getSubscription();status.textContent=(installed()?'已從主畫面開啟':'請先加入 iPhone 主畫面')+' · '+(Notification.permission==='granted'&&sub?'此裝置已啟用通知':'通知尚未啟用');}
- document.getElementById('pushSetupBtn').onclick=()=>{box.hidden=false;state().catch(e=>status.textContent=e.message);};
- document.getElementById('pushClose').onclick=()=>box.hidden=true;
- document.getElementById('pushEnable').onclick=async()=>{
+ async function request(path,opts={}){const r=await fetch(base+path,{cache:'no-store',...opts});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(({enrollment_expired_or_used:'註冊碼已使用或超過 10 分鐘，請向管理員重新取得',admin_authorization_required:'管理員授權碼不正確',push_admin_not_configured:'NAS 尚未設定管理員授權碼',use_one_time_enrollment:'請使用辦公室一次性 QR Code'})[data.error]||data.error||'伺服器回應 '+r.status);return data;}
+ async function enroll(token){
+  if(!installed())throw Error('請先從 iPhone 主畫面的設備管理圖示開啟，再掃描 QR Code');
+  const name=el('pushMemberName').value.trim();if(!name)throw Error('請先填寫員工姓名');
+  if(!/^[a-f0-9]{64}$/i.test(token))throw Error('不是有效的註冊 QR Code');
+  if(!('serviceWorker'in navigator)||!('PushManager'in window))throw Error('此裝置不支援網頁推播');
+  message('正在確認通知權限…');
+  const cfg=await request('/api/push-config');
+  if(!cfg.ready||!cfg.publicKey)throw Error('NAS 尚未啟用 Web Push');
+  const permission=await Notification.requestPermission();if(permission!=='granted')throw Error('請允許設備管理通知');
+  const reg=await navigator.serviceWorker.register('./sw.js');
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(cfg.publicKey)});
+  message('正在使用一次性註冊碼…');
+  const data=await request('/api/push-enrollments/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,memberName:name,subscription:sub.toJSON()})});
+  member={id:data.memberId,name:data.memberName};localStorage.setItem(memberKey,JSON.stringify(member));localStorage.removeItem(pendingKey);
+  message('✅ '+member.name+' 註冊成功，這組 QR Code 已作廢。');
+ }
+ async function stopScan(){if(scanner&&scanning){await scanner.stop().catch(()=>{});scanning=false;}if(scanner){await scanner.clear().catch(()=>{});scanner=null;}el('pushScanArea').hidden=true;}
+ el('pushSetupBtn').onclick=()=>{box.hidden=false;message(member?'已註冊：'+member.name:'尚未註冊，請到辦公室掃描 QR Code');};
+ el('pushClose').onclick=()=>{stopScan();box.hidden=true;};
+ el('pushScan').onclick=async()=>{
   try{
-   if(!installed())throw Error('iPhone 請先用 Safari「加入主畫面」，再從主畫面圖示開啟');
-   const memberName=name.value.trim();if(!memberName)throw Error('請先填寫使用這支裝置的人員姓名');
-   const cfg=await config();if(!cfg.ready||!cfg.publicKey)throw Error('NAS 尚未設定 Web Push 金鑰');
-   const permission=await Notification.requestPermission();if(permission!=='granted')throw Error('通知權限沒有允許');
-   const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(cfg.publicKey)});
-   member=member||{id:(crypto.randomUUID?crypto.randomUUID():'member-'+Date.now())};member.name=memberName;localStorage.setItem(key,JSON.stringify(member));
-   const r=await apiFetch(API_BASE+'/api/push-subscriptions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:member.id,memberName,subscription:sub.toJSON()})});if(!r.ok)throw Error('裝置註冊失敗');
-   status.textContent='✅ '+memberName+' 的這支裝置已啟用巡檢通知';
-  }catch(e){status.textContent='⚠️ '+e.message;}
+   if(!installed())throw Error('請先加入 iPhone 主畫面，再從主畫面圖示開啟');
+   if(!el('pushMemberName').value.trim())throw Error('請先輸入員工姓名');
+   if(typeof Html5Qrcode==='undefined')throw Error('掃描元件尚未載入，請稍後重試');
+   el('pushScanArea').hidden=false;scanner=new Html5Qrcode('pushScanner');
+   await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},async decoded=>{
+    if(!scanning)return;scanning=false;
+    await scanner.stop().catch(()=>{});await scanner.clear().catch(()=>{});scanner=null;el('pushScanArea').hidden=true;
+    try{const u=new URL(decoded);if(u.origin!==location.origin||u.pathname.replace(/\/$/,'')!==location.pathname.replace(/\/$/,''))throw Error('這不是百麒設備註冊碼');const token=new URLSearchParams(u.hash.slice(1)).get('enroll');await enroll(token||'');}catch(e){message('⚠️ '+e.message);}
+   },()=>{});scanning=true;message('請對準辦公室電腦上的 QR Code');
+  }catch(e){message('⚠️ '+e.message);await stopScan();}
  };
- document.getElementById('pushTest').onclick=async()=>{try{if(!member?.id)throw Error('請先啟用這支裝置');status.textContent='正在傳送測試通知…';const r=await apiFetch(API_BASE+'/api/push-test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:member.id})});const d=await r.json();if(!r.ok)throw Error(d.error||'測試失敗');status.textContent=d.sent?'✅ 測試通知已送出':'⚠️ 找不到這位人員已啟用的裝置';}catch(e){status.textContent='⚠️ '+e.message;}};
+ el('pushStopScan').onclick=stopScan;
+ el('pushGenerate').onclick=async()=>{
+  if(mobile)return;
+  try{
+   const secret=el('pushAdminToken').value.trim();if(!secret)throw Error('請先輸入管理員授權碼');
+   const data=await request('/api/push-enrollments',{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},body:'{}'});
+   if(typeof QRCode==='undefined')throw Error('QR Code 元件尚未載入，請稍後重試');
+   await QRCode.toCanvas(el('pushQrCanvas'),data.registrationUrl,{width:260,margin:2});
+   el('pushAdminPanel').hidden=false;el('pushQrExpiry').textContent='此 QR Code 僅限一人使用，10 分鐘後失效。請讓員工從主畫面的設備 App 掃描。';
+   message('已產生一次性 QR Code，請讓員工在辦公室掃描。');
+  }catch(e){message('⚠️ '+e.message);}
+ };
+ el('pushTest').onclick=async()=>{
+  try{if(!member?.id)throw Error('請先完成一次性掃碼註冊');const d=await request('/api/push-test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:member.id})});message(d.sent?'✅ 已送出測試通知':'⚠️ 找不到已啟用的通知裝置');}catch(e){message('⚠️ '+e.message);}
+ };
  if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 })();
 </script>
