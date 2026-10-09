@@ -138,7 +138,7 @@ app.get('/api/push-config',(_req,res)=>res.json({pushVersion:1,ready:pushReady,p
 app.get('/api/push-members',async(_req,res)=>{try{await ensureSchema();const {rows}=await pool.query('SELECT id,name,active FROM push_members WHERE active=true ORDER BY name');res.json({members:rows});}catch{res.status(500).json({error:'push_members_load_failed'});}});
 const pushAdminToken=String(process.env.PUSH_ADMIN_TOKEN||'').trim();
 function adminAllowed(req){
- const token=String(req.headers.authorization||'').replace(/^Bearer\\s+/i,'');
+ const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
  if(!pushAdminToken||!token||token.length!==pushAdminToken.length)return false;
  return timingSafeEqual(Buffer.from(token),Buffer.from(pushAdminToken));
 }
