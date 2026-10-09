@@ -20,7 +20,9 @@ http.createServer(async(req,res)=>{
  if(!url.pathname.startsWith('/api/')||!['GET','PUT','POST'].includes(req.method)){
   res.writeHead(404);return res.end();
  }
- if(url.pathname!=='/api/health'){
+ const pushPublicRoute=(req.method==='GET'&&url.pathname==='/api/push-config')||
+  (req.method==='POST'&&['/api/push-enrollments','/api/push-enrollments/redeem','/api/push-test'].includes(url.pathname));
+ if(url.pathname!=='/api/health'&&!pushPublicRoute){
   const match=/^Bearer ([a-f0-9]{64})$/i.exec(req.headers.authorization||'');
   if(!match){res.writeHead(401);return res.end(JSON.stringify({error:'access_required'}));}
   const digest=createHash('sha256').update(match[1].toLowerCase()).digest();
@@ -30,7 +32,7 @@ http.createServer(async(req,res)=>{
  try{
   const chunks=[];let total=0;
   for await(const chunk of req){total+=chunk.length;if(total>maxBody){res.writeHead(413);return res.end();}chunks.push(chunk);}
-  const upstream=http.request({hostname:process.env.API_HOST||'api',port:Number(process.env.API_PORT||3000),path:url.pathname+url.search,method:req.method,headers:{'Content-Type':req.headers['content-type']||'application/json'},timeout:30000},response=>{
+  const upstream=http.request({hostname:process.env.API_HOST||'api',port:Number(process.env.API_PORT||3000),path:url.pathname+url.search,method:req.method,headers:{'Content-Type':req.headers['content-type']||'application/json',...(pushPublicRoute&&req.headers.authorization?{'Authorization':req.headers.authorization}:{})},timeout:30000},response=>{
    res.setHeader('Content-Type',response.headers['content-type']||'application/octet-stream');
    res.setHeader('Cache-Control',response.headers['cache-control']||'no-store');
    res.writeHead(response.statusCode||502);response.pipe(res);
