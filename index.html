@@ -767,6 +767,15 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
 <script>
 (()=>{
  const box=document.getElementById('pushSetup'),status=document.getElementById('pushStatus'),name=document.getElementById('pushMemberName');
+ const API_BASE='https://fileserver.tailbb066f.ts.net:8443';
+ async function apiFetch(url,options={}){
+  const key=localStorage.getItem('equipment_api_access_v1');
+  const headers=new Headers(options.headers||{});
+  if(key)headers.set('Authorization','Bearer '+key);
+  const response=await fetch(url,{...options,headers});
+  if(response.status===401)throw Error('此裝置尚未啟用設備系統，請開啟管理員提供的啟用連結');
+  return response;
+ }
  const key='baiqiPushMemberV1';let member=null;try{member=JSON.parse(localStorage.getItem(key)||'null');}catch{}
  if(member?.name)name.value=member.name;
  const installed=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
