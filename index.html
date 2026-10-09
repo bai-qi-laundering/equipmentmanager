@@ -770,10 +770,10 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
 <h3>辦公室管理員 · 一次性註冊碼</h3>
 <label for="pushAdminToken">管理員授權碼（僅保留在此頁面）</label><input id="pushAdminToken" type="password" autocomplete="off" placeholder="NAS PUSH_ADMIN_TOKEN">
 <button id="pushGenerate" type="button">產生一次性 QR Code（10 分鐘）</button>
-<div id="pushAdminPanel" hidden><canvas id="pushQrCanvas"></canvas><p id="pushQrExpiry"></p></div>
+<div id="pushAdminPanel" hidden><div id="pushQrCanvas"></div><p id="pushQrExpiry"></p></div>
 </div>
 </section></div>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 <script>
 (()=>{
@@ -803,7 +803,7 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(cfg.publicKey)});
   message('正在使用一次性註冊碼…');
   const data=await request('/api/push-enrollments/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,memberName:name,subscription:sub.toJSON()})});
-  member={id:data.memberId,name:data.memberName};localStorage.setItem(memberKey,JSON.stringify(member));localStorage.removeItem(pendingKey);
+  member={id:data.memberId,name:data.memberName,deviceToken:data.deviceToken};localStorage.setItem(memberKey,JSON.stringify(member));localStorage.removeItem(pendingKey);
   message('✅ '+member.name+' 註冊成功，這組 QR Code 已作廢。');
  }
  async function stopScan(){if(scanner&&scanning){await scanner.stop().catch(()=>{});scanning=false;}if(scanner){await scanner.clear().catch(()=>{});scanner=null;}el('pushScanArea').hidden=true;}
@@ -829,13 +829,14 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
    const secret=el('pushAdminToken').value.trim();if(!secret)throw Error('請先輸入管理員授權碼');
    const data=await request('/api/push-enrollments',{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},body:'{}'});
    if(typeof QRCode==='undefined')throw Error('QR Code 元件尚未載入，請稍後重試');
-   await QRCode.toCanvas(el('pushQrCanvas'),data.registrationUrl,{width:260,margin:2});
+   el('pushQrCanvas').replaceChildren();
+   new QRCode(el('pushQrCanvas'),{text:data.registrationUrl,width:260,height:260,correctLevel:QRCode.CorrectLevel.M});
    el('pushAdminPanel').hidden=false;el('pushQrExpiry').textContent='此 QR Code 僅限一人使用，10 分鐘後失效。請讓員工從主畫面的設備 App 掃描。';
    message('已產生一次性 QR Code，請讓員工在辦公室掃描。');
   }catch(e){message('⚠️ '+e.message);}
  };
  el('pushTest').onclick=async()=>{
-  try{if(!member?.id)throw Error('請先完成一次性掃碼註冊');const d=await request('/api/push-test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:member.id})});message(d.sent?'✅ 已送出測試通知':'⚠️ 找不到已啟用的通知裝置');}catch(e){message('⚠️ '+e.message);}
+  try{if(!member?.id||!member?.deviceToken)throw Error('請先完成一次性掃碼註冊');const d=await request('/api/push-test',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+member.deviceToken},body:JSON.stringify({memberId:member.id})});message(d.sent?'✅ 已送出測試通知':'⚠️ 找不到已啟用的通知裝置');}catch(e){message('⚠️ '+e.message);}
  };
  if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 })();
