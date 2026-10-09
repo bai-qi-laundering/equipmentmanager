@@ -1,6 +1,7 @@
 import express from 'express';
 import pg from 'pg';
 import webpush from 'web-push';
+import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 
 const { Pool } = pg;
 const app = express();
@@ -23,6 +24,7 @@ const ensureSchema = async () => {
     ADD COLUMN IF NOT EXISTS maintenance_cycle_days INTEGER NOT NULL DEFAULT 180,
     ADD COLUMN IF NOT EXISTS commissioned_date DATE,
     ADD COLUMN IF NOT EXISTS notes TEXT NOT NULL DEFAULT ''`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS push_enrollment_tokens (token_hash TEXT PRIMARY KEY, expires_at TIMESTAMPTZ NOT NULL, used_at TIMESTAMPTZ, member_id TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS push_members (id TEXT PRIMARY KEY,name TEXT NOT NULL,active BOOLEAN NOT NULL DEFAULT true,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS push_subscriptions (endpoint TEXT PRIMARY KEY,member_id TEXT NOT NULL REFERENCES push_members(id) ON DELETE CASCADE,subscription JSONB NOT NULL,user_agent TEXT NOT NULL DEFAULT '',enabled BOOLEAN NOT NULL DEFAULT true,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await pool.query(`CREATE INDEX IF NOT EXISTS push_subscriptions_member_idx ON push_subscriptions(member_id) WHERE enabled`);
@@ -134,11 +136,46 @@ app.post('/api/inspection-sync',async(req,res)=>{
 const MEMBER_ID=/^[a-zA-Z0-9_-]{8,80}$/;
 app.get('/api/push-config',(_req,res)=>res.json({pushVersion:1,ready:pushReady,publicKey:pushReady?vapidPublicKey:null}));
 app.get('/api/push-members',async(_req,res)=>{try{await ensureSchema();const {rows}=await pool.query('SELECT id,name,active FROM push_members WHERE active=true ORDER BY name');res.json({members:rows});}catch{res.status(500).json({error:'push_members_load_failed'});}});
-app.post('/api/push-subscriptions',async(req,res)=>{
- const b=req.body||{},sub=b.subscription;
- if(!MEMBER_ID.test(b.memberId||'')||typeof b.memberName!=='string'||!b.memberName.trim()||b.memberName.length>80||!sub||typeof sub.endpoint!=='string'||!sub.endpoint.startsWith('https://')||typeof sub.keys?.p256dh!=='string'||typeof sub.keys?.auth!=='string')return res.status(400).json({error:'invalid_push_subscription'});
- try{await ensureSchema();const client=await pool.connect();try{await client.query('BEGIN');await client.query(`INSERT INTO push_members(id,name) VALUES($1,$2) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name,active=true,updated_at=now()`,[b.memberId,b.memberName.trim()]);await client.query(`INSERT INTO push_subscriptions(endpoint,member_id,subscription,user_agent) VALUES($1,$2,$3::jsonb,$4) ON CONFLICT(endpoint) DO UPDATE SET member_id=EXCLUDED.member_id,subscription=EXCLUDED.subscription,user_agent=EXCLUDED.user_agent,enabled=true,updated_at=now()`,[sub.endpoint,b.memberId,JSON.stringify(sub),String(req.headers['user-agent']||'').slice(0,500)]);await client.query('COMMIT');res.json({ok:true,pushVersion:1});}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}catch{res.status(500).json({error:'push_subscription_save_failed'});}
+const pushAdminToken=String(process.env.PUSH_ADMIN_TOKEN||'').trim();
+function adminAllowed(req){
+ const token=String(req.headers.authorization||'').replace(/^Bearer\\s+/i,'');
+ if(!pushAdminToken||!token||token.length!==pushAdminToken.length)return false;
+ return timingSafeEqual(Buffer.from(token),Buffer.from(pushAdminToken));
+}
+function requirePushAdmin(req,res,next){
+ if(!pushAdminToken)return res.status(503).json({error:'push_admin_not_configured'});
+ if(!adminAllowed(req))return res.status(403).json({error:'admin_authorization_required'});
+ next();
+}
+app.post('/api/push-enrollments',requirePushAdmin,async(req,res)=>{
+ try{
+  await ensureSchema();
+  const token=randomBytes(32).toString('hex');
+  const hash=createHash('sha256').update(token).digest('hex');
+  await pool.query('INSERT INTO push_enrollment_tokens(token_hash,expires_at) VALUES($1,now()+interval \'10 minutes\')',[hash]);
+  res.setHeader('Cache-Control','no-store');
+  res.json({token,expiresInSeconds:600,registrationUrl:'https://bai-qi-laundering.github.io/equipmentmanager/#enroll='+token});
+ }catch(e){res.status(500).json({error:'enrollment_create_failed'});}
 });
+app.post('/api/push-enrollments/redeem',async(req,res)=>{
+ const b=req.body||{},sub=b.subscription;
+ if(!/^[a-f0-9]{64}$/i.test(String(b.token||''))||typeof b.memberName!=='string'||!b.memberName.trim()||b.memberName.trim().length>80||!sub||typeof sub.endpoint!=='string'||!sub.endpoint.startsWith('https://')||typeof sub.keys?.p256dh!=='string'||typeof sub.keys?.auth!=='string')return res.status(400).json({error:'invalid_enrollment'});
+ const hash=createHash('sha256').update(String(b.token).toLowerCase()).digest('hex');
+ const client=await pool.connect();
+ try{
+  await ensureSchema();
+  await client.query('BEGIN');
+  const {rows}=await client.query('UPDATE push_enrollment_tokens SET used_at=now() WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() RETURNING token_hash',[hash]);
+  if(!rows.length){await client.query('ROLLBACK');return res.status(410).json({error:'enrollment_expired_or_used'});}
+  const memberId=randomBytes(16).toString('hex');
+  await client.query('INSERT INTO push_members(id,name) VALUES($1,$2)',[memberId,b.memberName.trim()]);
+  await client.query('INSERT INTO push_subscriptions(endpoint,member_id,subscription,user_agent) VALUES($1,$2,$3::jsonb,$4) ON CONFLICT(endpoint) DO UPDATE SET member_id=EXCLUDED.member_id,subscription=EXCLUDED.subscription,user_agent=EXCLUDED.user_agent,enabled=true,updated_at=now()',[sub.endpoint,memberId,JSON.stringify(sub),String(req.headers['user-agent']||'').slice(0,500)]);
+  await client.query('UPDATE push_enrollment_tokens SET member_id=$2 WHERE token_hash=$1',[hash,memberId]);
+  await client.query('COMMIT');
+  res.json({ok:true,memberId,memberName:b.memberName.trim()});
+ }catch(e){await client.query('ROLLBACK').catch(()=>{});res.status(500).json({error:'enrollment_save_failed'});}finally{client.release();}
+});
+app.post('/api/push-subscriptions',(_req,res)=>res.status(410).json({error:'use_one_time_enrollment'}));
 app.post('/api/push-test',async(req,res)=>{
  if(!pushReady)return res.status(503).json({error:'push_not_configured'});
  const memberId=String(req.body?.memberId||'');if(!MEMBER_ID.test(memberId))return res.status(400).json({error:'invalid_member'});
