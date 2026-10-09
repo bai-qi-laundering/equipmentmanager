@@ -26,6 +26,7 @@ const ensureSchema = async () => {
     ADD COLUMN IF NOT EXISTS notes TEXT NOT NULL DEFAULT ''`);
   await pool.query(`CREATE TABLE IF NOT EXISTS push_enrollment_tokens (token_hash TEXT PRIMARY KEY, expires_at TIMESTAMPTZ NOT NULL, used_at TIMESTAMPTZ, member_id TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS push_members (id TEXT PRIMARY KEY,name TEXT NOT NULL,active BOOLEAN NOT NULL DEFAULT true,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
+  await pool.query(`ALTER TABLE push_members ADD COLUMN IF NOT EXISTS device_token_hash TEXT`);
   await pool.query(`CREATE TABLE IF NOT EXISTS push_subscriptions (endpoint TEXT PRIMARY KEY,member_id TEXT NOT NULL REFERENCES push_members(id) ON DELETE CASCADE,subscription JSONB NOT NULL,user_agent TEXT NOT NULL DEFAULT '',enabled BOOLEAN NOT NULL DEFAULT true,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await pool.query(`CREATE INDEX IF NOT EXISTS push_subscriptions_member_idx ON push_subscriptions(member_id) WHERE enabled`);
   await pool.query(`CREATE TABLE IF NOT EXISTS equipment_assignments (equipment_id TEXT NOT NULL,member_id TEXT NOT NULL REFERENCES push_members(id) ON DELETE CASCADE,PRIMARY KEY(equipment_id,member_id))`);
@@ -168,18 +169,26 @@ app.post('/api/push-enrollments/redeem',async(req,res)=>{
   const {rows}=await client.query('UPDATE push_enrollment_tokens SET used_at=now() WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() RETURNING token_hash',[hash]);
   if(!rows.length){await client.query('ROLLBACK');return res.status(410).json({error:'enrollment_expired_or_used'});}
   const memberId=randomBytes(16).toString('hex');
-  await client.query('INSERT INTO push_members(id,name) VALUES($1,$2)',[memberId,b.memberName.trim()]);
+  const deviceToken=randomBytes(32).toString('hex');
+  const deviceTokenHash=createHash('sha256').update(deviceToken).digest('hex');
+  await client.query('INSERT INTO push_members(id,name,device_token_hash) VALUES($1,$2,$3)',[memberId,b.memberName.trim(),deviceTokenHash]);
   await client.query('INSERT INTO push_subscriptions(endpoint,member_id,subscription,user_agent) VALUES($1,$2,$3::jsonb,$4) ON CONFLICT(endpoint) DO UPDATE SET member_id=EXCLUDED.member_id,subscription=EXCLUDED.subscription,user_agent=EXCLUDED.user_agent,enabled=true,updated_at=now()',[sub.endpoint,memberId,JSON.stringify(sub),String(req.headers['user-agent']||'').slice(0,500)]);
   await client.query('UPDATE push_enrollment_tokens SET member_id=$2 WHERE token_hash=$1',[hash,memberId]);
   await client.query('COMMIT');
-  res.json({ok:true,memberId,memberName:b.memberName.trim()});
+  res.setHeader('Cache-Control','no-store');
+  res.json({ok:true,memberId,memberName:b.memberName.trim(),deviceToken});
  }catch(e){await client.query('ROLLBACK').catch(()=>{});res.status(500).json({error:'enrollment_save_failed'});}finally{client.release();}
 });
 app.post('/api/push-subscriptions',(_req,res)=>res.status(410).json({error:'use_one_time_enrollment'}));
 app.post('/api/push-test',async(req,res)=>{
  if(!pushReady)return res.status(503).json({error:'push_not_configured'});
  const memberId=String(req.body?.memberId||'');if(!MEMBER_ID.test(memberId))return res.status(400).json({error:'invalid_member'});
- try{const {rows}=await pool.query('SELECT endpoint,subscription FROM push_subscriptions WHERE member_id=$1 AND enabled=true',[memberId]);let sent=0;for(const row of rows){try{await webpush.sendNotification(row.subscription,JSON.stringify({title:'百麒設備管理',body:'iPhone 巡檢通知測試成功 🔔',url:'./?inspection=mine',badge:1}),{TTL:300});sent++;}catch(e){if([404,410].includes(e.statusCode))await pool.query('UPDATE push_subscriptions SET enabled=false,updated_at=now() WHERE endpoint=$1',[row.endpoint]);}}res.json({ok:true,sent});}catch{res.status(500).json({error:'push_test_failed'});}
+ const deviceToken=/^Bearer ([a-f0-9]{64})$/i.exec(String(req.headers.authorization||''))?.[1];
+ if(!deviceToken)return res.status(403).json({error:'device_authorization_required'});
+ try{
+  const check=await pool.query('SELECT 1 FROM push_members WHERE id=$1 AND active=true AND device_token_hash=$2',[memberId,createHash('sha256').update(deviceToken.toLowerCase()).digest('hex')]);
+  if(!check.rowCount)return res.status(403).json({error:'device_authorization_required'});
+  const {rows}=await pool.query('SELECT endpoint,subscription FROM push_subscriptions WHERE member_id=$1 AND enabled=true',[memberId]);let sent=0;for(const row of rows){try{await webpush.sendNotification(row.subscription,JSON.stringify({title:'百麒設備管理',body:'iPhone 巡檢通知測試成功 🔔',url:'./?inspection=mine',badge:1}),{TTL:300});sent++;}catch(e){if([404,410].includes(e.statusCode))await pool.query('UPDATE push_subscriptions SET enabled=false,updated_at=now() WHERE endpoint=$1',[row.endpoint]);}}res.json({ok:true,sent});}catch{res.status(500).json({error:'push_test_failed'});}
 });
 app.get('/api/push-assignments',async(_req,res)=>{try{const {rows}=await pool.query(`SELECT a.equipment_id,m.id AS member_id,m.name FROM equipment_assignments a JOIN push_members m ON m.id=a.member_id WHERE m.active=true ORDER BY a.equipment_id,m.name`);res.json({assignments:rows});}catch{res.status(500).json({error:'push_assignments_load_failed'});}});
 app.put('/api/push-assignments/:equipmentId',async(req,res)=>{const ids=Array.isArray(req.body?.memberIds)?req.body.memberIds:[];if(ids.some(x=>!MEMBER_ID.test(x)))return res.status(400).json({error:'invalid_assignment'});const client=await pool.connect();try{await client.query('BEGIN');await client.query('DELETE FROM equipment_assignments WHERE equipment_id=$1',[String(req.params.equipmentId)]);for(const id of [...new Set(ids)])await client.query('INSERT INTO equipment_assignments(equipment_id,member_id) VALUES($1,$2)',[String(req.params.equipmentId),id]);await client.query('COMMIT');res.json({ok:true});}catch{await client.query('ROLLBACK');res.status(500).json({error:'assignment_save_failed'});}finally{client.release();}});
