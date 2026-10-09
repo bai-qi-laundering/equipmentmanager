@@ -746,7 +746,7 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
 </script></div>
 <style>
 #pushSetupBtn{position:fixed;z-index:38;right:14px;top:126px;min-height:38px;padding:8px 11px;border-color:#4fb9ef;background:#0d527d;font-size:12px}
-#pushSetup[hidden]{display:none!important}#pushSetup{position:fixed;inset:0;z-index:260;background:#06111dcc;display:grid;place-items:center;padding:18px}
+#pushSetup[hidden],#pushActivateWrap[hidden]{display:none!important}#pushSetup{position:fixed;inset:0;z-index:260;background:#06111dcc;display:grid;place-items:center;padding:18px}
 .push-card{width:min(460px,100%);max-height:90dvh;overflow:auto;background:#f7fbfe;color:#17364d;border-radius:20px;padding:22px;box-shadow:0 24px 70px #0008}
 .push-card h2{margin:0 0 8px}.push-card p{line-height:1.65;color:#557084}.push-card label{display:block;font-weight:700;margin:16px 0 6px}.push-card input{width:100%;min-height:48px;background:white;color:#17364d;border:1px solid #aac5d7}
 .push-actions{display:flex;gap:8px;margin-top:18px}.push-actions button{flex:1;min-height:48px}.push-primary{background:#0e679d!important;border-color:#0e679d!important;color:white!important}.push-status{margin-top:12px;padding:10px;border-radius:10px;background:#e9f2f8;font-size:13px}
@@ -776,6 +776,26 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
   if(response.status===401)throw Error('此裝置尚未啟用設備系統，請開啟管理員提供的啟用連結');
   return response;
  }
+ const accessKeyName='equipment_api_access_v1';
+ const activateWrap=document.createElement('div');
+ activateWrap.id='pushActivateWrap';
+ activateWrap.innerHTML='<label for="pushAccessKey">首次啟用：貼上管理員提供的 64 碼連線金鑰</label><input id="pushAccessKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="只貼 #access= 後面的 64 碼"><button id="pushActivate" type="button">儲存連線金鑰</button><p style="font-size:12px">金鑰只儲存在這支裝置，不會上傳到 GitHub。請勿將金鑰傳給其他人。</p>';
+ document.getElementById('pushStatus').before(activateWrap);
+ const accessInput=document.getElementById('pushAccessKey');
+ function refreshActivation(){activateWrap.hidden=!!localStorage.getItem(accessKeyName);}
+ refreshActivation();
+ document.getElementById('pushActivate').onclick=async()=>{
+  const raw=accessInput.value.trim();
+  const match=raw.match(/(?:^|[#?&])access=([0-9a-f]{64})(?:$|&)/i);
+  const candidate=match?match[1]:raw;
+  if(!/^[0-9a-f]{64}$/i.test(candidate)){status.textContent='請貼上啟用網址中 #access= 後面的完整 64 碼金鑰';return;}
+  try{
+   const r=await fetch(API_BASE+'/api/push-config',{headers:{Authorization:'Bearer '+candidate.toLowerCase()},cache:'no-store'});
+   if(!r.ok)throw Error('金鑰驗證失敗，請確認是否為最新啟用連結');
+   localStorage.setItem(accessKeyName,candidate.toLowerCase());
+   accessInput.value='';refreshActivation();status.textContent='✅ 裝置已連接 NAS，現在可以啟用通知';
+  }catch(e){status.textContent='⚠️ '+e.message;}
+ };
  const key='baiqiPushMemberV1';let member=null;try{member=JSON.parse(localStorage.getItem(key)||'null');}catch{}
  if(member?.name)name.value=member.name;
  const installed=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
