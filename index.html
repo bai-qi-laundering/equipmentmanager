@@ -840,7 +840,7 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
     await stopScan();
     try{
      const u=new URL(decoded);
-     if(u.origin!==location.origin||u.pathname.replace(/\\/$/,'')!==location.pathname.replace(/\\/$/,''))throw Error('這不是百麒設備註冊碼');
+     if(u.origin!==location.origin||u.pathname.replace(/\/$/,'')!==location.pathname.replace(/\/$/,''))throw Error('這不是百麒設備註冊碼');
      const token=new URLSearchParams(u.hash.slice(1)).get('enroll');
      await enroll(token||'');
     }catch(e){message('⚠️ '+e.message);}
