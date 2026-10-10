@@ -746,7 +746,7 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
 </script></div>
 <style>
 #pushSetupBtn{position:fixed;z-index:38;right:14px;top:126px;padding:9px 12px;background:#0d527d;color:white}
-#pushSetup[hidden],#pushAdminPanel[hidden],#pushScanArea[hidden]{display:none!important}
+#pushSetup[hidden],#pushAdminPanel[hidden],#pushScanArea[hidden]{display:none!important} #pushScanner{width:100%;min-height:240px;background:#e9f1f7;border:2px solid #a8c6d9;border-radius:12px;overflow:hidden;margin:10px 0} #pushScanner video{width:100%!important;max-height:340px;object-fit:cover}
 #pushSetup{position:fixed;inset:0;z-index:260;background:#06111dcc;display:grid;place-items:center;padding:14px}
 .push-card{width:min(480px,100%);max-height:92dvh;overflow:auto;background:#f7fbfe;color:#17364d;border-radius:18px;padding:22px}
 .push-card input{box-sizing:border-box;width:100%;min-height:46px;margin:5px 0 10px;padding:8px;border:1px solid #aac5d7;background:white;color:#17364d}
@@ -763,7 +763,7 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
 <p>員工請先將設備管理網站加入 iPhone 主畫面，從主畫面開啟後，到辦公室掃描管理員提供的註冊 QR Code。每個 QR Code 只能成功使用一次。</p>
 <label for="pushMemberName">員工姓名</label><input id="pushMemberName" maxlength="80" autocomplete="name" placeholder="請輸入姓名">
 <div id="pushStatus" class="push-status">尚未啟用通知</div>
-<div><button id="pushScan" type="button">📷 掃描辦公室 QR Code</button><button id="pushClose" type="button">關閉</button></div>
+<div><button id="pushAllowNotification" type="button">① 允許 iPhone 通知</button><button id="pushScan" type="button">② 掃描辦公室 QR Code</button><button id="pushClose" type="button">關閉</button></div>
 <div id="pushScanArea" hidden><div id="pushScanner" style="width:100%"></div><button id="pushStopScan" type="button">停止掃描</button></div>
 <div><button id="pushTest" type="button">傳送測試通知</button></div>
 <div id="pushAdminEntry" hidden>
@@ -797,7 +797,7 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
   message('正在確認通知權限…');
   const cfg=await request('/api/push-config');
   if(!cfg.ready||!cfg.publicKey)throw Error('NAS 尚未啟用 Web Push');
-  const permission=await Notification.requestPermission();if(permission!=='granted')throw Error('請允許設備管理通知');
+  if(Notification.permission!=='granted')throw Error('請先按「① 允許 iPhone 通知」，再重新掃描 QR Code');
   const reg=await navigator.serviceWorker.register('./sw.js');
   let sub=await reg.pushManager.getSubscription();
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(cfg.publicKey)});
@@ -806,21 +806,47 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
   member={id:data.memberId,name:data.memberName,deviceToken:data.deviceToken};localStorage.setItem(memberKey,JSON.stringify(member));localStorage.removeItem(pendingKey);
   message('✅ '+member.name+' 註冊成功，這組 QR Code 已作廢。');
  }
- async function stopScan(){if(scanner&&scanning){await scanner.stop().catch(()=>{});scanning=false;}if(scanner){await scanner.clear().catch(()=>{});scanner=null;}el('pushScanArea').hidden=true;}
- el('pushSetupBtn').onclick=()=>{box.hidden=false;message(member?'已註冊：'+member.name:'尚未註冊，請到辦公室掃描 QR Code');};
+ async function stopScan(){
+  scanning=false;
+  const current=scanner;scanner=null;
+  if(current){try{await current.stop();}catch{}try{await current.clear();}catch{}}
+  el('pushScanArea').hidden=true;
+ }
+ el('pushSetupBtn').onclick=()=>{box.hidden=false;message(member?'已註冊：'+member.name:'尚未註冊，請先允許通知，再掃描辦公室 QR Code');};
  el('pushClose').onclick=()=>{stopScan();box.hidden=true;};
+ el('pushAllowNotification').onclick=async()=>{
+  try{
+   if(!installed())throw Error('請先將網站加入 iPhone 主畫面，從主畫面開啟');
+   if(!('Notification'in window))throw Error('此裝置不支援通知');
+   const permission=await Notification.requestPermission();
+   message(permission==='granted'?'✅ 通知權限已允許，現在請掃描 QR Code':'⚠️ 尚未允許通知，請在 iPhone 設定中開啟通知權限');
+  }catch(e){message('⚠️ '+e.message);}
+ };
  el('pushScan').onclick=async()=>{
   try{
    if(!installed())throw Error('請先加入 iPhone 主畫面，再從主畫面圖示開啟');
    if(!el('pushMemberName').value.trim())throw Error('請先輸入員工姓名');
+   if(Notification.permission!=='granted')throw Error('請先按「① 允許 iPhone 通知」');
    if(typeof Html5Qrcode==='undefined')throw Error('掃描元件尚未載入，請稍後重試');
-   el('pushScanArea').hidden=false;scanner=new Html5Qrcode('pushScanner');
-   await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},async decoded=>{
-    if(!scanning)return;scanning=false;
-    await scanner.stop().catch(()=>{});await scanner.clear().catch(()=>{});scanner=null;el('pushScanArea').hidden=true;
-    try{const u=new URL(decoded);if(u.origin!==location.origin||u.pathname.replace(/\/$/,'')!==location.pathname.replace(/\/$/,''))throw Error('這不是百麒設備註冊碼');const token=new URLSearchParams(u.hash.slice(1)).get('enroll');await enroll(token||'');}catch(e){message('⚠️ '+e.message);}
-   },()=>{});scanning=true;message('請對準辦公室電腦上的 QR Code');
-  }catch(e){message('⚠️ '+e.message);await stopScan();}
+   await stopScan();
+   el('pushScanArea').hidden=false;
+   message('正在啟動相機，請允許相機權限…');
+   const current=new Html5Qrcode('pushScanner');scanner=current;
+   scanning=true;
+   await current.start({facingMode:'environment'},{fps:8,qrbox:(w,h)=>{const side=Math.max(120,Math.min(220,w-24,h-24));return {width:side,height:side};}},async decoded=>{
+    if(!scanning||scanner!==current)return;
+    scanning=false;
+    message('已辨識 QR Code，正在完成註冊…');
+    await stopScan();
+    try{
+     const u=new URL(decoded);
+     if(u.origin!==location.origin||u.pathname.replace(/\\/$/,'')!==location.pathname.replace(/\\/$/,''))throw Error('這不是百麒設備註冊碼');
+     const token=new URLSearchParams(u.hash.slice(1)).get('enroll');
+     await enroll(token||'');
+    }catch(e){message('⚠️ '+e.message);}
+   },()=>{});
+   message('相機已開啟，請把電腦上的 QR Code 放進取景框');
+  }catch(e){message('⚠️ 相機無法啟動或掃描失敗：'+e.message);await stopScan();}
  };
  el('pushStopScan').onclick=stopScan;
  el('pushGenerate').onclick=async()=>{
