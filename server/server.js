@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 app.get('/api/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1,inspectionVersion:1,pushVersion:1,pushReady });
+    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1,inspectionVersion:1,pushVersion:1,deviceReadVersion:1,pushReady });
   } catch (error) {
     res.status(503).json({ ok: false, error: 'database_unavailable' });
   }
