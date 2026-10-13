@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 116 158" width="116" height="158" role="img" aria-label="乾洗機正面">
+<defs>
+ <linearGradient id="body" x1="0" x2="1"><stop stop-color="#b6c3cb"/><stop offset=".14" stop-color="#f3f6f4"/><stop offset=".78" stop-color="#dce5e8"/><stop offset="1" stop-color="#8595a0"/></linearGradient>
+ <linearGradient id="steel" x1="0" x2="1"><stop stop-color="#6c7983"/><stop offset=".2" stop-color="#dfe6e7"/><stop offset=".5" stop-color="#8698a1"/><stop offset=".8" stop-color="#eef3f4"/><stop offset="1" stop-color="#6a7781"/></linearGradient>
+ <radialGradient id="glass"><stop stop-color="#34434c"/><stop offset=".68" stop-color="#172934"/><stop offset="1" stop-color="#06141d"/></radialGradient>
+ <filter id="shadow" x="-30%" y="-20%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2"/></filter>
+</defs>
+<ellipse cx="58" cy="150" rx="53" ry="5" fill="#101820" opacity=".42" filter="url(#shadow)"/>
+<path d="M10 13 L105 13 L110 143 L105 149 L9 149 Z" fill="url(#body)" stroke="#788894" stroke-width="1.3"/>
+<path d="M10 13 L105 13 L106 42 L10 42 Z" fill="url(#steel)" stroke="#657580" stroke-width=".8"/>
+<rect x="16" y="18" width="42" height="17" rx="1.5" fill="#8997a1" stroke="#62727b"/>
+<rect x="62" y="19" width="22" height="12" rx="1.5" fill="#526875" stroke="#a7bac2"/>
+<rect x="65" y="21" width="16" height="7" fill="#b4d6e7"/>
+<rect x="88" y="19" width="12" height="17" rx="1" fill="#d3dee3" stroke="#718490"/>
+<g fill="#617782"><rect x="90" y="22" width="8" height="1.6"/><rect x="90" y="26" width="8" height="1.6"/><rect x="90" y="30" width="8" height="1.6"/></g>
+<circle cx="29" cy="44" r="3.5" fill="#cf3e3e" stroke="#f4d36c" stroke-width="1.5"/>
+<circle cx="57" cy="85" r="47" fill="#e7ecec" stroke="#a4b2b8" stroke-width="1.4"/>
+<circle cx="57" cy="85" r="40" fill="#2878a6" stroke="#185075" stroke-width="2"/>
+<circle cx="57" cy="85" r="33" fill="#17252f" stroke="#a8c4d0" stroke-width="1.3"/>
+<circle cx="57" cy="85" r="27" fill="url(#steel)" stroke="#5e6d78" stroke-width="1.5"/>
+<circle cx="57" cy="85" r="21" fill="url(#glass)" stroke="#b5c3ca" stroke-width="1.6"/>
+<path d="M41 77 Q54 61 73 75" fill="none" stroke="#c9e1e9" stroke-width="2" opacity=".55"/>
+<rect x="87" y="73" width="11" height="26" rx="2" fill="url(#steel)" stroke="#4e5d67" stroke-width="1"/>
+<rect x="10" y="128" width="96" height="19" fill="#d6e0e3" stroke="#9aaab2" stroke-width="1"/>
+<path d="M16 134 H100 M16 140 H100" stroke="#a4b1b7" stroke-width="1.6"/>
+<path d="M12 149 H105" stroke="#27343d" stroke-width="4"/>
+</svg>
