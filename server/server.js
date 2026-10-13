@@ -49,12 +49,15 @@ app.get('/api/health', async (_req, res) => {
   }
 });
 
-app.get('/api/checklists/:equipmentId', async (req,res)=>{
+const loadDeviceChecklists=async (req,res)=>{
   try{
     const {rows}=await pool.query('SELECT id,equipment_id,equipment_name,schedule,items,check_date,operator,action,note,saved_at FROM routine_checklist_records WHERE equipment_id=$1 ORDER BY saved_at DESC LIMIT 100',[String(req.params.equipmentId)]);
     res.json({records:rows});
   }catch(error){res.status(500).json({error:'checklist_load_failed'});}
-});
+};
+
+app.get('/api/checklists/:equipmentId',loadDeviceChecklists);
+app.get('/api/device-checklists/:equipmentId',requireEnrolledDevice,loadDeviceChecklists);
 app.put('/api/checklists/:equipmentId', async (req,res)=>{
   const r=req.body||{};
   if(!r.schedule||!Array.isArray(r.items))return res.status(400).json({error:'invalid_checklist'});
@@ -88,13 +91,16 @@ app.post('/api/checklist-photos',async(req,res)=>{
   res.json({ok:true,id:p.id,photoVersion:1});
  }catch(error){res.status(500).json({error:'photo_save_failed'});}
 });
-app.get('/api/checklist-photos/:id/:variant',async(req,res)=>{
+const loadDeviceChecklistPhoto=async(req,res)=>{
  if(!PHOTO_ID.test(req.params.id)||!['thumbnail','image'].includes(req.params.variant))return res.status(400).json({error:'invalid_photo_request'});
  try{const column=req.params.variant==='thumbnail'?'thumbnail':'image';const {rows}=await pool.query(`SELECT ${column} AS bytes FROM checklist_photos WHERE id=$1`,[req.params.id]);if(!rows.length)return res.status(404).json({error:'photo_not_found'});
   res.setHeader('Content-Type','image/jpeg');res.setHeader('Cache-Control','private, max-age=86400');res.setHeader('X-Content-Type-Options','nosniff');res.send(rows[0].bytes);
  }catch(error){res.status(500).json({error:'photo_load_failed'});}
-});
+};
 
+
+app.get('/api/checklist-photos/:id/:variant',loadDeviceChecklistPhoto);
+app.get('/api/device-checklist-photos/:id/:variant',requireEnrolledDevice,loadDeviceChecklistPhoto);
 function inspectionApiCanonical(v){return JSON.stringify(v,(_,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);}
 // Versioned entities keep offline records independent; drafts and operator names remain local.
 const inspectionDay=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v;
@@ -107,9 +113,12 @@ function validInspectionEntity(kind,id,d){
  if(kind==='meta'&&id==='reminder')return /^([01]\d|2[0-3]):[0-5]\d$/.test(d.time||'')&&[0,1,3].includes(d.lead)&&d.recipient==='簡通延';
  return false;
 }
-app.get('/api/inspection-sync',async(_req,res)=>{
+const loadDeviceInspection=async(_req,res)=>{
  try{const {rows}=await pool.query('SELECT kind,id,data,revision::text AS revision FROM inspection_sync_entities ORDER BY kind,id');res.setHeader('Cache-Control','no-store');res.json({inspectionVersion:1,entities:rows});}catch{res.status(500).json({error:'inspection_load_failed'});}
-});
+};
+
+app.get('/api/inspection-sync',loadDeviceInspection);
+app.get('/api/device-inspection-sync',requireEnrolledDevice,loadDeviceInspection);
 app.post('/api/inspection-sync',async(req,res)=>{
  const c=req.body||{};
  if(c.inspectionVersion!==1||!validInspectionEntity(c.kind,c.id,c.data)||(c.expectedRevision!==null&&!/^\d+$/.test(c.expectedRevision||'')))return res.status(400).json({error:'invalid_inspection_entity'});
@@ -133,6 +142,21 @@ app.post('/api/inspection-sync',async(req,res)=>{
  }catch{await client.query('ROLLBACK');res.status(500).json({error:'inspection_save_failed'});}finally{client.release();}
 });
 
+
+
+// Read-only device access: a QR-enrolled phone receives its own revocable token.
+// It never receives API_ACCESS_KEYS or PUSH_ADMIN_TOKEN.
+async function requireEnrolledDevice(req,res,next){
+ const token=/^Bearer ([a-f0-9]{64})$/i.exec(String(req.headers.authorization||''))?.[1];
+ if(!token)return res.status(401).json({error:'device_authorization_required'});
+ try{
+  const digest=createHash('sha256').update(token.toLowerCase()).digest('hex');
+  const {rows}=await pool.query('SELECT id FROM push_members WHERE device_token_hash=$1 AND active=true LIMIT 1',[digest]);
+  if(!rows.length)return res.status(403).json({error:'device_authorization_required'});
+  res.setHeader('Cache-Control','no-store');
+  next();
+ }catch{res.status(503).json({error:'device_auth_unavailable'});}
+}
 
 const MEMBER_ID=/^[a-zA-Z0-9_-]{8,80}$/;
 app.get('/api/push-config',(_req,res)=>res.json({pushVersion:1,ready:pushReady,publicKey:pushReady?vapidPublicKey:null}));
@@ -193,7 +217,7 @@ app.post('/api/push-test',async(req,res)=>{
 app.get('/api/push-assignments',async(_req,res)=>{try{const {rows}=await pool.query(`SELECT a.equipment_id,m.id AS member_id,m.name FROM equipment_assignments a JOIN push_members m ON m.id=a.member_id WHERE m.active=true ORDER BY a.equipment_id,m.name`);res.json({assignments:rows});}catch{res.status(500).json({error:'push_assignments_load_failed'});}});
 app.put('/api/push-assignments/:equipmentId',async(req,res)=>{const ids=Array.isArray(req.body?.memberIds)?req.body.memberIds:[];if(ids.some(x=>!MEMBER_ID.test(x)))return res.status(400).json({error:'invalid_assignment'});const client=await pool.connect();try{await client.query('BEGIN');await client.query('DELETE FROM equipment_assignments WHERE equipment_id=$1',[String(req.params.equipmentId)]);for(const id of [...new Set(ids)])await client.query('INSERT INTO equipment_assignments(equipment_id,member_id) VALUES($1,$2)',[String(req.params.equipmentId),id]);await client.query('COMMIT');res.json({ok:true});}catch{await client.query('ROLLBACK');res.status(500).json({error:'assignment_save_failed'});}finally{client.release();}});
 
-app.get('/api/layout', async (_req, res) => {
+const loadDeviceLayout=async (_req, res) => {
   try {
     await ensureSchema();
     const { rows } = await pool.query(
@@ -206,7 +230,10 @@ app.get('/api/layout', async (_req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'layout_load_failed' });
   }
-});
+};
+
+app.get('/api/layout',loadDeviceLayout);
+app.get('/api/device-layout',requireEnrolledDevice,loadDeviceLayout);
 app.put('/api/layout', async (req, res) => {
   if(req.body?.syncVersion!==2)return res.status(428).json({error:'sync_upgrade_required'});
   const positions = Array.isArray(req.body?.positions) ? req.body.positions : null;
