@@ -199,9 +199,25 @@ if(invitation&&/^[0-9a-f]{64}$/i.test(invitation)){
 async function apiFetch(url,options={}){
  const key=localStorage.getItem(accessStorageKey);
  const headers=new Headers(options.headers||{});
+ let target=url;
+ const method=String(options.method||'GET').toUpperCase();
+ // A QR-enrolled iPhone may READ shared NAS data, never write with the device token.
+ if(!key&&method==='GET'){
+  let member=null;
+  try{member=JSON.parse(localStorage.getItem('baiqiPushMemberV2')||'null');}catch{}
+  if(member&&/^[a-f0-9]{64}$/i.test(member.deviceToken||'')){
+   const parsed=new URL(url,API_BASE);
+   const path=parsed.pathname;
+   if(path==='/api/layout'||path==='/api/inspection-sync'||/^\/api\/checklists\/[^/]+$/.test(path)||/^\/api\/checklist-photos\/[^/]+\/(?:thumbnail|image)$/.test(path)){
+    parsed.pathname=path.replace(/^\/api\//,'/api/device-');
+    target=parsed.href;
+    headers.set('Authorization','Bearer '+member.deviceToken);
+   }
+  }
+ }
  if(key)headers.set('Authorization','Bearer '+key);
- const response=await fetch(url,{...options,headers});
- if(response.status===401)throw Error('此裝置尚未啟用設備系統，請開啟管理員提供的啟用連結');
+ const response=await fetch(target,{...options,headers});
+ if(response.status===401||response.status===403&&target!==url)throw Error('此裝置尚未取得 NAS 資料權限，請確認 QR Code 註冊狀態及 NAS 是否已更新');
  return response;
 }
 async function apiImageUrl(url){
@@ -731,6 +747,7 @@ async function refreshEquipmentFromNas(){
  return loadRemoteLayout();
 }
 window.addEventListener('online',refreshEquipmentFromNas);
+window.addEventListener('baiqi-device-enrolled',async()=>{await loadRemoteLayout();await syncInspectionNas();});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshEquipmentFromNas();});
 document.getElementById('refreshAllBtn').onclick=async()=>{
  const b=document.getElementById('refreshAllBtn');b.disabled=true;
@@ -804,7 +821,8 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
   message('正在使用一次性註冊碼…');
   const data=await request('/api/push-enrollments/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,memberName:name,subscription:sub.toJSON()})});
   member={id:data.memberId,name:data.memberName,deviceToken:data.deviceToken};localStorage.setItem(memberKey,JSON.stringify(member));localStorage.removeItem(pendingKey);
-  message('✅ '+member.name+' 註冊成功，這組 QR Code 已作廢。');
+  message('✅ '+member.name+' 註冊成功！已啟用 NAS 資料唯讀同步，正在更新設備名稱。');
+  window.dispatchEvent(new Event('baiqi-device-enrolled'));
  }
  async function stopScan(){
   scanning=false;
