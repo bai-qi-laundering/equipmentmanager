@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>百麒設備地圖｜3D 圖像測試版</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#050c19;color:#e6f2ff;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif}
+#scene{position:fixed;inset:0;touch-action:none}#labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.top{position:fixed;top:max(8px,env(safe-area-inset-top));left:10px;right:10px;display:flex;gap:8px;align-items:flex-start;justify-content:space-between;pointer-events:none}
+.panel,.tools,.detail{background:rgba(9,25,47,.91);border:1px solid rgba(94,174,235,.35);box-shadow:0 8px 26px #0008;backdrop-filter:blur(12px);border-radius:15px}
+.panel{padding:10px 12px;pointer-events:auto;max-width:390px}.panel b{font-size:15px}.panel small{display:block;color:#a6c6df;font-size:11px;margin-top:4px}
+button,select{font:inherit;color:#e8f5ff;background:#15375a;border:1px solid #42779c;border-radius:9px;padding:8px 10px;cursor:pointer}button:active{background:#23649a}button:disabled{opacity:.4}
+.tools{position:fixed;right:10px;top:83px;padding:7px;display:flex;flex-direction:column;gap:6px;z-index:3}
+.bottom{position:fixed;bottom:max(10px,env(safe-area-inset-bottom));left:10px;right:10px;display:flex;gap:7px;align-items:center;justify-content:center;flex-wrap:wrap;pointer-events:none}
+.bottom>*{pointer-events:auto}
+.label{position:absolute;transform:translate(-50%,-50%);border:1px solid #70baf0;background:rgba(11,39,76,.9);border-radius:20px;padding:3px 7px;color:white;font-size:10px;white-space:nowrap;pointer-events:auto;cursor:pointer;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+.label.active{background:#1569ae;border-color:#fff;box-shadow:0 0 15px #45baff}
+.detail{position:fixed;right:10px;top:195px;width:min(330px,calc(100vw - 20px));max-height:calc(100vh - 280px);overflow:auto;padding:14px;z-index:4;display:none}
+.detail.open{display:block}.detail h2{font-size:17px;margin:0 0 7px}.detail p{font-size:12px;color:#aac7dd;line-height:1.6}
+.detail .row{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.detail .row>*{flex:1}
+input[type=file]{display:none}.upload{display:block;text-align:center;padding:12px;border:1px dashed #6ba9d5;border-radius:10px;background:#17385b;cursor:pointer;font-size:13px;font-weight:700}
+#status{position:fixed;bottom:94px;left:50%;transform:translateX(-50%);background:#091a2ef0;border:1px solid #457ca4;border-radius:20px;padding:7px 12px;font-size:11px;color:#b6d8f1;max-width:90vw;text-align:center;z-index:2}
+#loading{position:fixed;inset:0;display:grid;place-items:center;background:#050c19;z-index:10;color:#bde4ff}
+@media(max-width:600px){.top .panel{max-width:245px}.top .panel b{font-size:12px}.tools{top:78px}.tools button{font-size:11px;padding:7px}.detail{top:190px;max-height:calc(100vh - 290px)}#status{bottom:115px}}
+</style>
+</head>
+<body>
+<div id="scene"></div><div id="labels"></div>
+<div class="top"><div class="panel"><b>百麒洗滌廠 · 3D 設備地圖</b><small>原始設備座標 · 個別更換圖片 · 獨立測試版</small></div><div class="panel"><small>🛡️ 不連線、不寫入 NAS<br>正式設備管理頁面不受影響</small></div></div>
+<div class="tools"><button id="iso">立體鳥瞰</button><button id="top">正俯視</button><button id="home">全廠重置</button><button id="zin">＋ 放大</button><button id="zout">－ 縮小</button><button id="toggle">隱藏標籤</button></div>
+<div class="bottom"><select id="filter"><option value="all">全部設備</option><option value="洗衣設備">洗衣設備</option><option value="烘乾設備">烘乾設備</option><option value="折疊設備">折疊設備</option><option value="周邊設備">周邊設備</option></select><button id="official">開啟正式設備系統 ↗</button></div>
+<div id="status">單指旋轉 · 雙指縮放及移動 · 點設備上傳專屬圖片</div>
+<aside id="detail" class="detail"><div class="row" style="justify-content:space-between;align-items:center"><h2 id="title">設備</h2><button id="close">✕</button></div><p id="subtitle"></p><label class="upload">📷 上傳這一台設備的去背 PNG / 照片<input id="upload" type="file" accept="image/png,image/jpeg,image/webp"></label><p>上傳只改這台設備的外觀，不影響其他同類機台。圖片保存在目前瀏覽器，不會上傳 NAS。</p><div class="row"><button id="restore">恢復原本圖像</button></div><p>這是 2.5D 圖像立體展示：設備圖片會面向鏡頭，並非真正有背面的 3D 模型。</p></aside>
+<div id="loading">正在載入原始設備圖片與 3D 場景…</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+const instances=[["不鏽鋼工作台 1", "周邊設備", "worktable", -185, 0, -226, "一樓", "DESK-01", 1.57079632679, 32], ["打包機 1", "周邊設備", "packer", -150, 0, -226, "一樓", "PACK-01", 0, 18], ["不鏽鋼工作台 2", "周邊設備", "worktable", -108, 0, -226, "一樓", "DESK-02", 0, 38], ["打包機 2", "周邊設備", "packer", -185, 0, -187, "一樓", "PACK-02", 0, 18], ["60K", "折疊設備", "folding", -185, 0, -130, "一樓", "60K-01", 1.57079632679, 46], ["80K", "折疊設備", "folding", -185, 0, -64, "一樓", "80K-01", 1.57079632679, 46], ["30K", "折疊設備", "folding", -185, 0, -10, "一樓", "30K-01", 0, 46], ["廁所 1", "周邊設備", "toilet", -185, 0, 45, "一樓", "WC-01", 0, 32], ["廁所 2", "周邊設備", "toilet", -185, 0, 92, "一樓", "WC-02", 0, 32], ["乾洗機", "洗衣設備", "dryclean", -153, 0, 123, "一樓", "DRYCLEAN-01", 0, 28], ["SMF", "燙床設備", "lineSMF", -195, 0, 151, "一樓", "SMF-01", 0, 48], ["ICC", "燙床設備", "lineICC", -132, 0, 151, "一樓", "ICC-01", 0, 50], ["襯衫機", "整燙設備", "shirt", -75, 0, -167, "一樓", "SHIRT-01", 0, 26], ["壓板機", "整燙設備", "longPress", -75, 0, -104, "一樓", "EQ-1", 0, 29], ["整燙區", "整燙設備", "pressZone", -75, 0, -39, "一樓", "FINISH-01", 0, 44], ["冷風區", "周邊設備", "fan", -75, 0, 76, "一樓", "FAN-01", 0, 23], ["空壓機", "周邊設備", "compressor", -75, 36, 76, "架高二層", "COMP-01", 0, 29], ["洗衣機", "洗衣設備", "washer", 0, 0, -228, "一樓", "WASH-EXTRA-01", 0, 23], ["N5", "燙床設備", "lineN5", 0, 0, -125, "一樓", "N5-01", 1.57079632679, 72], ["IRT", "燙床設備", "lineIRT", 0, 0, -53, "一樓", "IRT-01", 1.57079632679, 72], ["35kg", "洗衣設備", "washer", 167, 0, -216, "一樓", "W35-01", 0, 21], ["50kg", "洗衣設備", "washer", 196, 0, -216, "一樓", "W50-01", 0, 23], ["兩層辦公室", "周邊設備", "office", 182, 0, -159, "一樓", "OFFICE-01", 0, 59], ["直式洗衣機 #8", "洗衣設備", "vertical", 193, 0, -101, "一樓", "VERT-01", 0, 24], ["直式洗衣機 #7", "洗衣設備", "vertical", 193, 0, -60, "一樓", "VERT-02", 0, 24], ["直式洗衣機 #6", "洗衣設備", "vertical", 193, 0, -19, "一樓", "VERT-03", 0, 24], ["直式洗衣機 #5", "洗衣設備", "vertical", 193, 0, 22, "一樓", "VERT-05", 0, 24], ["直式洗衣機 #3", "洗衣設備", "vertical", 193, 0, 63, "一樓", "VERT-06", 0, 24], ["直式洗衣機 #2", "洗衣設備", "vertical", 193, 0, 104, "一樓", "VERT-07", 0, 24], ["直式洗衣機 #1", "洗衣設備", "vertical", 193, 0, 145, "一樓", "VERT-08", 0, 24], ["烘乾機 #3", "烘乾設備", "dryer", 62, 0, 101, "一樓", "DRY-03", 0, 26], ["烘乾機 #5", "烘乾設備", "dryer", 91, 0, 101, "一樓", "DRY-02", 0, 26], ["烘乾機 #6", "烘乾設備", "dryer", 120, 0, 101, "一樓", "DRY-01", 0, 26], ["烘乾機（L 型 後段）", "烘乾設備", "dryer", 62, 0, 144, "一樓", "DRY-04", 0, 26], ["烘乾機（L 型 末段）", "烘乾設備", "dryer", 62, 0, 187, "一樓", "DRY-05", 0, 26], ["猛沙過濾設備", "周邊設備", "manganese", 91, 36, 92, "架高二層", "MANG-01", 0, 47], ["天車 #1", "周邊設備", "crane", 59, 76, 73, "架高二層", "CRANE-01", 0, 25], ["天車 #2", "周邊設備", "crane", 123, 76, 73, "架高二層", "CRANE-02", 0, 25], ["鍋爐", "周邊設備", "boiler", 132, 0, 164, "一樓", "BOILER-01", 0, 33], ["水設備", "周邊設備", "water", -124, 0, 281, "一樓", "WATER-01", 0, 43], ["水塔", "周邊設備", "tank", -70, 0, 281, "一樓", "TANK-01", 0, 28]];
+const regions=[["DESK-01", 56, 65, 60, 100], ["PACK-01", 132, 39, 65, 105], ["DESK-02", 190, 72, 113, 80], ["PACK-02", 70, 173, 68, 90], ["60K-01", 71, 256, 67, 117], ["80K-01", 69, 374, 75, 72], ["30K-01", 41, 439, 132, 64], ["WC-01", 44, 512, 112, 100], ["WC-02", 9, 610, 147, 107], ["DRYCLEAN-01", 55, 735, 94, 119], ["SMF-01", 19, 870, 169, 91], ["ICC-01", 196, 870, 159, 91], ["SHIRT-01", 291, 144, 120, 123], ["EQ-1", 287, 267, 127, 115], ["FINISH-01", 274, 386, 148, 87], ["FAN-01", 289, 617, 99, 83], ["COMP-01", 256, 529, 157, 90], ["WASH-EXTRA-01", 446, 30, 80, 100], ["N5-01", 456, 162, 91, 224], ["IRT-01", 456, 387, 94, 291], ["W35-01", 809, 129, 66, 76], ["W50-01", 877, 129, 66, 76], ["OFFICE-01", 789, 206, 198, 160], ["VERT-01", 876, 363, 104, 66], ["VERT-02", 876, 429, 104, 62], ["VERT-03", 876, 491, 104, 61], ["VERT-05", 876, 552, 104, 62], ["VERT-06", 876, 614, 104, 58], ["VERT-07", 876, 672, 104, 62], ["VERT-08", 876, 734, 104, 63], ["DRY-03", 598, 633, 79, 101], ["DRY-02", 677, 633, 77, 101], ["DRY-01", 754, 633, 74, 105], ["DRY-04", 598, 736, 83, 104], ["DRY-05", 598, 841, 87, 107], ["MANG-01", 616, 542, 184, 90], ["CRANE-01", 597, 491, 54, 90], ["CRANE-02", 777, 491, 57, 90], ["BOILER-01", 748, 756, 141, 120], ["WATER-01", 244, 1018, 195, 194], ["TANK-01", 442, 1014, 98, 196]];
+const regionMap=new Map(regions.map(r=>[r[0],r]));
+const items=instances.map(r=>({name:r[0],cat:r[1],kind:r[2],level:r[6],id:r[7],rect:regionMap.get(r[7])})).filter(x=>x.rect);
+const nodes=new Map(),labels=new Map(),customTextures=new Map();
+let scene,camera,renderer,raycaster,selected=null,hideLabels=false,down=null,gesture=null;
+const cam={theta:-0.58,phi:0.62,radius:160,tx:0,tz:0};
+const v3=new THREE.Vector3(),mouse=new THREE.Vector2();
+const root=document.getElementById('scene'),labelRoot=document.getElementById('labels'),detail=document.getElementById('detail');
+function notify(s){document.getElementById('status').textContent=s}
+function setCam(){cam.phi=Math.max(.06,Math.min(1.42,cam.phi));cam.radius=Math.max(22,Math.min(320,cam.radius));camera.position.set(cam.tx+cam.radius*Math.sin(cam.phi)*Math.sin(cam.theta),cam.radius*Math.cos(cam.phi),cam.tz+cam.radius*Math.sin(cam.phi)*Math.cos(cam.theta));camera.lookAt(cam.tx,0,cam.tz)}
+function canvasTexture(c){const t=new THREE.CanvasTexture(c);t.minFilter=THREE.LinearFilter;t.magFilter=THREE.LinearFilter;return t}
+function placeholder(name){const c=document.createElement('canvas');c.width=256;c.height=256;const x=c.getContext('2d');x.fillStyle='#8cabc4';x.fillRect(26,52,204,156);x.fillStyle='#d8e8f2';x.fillRect(38,40,176,154);x.fillStyle='#213c57';x.fillRect(50,58,150,25);x.fillStyle='#16334d';x.beginPath();x.arc(126,138,52,0,7);x.fill();x.strokeStyle='#6cb8e9';x.lineWidth=9;x.stroke();x.font='bold 18px sans-serif';x.textAlign='center';x.fillStyle='white';x.fillText(name.slice(0,12),128,235);return canvasTexture(c)}
+function croppedTexture(img,item){const r=item.rect;let [id,x,y,w,h]=r;if(id==='SMF-01'){x=19;y=740}else if(id==='ICC-01'){x=196;y=740}
+const margin=2,c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d',{willReadFrequently:true});
+const s=Math.min(240/(w+margin*2),240/(h+margin*2));const ww=w*s,hh=h*s;ctx.drawImage(img,Math.max(0,x-margin),Math.max(0,y-margin),Math.min(w+margin*2,1024-x+margin),Math.min(h+margin*2,1536-y+margin),128-ww/2,128-hh/2,ww,hh);
+const p=ctx.getImageData(0,0,256,256),d=p.data;const visited=new Uint8Array(256*256),q=new Int32Array(256*256);let head=0,tail=0;
+function bg(i){const j=i*4;const r=d[j],g=d[j+1],b=d[j+2];return Math.max(r,g,b)<105&&Math.abs(r-g)<45&&Math.abs(g-b)<55}
+function push(i){if(i<0||i>=65536||visited[i]||!bg(i))return;visited[i]=1;q[tail++]=i}
+for(let x=0;x<256;x++){push(x);push(255*256+x)}for(let y=0;y<256;y++){push(y*256);push(y*256+255)}
+while(head<tail){const i=q[head++],x=i%256,y=(i/256)|0;d[i*4+3]=0;if(x>0)push(i-1);if(x<255)push(i+1);if(y>0)push(i-256);if(y<255)push(i+256)}
+ctx.putImageData(p,0,0);return canvasTexture(c)}
+function build(img){
+scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x060d1a,.003);
+camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,.1,1000);setCam();
+renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);root.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0xdbeafe,1));const light=new THREE.DirectionalLight(0xffffff,.8);light.position.set(50,100,60);scene.add(light);
+const floorC=document.createElement('canvas');floorC.width=256;floorC.height=256;const f=floorC.getContext('2d');f.fillStyle='#0e1c30';f.fillRect(0,0,256,256);f.strokeStyle='#274b6c';f.lineWidth=1;for(let a=0;a<=256;a+=32){f.beginPath();f.moveTo(a,0);f.lineTo(a,256);f.stroke();f.beginPath();f.moveTo(0,a);f.lineTo(256,a);f.stroke()}
+const floorTex=canvasTexture(floorC);floorTex.wrapS=floorTex.wrapT=THREE.RepeatWrapping;floorTex.repeat.set(5,7);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,122),new THREE.MeshStandardMaterial({map:floorTex,roughness:.8}));floor.rotation.x=-Math.PI/2;floor.position.y=-.07;scene.add(floor);
+const divider=new THREE.Mesh(new THREE.BoxGeometry(.32,3.5,98),new THREE.MeshBasicMaterial({color:0x68b5e7,transparent:true,opacity:.25}));divider.position.set(-4,1.75,0);scene.add(divider);
+for(const item of items){const [id,x,y,w,h]=item.rect;const group=new THREE.Group();group.position.set(((x+w/2)-512)*.087,0,((y+h/2)-610)*.087);
+const pad=new THREE.Mesh(new THREE.BoxGeometry(Math.max(w*.087,2),.24,Math.max(h*.087,2)),new THREE.MeshBasicMaterial({color:item.level==='上層'?0x934bcf:0x147bc2,transparent:true,opacity:.25}));pad.position.y=.12;pad.userData.id=id;group.add(pad);
+const edges=new THREE.LineSegments(new THREE.EdgesGeometry(pad.geometry),new THREE.LineBasicMaterial({color:0x59baf5,transparent:true,opacity:.8}));edges.position.y=.12;group.add(edges);
+const tex=img?croppedTexture(img,item):placeholder(item.name);const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});const spr=new THREE.Sprite(mat);
+const size=Math.max(4,Math.min(14,Math.max(w,h)*.105));spr.scale.set(size,size,1);spr.position.y=size*.45+(item.level==='上層'?3:0);spr.userData.id=id;group.add(spr);scene.add(group);
+const el=document.createElement('div');el.className='label';el.textContent=item.name;el.onclick=()=>select(id);labelRoot.appendChild(el);labels.set(id,el);nodes.set(id,{group,spr,pad,edges,item,size});
+}
+raycaster=new THREE.Raycaster();bind();animate();document.getElementById('loading').remove();notify('已載入 '+items.length+' 個設備位置；目前僅供視覺測試，NAS 不受影響');restoreSavedImages();
+}
+function select(id){selected=id;for(const [k,el]of labels)el.classList.toggle('active',k===id);const n=nodes.get(id);if(!n)return;document.getElementById('title').textContent=n.item.name;document.getElementById('subtitle').textContent='設備 ID：'+id+'　｜　'+n.item.cat+'　｜　'+n.item.level;detail.classList.add('open')}
+function updateTexture(id,tex){const n=nodes.get(id);if(!n)return;const old=n.spr.material;n.spr.material=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});old.dispose();customTextures.set(id,tex)}
+function pick(x,y){mouse.set(x/innerWidth*2-1,-y/innerHeight*2+1);raycaster.setFromCamera(mouse,camera);const targets=[];for(const n of nodes.values())if(n.group.visible)targets.push(n.spr,n.pad);const hits=raycaster.intersectObjects(targets);if(hits.length&&hits[0].object.userData.id)select(hits[0].object.userData.id)}
+function bind(){const c=renderer.domElement;
+c.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;down={x:e.clientX,y:e.clientY,px:e.clientX,py:e.clientY,moved:false};c.setPointerCapture(e.pointerId)});
+c.addEventListener('pointermove',e=>{if(!down||e.pointerType==='touch')return;const dx=e.clientX-down.px,dy=e.clientY-down.py;down.px=e.clientX;down.py=e.clientY;if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)down.moved=true;if(e.shiftKey||e.buttons===2){cam.tx-=dx*.12;cam.tz-=dy*.12}else{cam.theta-=dx*.008;cam.phi-=dy*.006}setCam()});
+c.addEventListener('pointerup',e=>{if(e.pointerType==='touch')return;if(down&&!down.moved)pick(e.clientX,e.clientY);down=null});
+c.addEventListener('contextmenu',e=>e.preventDefault());
+c.addEventListener('wheel',e=>{e.preventDefault();cam.radius+=e.deltaY*.1;setCam()},{passive:false});
+let touchStart=null;
+c.addEventListener('touchstart',e=>{e.preventDefault();if(e.touches.length===1){const t=e.touches[0];gesture={mode:1,x:t.clientX,y:t.clientY};touchStart={x:t.clientX,y:t.clientY}}else if(e.touches.length===2){const a=e.touches[0],b=e.touches[1];gesture={mode:2,d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),mx:(a.clientX+b.clientX)/2,my:(a.clientY+b.clientY)/2};touchStart=null}},{passive:false});
+c.addEventListener('touchmove',e=>{e.preventDefault();if(!gesture)return;if(e.touches.length===1&&gesture.mode===1){const t=e.touches[0];cam.theta-=(t.clientX-gesture.x)*.009;cam.phi-=(t.clientY-gesture.y)*.007;gesture.x=t.clientX;gesture.y=t.clientY}else if(e.touches.length===2){const a=e.touches[0],b=e.touches[1],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),mx=(a.clientX+b.clientX)/2,my=(a.clientY+b.clientY)/2;if(gesture.mode===2){cam.radius*=gesture.d/Math.max(d,10);cam.tx-=(mx-gesture.mx)*cam.radius*.0014;cam.tz-=(my-gesture.my)*cam.radius*.0014}gesture={mode:2,d,mx,my}}setCam()},{passive:false});
+c.addEventListener('touchend',e=>{if(touchStart&&e.touches.length===0){const t=e.changedTouches[0];if(Math.hypot(t.clientX-touchStart.x,t.clientY-touchStart.y)<12)pick(t.clientX,t.clientY)}if(e.touches.length===0){gesture=null;touchStart=null}},{passive:false});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+document.getElementById('iso').onclick=()=>{cam.theta=-.58;cam.phi=.62;cam.radius=160;setCam()};
+document.getElementById('top').onclick=()=>{cam.theta=0;cam.phi=.06;cam.radius=165;setCam()};
+document.getElementById('home').onclick=()=>{cam.theta=-.58;cam.phi=.62;cam.radius=160;cam.tx=0;cam.tz=0;setCam()};
+document.getElementById('zin').onclick=()=>{cam.radius-=18;setCam()};document.getElementById('zout').onclick=()=>{cam.radius+=18;setCam()};
+document.getElementById('toggle').onclick=e=>{hideLabels=!hideLabels;e.target.textContent=hideLabels?'顯示標籤':'隱藏標籤'};
+document.getElementById('close').onclick=()=>{detail.classList.remove('open');selected=null};
+document.getElementById('official').onclick=()=>location.href='./index.html';
+document.getElementById('filter').onchange=e=>{for(const n of nodes.values())n.group.visible=e.target.value==='all'||n.item.cat===e.target.value};
+document.getElementById('upload').onchange=async e=>{const file=e.target.files[0];if(!file||!selected)return;if(file.size>8*1024*1024){notify('圖片請小於 8 MB');return}const id=selected;try{const img=await loadImage(URL.createObjectURL(file));const c=document.createElement('canvas');c.width=512;c.height=512;const x=c.getContext('2d');const scale=Math.min(500/img.width,500/img.height);x.drawImage(img,(512-img.width*scale)/2,(512-img.height*scale)/2,img.width*scale,img.height*scale);const data=c.toDataURL('image/png');updateTexture(id,canvasTexture(c));await storeImage(id,data);notify('已替換 '+nodes.get(id).item.name+'，圖片只存在此瀏覽器');}catch(err){notify('圖片儲存失敗：'+err.message)}finally{e.target.value=''}};
+document.getElementById('restore').onclick=async()=>{if(!selected)return;const id=selected;const item=nodes.get(id).item;const img=await loadImage('factory-map-clean-v13.svg');updateTexture(id,id==='DRYCLEAN-01'?await textureFromUrl('assets/dryclean-front.svg'):croppedTexture(img,item));await deleteImage(id);notify('已恢復原始設備圖像')};
+}
+function animate(){requestAnimationFrame(animate);renderer.render(scene,camera);for(const [id,n]of nodes){const el=labels.get(id);if(hideLabels||!n.group.visible){el.style.display='none';continue}v3.copy(n.spr.position).add(n.group.position).project(camera);if(v3.z>1||Math.abs(v3.x)>1.15||Math.abs(v3.y)>1.15){el.style.display='none';continue}el.style.display='block';el.style.left=((v3.x+1)*innerWidth/2)+'px';el.style.top=((1-v3.y)*innerHeight/2-12)+'px';}}
+function loadImage(url){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>{if(url.startsWith('blob:'))URL.revokeObjectURL(url);resolve(i)};i.onerror=()=>reject(Error('無法載入圖檔'));i.src=url})}
+async function textureFromUrl(url){const img=await loadImage(url);const c=document.createElement('canvas');c.width=256;c.height=256;const x=c.getContext('2d');const sc=Math.min(245/img.width,245/img.height);x.drawImage(img,(256-img.width*sc)/2,(256-img.height*sc)/2,img.width*sc,img.height*sc);return canvasTexture(c)}
+const DB_NAME='baiqi-3d-preview-images',STORE='equipment';
+function db(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function storeImage(id,data){const d=await db();return new Promise((res,rej)=>{const t=d.transaction(STORE,'readwrite');t.objectStore(STORE).put(data,id);t.oncomplete=()=>{d.close();res()};t.onerror=()=>{d.close();rej(t.error)}})}
+async function deleteImage(id){const d=await db();return new Promise((res,rej)=>{const t=d.transaction(STORE,'readwrite');t.objectStore(STORE).delete(id);t.oncomplete=()=>{d.close();res()};t.onerror=()=>{d.close();rej(t.error)}})}
+async function restoreSavedImages(){try{const d=await db();const t=d.transaction(STORE,'readonly');const os=t.objectStore(STORE);const keys=await new Promise((r,j)=>{const q=os.getAllKeys();q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});for(const key of keys){const data=await new Promise((r,j)=>{const q=os.get(key);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});if(nodes.has(key)&&data){const img=await loadImage(data);const c=document.createElement('canvas');c.width=512;c.height=512;c.getContext('2d').drawImage(img,0,0,512,512);updateTexture(key,canvasTexture(c))}}d.close()}catch(e){notify('設備圖片可使用，但此瀏覽器無法永久儲存：'+e.message)}}
+(async()=>{if(!window.THREE){document.getElementById('loading').textContent='3D 引擎載入失敗，請檢查網路';return}let img=null;try{img=await loadImage('factory-map-clean-v13.svg')}catch(e){notify('原圖載入失敗，使用備用設備圖像')}build(img);if(nodes.has('DRYCLEAN-01'))try{updateTexture('DRYCLEAN-01',await textureFromUrl('assets/dryclean-front.svg'))}catch(e){}})();
+</script></body></html>
