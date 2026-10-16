@@ -5,7 +5,7 @@ export PATH
 cd /volume1/docker/equipment-manager
 
 # This ref is the reviewed gateway and Compose overlay; never download secrets.
-source_ref=d6e7559ff47848c45c68690d903618a6498aa7c0
+source_ref=$(git rev-parse HEAD)
 base_url="https://raw.githubusercontent.com/bai-qi-laundering/equipmentmanager/$source_ref"
 download() {
   if command -v curl >/dev/null 2>&1; then

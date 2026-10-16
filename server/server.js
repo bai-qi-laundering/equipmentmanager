@@ -1,4 +1,6 @@
 import express from 'express';
+import {deviceWriteAllowed} from './device-policy.mjs';
+import {startReminderWorker} from './reminders.mjs';
 import pg from 'pg';
 import webpush from 'web-push';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
@@ -30,8 +32,13 @@ const ensureSchema = async () => {
   await pool.query(`CREATE TABLE IF NOT EXISTS push_subscriptions (endpoint TEXT PRIMARY KEY,member_id TEXT NOT NULL REFERENCES push_members(id) ON DELETE CASCADE,subscription JSONB NOT NULL,user_agent TEXT NOT NULL DEFAULT '',enabled BOOLEAN NOT NULL DEFAULT true,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await pool.query(`CREATE INDEX IF NOT EXISTS push_subscriptions_member_idx ON push_subscriptions(member_id) WHERE enabled`);
   await pool.query(`CREATE TABLE IF NOT EXISTS equipment_assignments (equipment_id TEXT NOT NULL,member_id TEXT NOT NULL REFERENCES push_members(id) ON DELETE CASCADE,PRIMARY KEY(equipment_id,member_id))`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS equipment_repairs(equipment_id TEXT NOT NULL,id TEXT NOT NULL,data JSONB NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),PRIMARY KEY(equipment_id,id))`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS push_deliveries(endpoint TEXT NOT NULL,delivery_day DATE NOT NULL,claimed_until TIMESTAMPTZ NOT NULL,sent_at TIMESTAMPTZ,PRIMARY KEY(endpoint,delivery_day))`);
+  await pool.query(`ALTER TABLE inspection_sync_entities ADD COLUMN IF NOT EXISTS created_by TEXT`);
   await pool.query(`CREATE TABLE IF NOT EXISTS checklist_photos (id UUID PRIMARY KEY,equipment_id TEXT NOT NULL,task_id TEXT NOT NULL,name TEXT NOT NULL,width INTEGER NOT NULL,height INTEGER NOT NULL,image BYTEA NOT NULL,thumbnail BYTEA NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
+  await pool.query(`ALTER TABLE checklist_photos ADD COLUMN IF NOT EXISTS created_by TEXT`);
 };
+let reminderWorker;
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,OPTIONS');
@@ -43,7 +50,7 @@ app.use((req, res, next) => {
 app.get('/api/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1,inspectionVersion:1,pushVersion:1,deviceReadVersion:1,pushReady });
+    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1,inspectionVersion:1,pushVersion:1,deviceReadVersion:1,deviceWriteVersion:1,repairVersion:1,pushReady,reminders:reminderWorker?.status||{enabled:false} });
   } catch (error) {
     res.status(503).json({ ok: false, error: 'database_unavailable' });
   }
@@ -62,7 +69,6 @@ app.put('/api/checklists/:equipmentId', async (req,res)=>{
   const r=req.body||{};
   if(!r.schedule||!Array.isArray(r.items))return res.status(400).json({error:'invalid_checklist'});
   try{
-    await ensureSchema();
     const {rows}=await pool.query(
       `INSERT INTO routine_checklist_records
        (equipment_id,equipment_name,schedule,items,check_date,operator,action,note)
@@ -80,17 +86,19 @@ function readPhotoJpeg(value,maxBytes){
  if(bytes.length<4||bytes.length>maxBytes||bytes[0]!==255||bytes[1]!==216||bytes.at(-2)!==255||bytes.at(-1)!==217||bytes.toString('base64')!==value)return null;
  return bytes;
 }
-app.post('/api/checklist-photos',async(req,res)=>{
+const saveChecklistPhoto=async(req,res)=>{
  const p=req.body||{},full=readPhotoJpeg(p.full,512*1024),thumb=readPhotoJpeg(p.thumbnail,80*1024);
  if(!PHOTO_ID.test(p.id||'')||!full||!thumb||typeof p.machineId!=='string'||!p.machineId.trim()||p.machineId.length>100||typeof p.taskId!=='string'||!p.taskId.trim()||p.taskId.length>100||!Number.isInteger(p.width)||p.width<1||p.width>1600||!Number.isInteger(p.height)||p.height<1||p.height>1600)return res.status(400).json({error:'invalid_compressed_photo'});
  try{
   const name=String(p.name||'照片').slice(0,200);
-  const {rows}=await pool.query(`INSERT INTO checklist_photos (id,equipment_id,task_id,name,width,height,image,thumbnail)
-   VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING RETURNING id`,[p.id,p.machineId,p.taskId,name,p.width,p.height,full,thumb]);
-  if(!rows.length){const existing=await pool.query('SELECT equipment_id,task_id,image FROM checklist_photos WHERE id=$1',[p.id]);const row=existing.rows[0];if(!row||row.equipment_id!==p.machineId||row.task_id!==p.taskId||!row.image.equals(full))return res.status(409).json({error:'photo_id_conflict'});}
+  const {rows}=await pool.query(`INSERT INTO checklist_photos (id,equipment_id,task_id,name,width,height,image,thumbnail,created_by)
+   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO NOTHING RETURNING id`,[p.id,p.machineId,p.taskId,name,p.width,p.height,full,thumb,req.device?.id||null]);
+  if(!rows.length){const existing=await pool.query('SELECT equipment_id,task_id,image,created_by FROM checklist_photos WHERE id=$1',[p.id]);const row=existing.rows[0];if(!row||(req.device&&row.created_by!==req.device.id)||row.equipment_id!==p.machineId||row.task_id!==p.taskId||!row.image.equals(full))return res.status(409).json({error:'photo_id_conflict'});}
   res.json({ok:true,id:p.id,photoVersion:1});
  }catch(error){res.status(500).json({error:'photo_save_failed'});}
-});
+};
+app.post('/api/checklist-photos',saveChecklistPhoto);
+app.post('/api/device-checklist-photos',requireEnrolledDevice,saveChecklistPhoto);
 const loadDeviceChecklistPhoto=async(req,res)=>{
  if(!PHOTO_ID.test(req.params.id)||!['thumbnail','image'].includes(req.params.variant))return res.status(400).json({error:'invalid_photo_request'});
  try{const column=req.params.variant==='thumbnail'?'thumbnail':'image';const {rows}=await pool.query(`SELECT ${column} AS bytes FROM checklist_photos WHERE id=$1`,[req.params.id]);if(!rows.length)return res.status(404).json({error:'photo_not_found'});
@@ -119,40 +127,53 @@ const loadDeviceInspection=async(_req,res)=>{
 
 app.get('/api/inspection-sync',loadDeviceInspection);
 app.get('/api/device-inspection-sync',requireEnrolledDevice,loadDeviceInspection);
-app.post('/api/inspection-sync',async(req,res)=>{
+const saveInspectionEntity=async(req,res)=>{
  const c=req.body||{};
  if(c.inspectionVersion!==1||!validInspectionEntity(c.kind,c.id,c.data)||(c.expectedRevision!==null&&!/^\d+$/.test(c.expectedRevision||'')))return res.status(400).json({error:'invalid_inspection_entity'});
+ if(req.device&&c.kind!=='record')return res.status(403).json({error:'device_append_only'});
+ if(req.device){
+  const exists=await pool.query('SELECT 1 FROM equipment WHERE id=$1',[c.data.machineId]);
+  if(!exists.rowCount&&!['CHECK-軟水','CHECK-發電機','CHECK-移載車'].includes(c.data.machineId))return res.status(400).json({error:'unknown_equipment'});
+ }
  const client=await pool.connect();
  try{
   await client.query('BEGIN');
   // Serialize writes, including first insert when a row does not yet exist.
   await client.query('LOCK TABLE inspection_sync_entities IN SHARE ROW EXCLUSIVE MODE');
-  const {rows}=await client.query('SELECT kind,id,data,revision::text AS revision FROM inspection_sync_entities WHERE kind=$1 AND id=$2 FOR UPDATE',[c.kind,c.id]);
+  const {rows}=await client.query('SELECT kind,id,data,revision::text AS revision,created_by FROM inspection_sync_entities WHERE kind=$1 AND id=$2 FOR UPDATE',[c.kind,c.id]);
   const old=rows[0];
+  if(req.device&&!deviceWriteAllowed(c,old,req.device.id,inspectionApiCanonical)){await client.query('ROLLBACK');return res.status(403).json({error:'device_append_only'});}
   if((old?.revision??null)!==c.expectedRevision){
    await client.query('ROLLBACK');
    // Retrying the same acknowledged data after a network timeout is safe.
    if(old&&inspectionApiCanonical(old.data)===inspectionApiCanonical(c.data))return res.json({ok:true,inspectionVersion:1,entity:old});
    return res.status(409).json({error:'inspection_conflict',entity:old||null});
   }
-  const saved=await client.query(`INSERT INTO inspection_sync_entities(kind,id,data) VALUES($1,$2,$3::jsonb)
+  const saved=await client.query(`INSERT INTO inspection_sync_entities(kind,id,data,created_by) VALUES($1,$2,$3::jsonb,$4)
    ON CONFLICT(kind,id) DO UPDATE SET data=EXCLUDED.data,revision=inspection_sync_entities.revision+1,updated_at=clock_timestamp()
-   RETURNING kind,id,data,revision::text AS revision`,[c.kind,c.id,JSON.stringify(c.data)]);
+   RETURNING kind,id,data,revision::text AS revision`,[c.kind,c.id,JSON.stringify(c.data),req.device?.id||null]);
+  // Employee inspections also update the map's cleaning date, within this transaction.
+  if(c.kind==='record'&&!old){
+   const completed=c.data.items.filter(i=>i.cleaning&&i.result==='normal');
+   if(completed.length)await client.query(`UPDATE equipment SET cleaning_last_date=$2,updated_at=clock_timestamp()
+     WHERE id=$1 AND (cleaning_last_date IS NULL OR cleaning_last_date<$2::date)`,[c.data.machineId,c.data.date]);
+  }
   await client.query('COMMIT');res.json({ok:true,inspectionVersion:1,entity:saved.rows[0]});
  }catch{await client.query('ROLLBACK');res.status(500).json({error:'inspection_save_failed'});}finally{client.release();}
-});
+};
+app.post('/api/inspection-sync',saveInspectionEntity);
+app.post('/api/device-inspection-sync',requireEnrolledDevice,saveInspectionEntity);
 
-
-
-// Read-only device access: a QR-enrolled phone receives its own revocable token.
+// Scoped device access: a QR-enrolled phone receives its own revocable token.
 // It never receives API_ACCESS_KEYS or PUSH_ADMIN_TOKEN.
 async function requireEnrolledDevice(req,res,next){
  const token=/^Bearer ([a-f0-9]{64})$/i.exec(String(req.headers.authorization||''))?.[1];
  if(!token)return res.status(401).json({error:'device_authorization_required'});
  try{
   const digest=createHash('sha256').update(token.toLowerCase()).digest('hex');
-  const {rows}=await pool.query('SELECT id FROM push_members WHERE device_token_hash=$1 AND active=true LIMIT 1',[digest]);
+  const {rows}=await pool.query('SELECT id,name FROM push_members WHERE device_token_hash=$1 AND active=true LIMIT 1',[digest]);
   if(!rows.length)return res.status(403).json({error:'device_authorization_required'});
+  req.device=rows[0];
   res.setHeader('Cache-Control','no-store');
   next();
  }catch{res.status(503).json({error:'device_auth_unavailable'});}
@@ -160,12 +181,13 @@ async function requireEnrolledDevice(req,res,next){
 
 const MEMBER_ID=/^[a-zA-Z0-9_-]{8,80}$/;
 app.get('/api/push-config',(_req,res)=>res.json({pushVersion:1,ready:pushReady,publicKey:pushReady?vapidPublicKey:null}));
-app.get('/api/push-members',async(_req,res)=>{try{await ensureSchema();const {rows}=await pool.query('SELECT id,name,active FROM push_members WHERE active=true ORDER BY name');res.json({members:rows});}catch{res.status(500).json({error:'push_members_load_failed'});}});
+app.get('/api/push-members',async(_req,res)=>{try{const {rows}=await pool.query('SELECT id,name,active FROM push_members WHERE active=true ORDER BY name');res.json({members:rows});}catch{res.status(500).json({error:'push_members_load_failed'});}});
 const pushAdminToken=String(process.env.PUSH_ADMIN_TOKEN||'').trim();
 function adminAllowed(req){
  const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
- if(!pushAdminToken||!token||token.length!==pushAdminToken.length)return false;
- return timingSafeEqual(Buffer.from(token),Buffer.from(pushAdminToken));
+ const provided=Buffer.from(token),expected=Buffer.from(pushAdminToken);
+ if(!pushAdminToken||!token||provided.length!==expected.length)return false;
+ return timingSafeEqual(provided,expected);
 }
 function requirePushAdmin(req,res,next){
  if(!pushAdminToken)return res.status(503).json({error:'push_admin_not_configured'});
@@ -174,7 +196,6 @@ function requirePushAdmin(req,res,next){
 }
 app.post('/api/push-enrollments',requirePushAdmin,async(req,res)=>{
  try{
-  await ensureSchema();
   const token=randomBytes(32).toString('hex');
   const hash=createHash('sha256').update(token).digest('hex');
   await pool.query('INSERT INTO push_enrollment_tokens(token_hash,expires_at) VALUES($1,now()+interval \'10 minutes\')',[hash]);
@@ -188,7 +209,6 @@ app.post('/api/push-enrollments/redeem',async(req,res)=>{
  const hash=createHash('sha256').update(String(b.token).toLowerCase()).digest('hex');
  const client=await pool.connect();
  try{
-  await ensureSchema();
   await client.query('BEGIN');
   const {rows}=await client.query('UPDATE push_enrollment_tokens SET used_at=now() WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() RETURNING token_hash',[hash]);
   if(!rows.length){await client.query('ROLLBACK');return res.status(410).json({error:'enrollment_expired_or_used'});}
@@ -217,16 +237,38 @@ app.post('/api/push-test',async(req,res)=>{
 app.get('/api/push-assignments',async(_req,res)=>{try{const {rows}=await pool.query(`SELECT a.equipment_id,m.id AS member_id,m.name FROM equipment_assignments a JOIN push_members m ON m.id=a.member_id WHERE m.active=true ORDER BY a.equipment_id,m.name`);res.json({assignments:rows});}catch{res.status(500).json({error:'push_assignments_load_failed'});}});
 app.put('/api/push-assignments/:equipmentId',async(req,res)=>{const ids=Array.isArray(req.body?.memberIds)?req.body.memberIds:[];if(ids.some(x=>!MEMBER_ID.test(x)))return res.status(400).json({error:'invalid_assignment'});const client=await pool.connect();try{await client.query('BEGIN');await client.query('DELETE FROM equipment_assignments WHERE equipment_id=$1',[String(req.params.equipmentId)]);for(const id of [...new Set(ids)])await client.query('INSERT INTO equipment_assignments(equipment_id,member_id) VALUES($1,$2)',[String(req.params.equipmentId),id]);await client.query('COMMIT');res.json({ok:true});}catch{await client.query('ROLLBACK');res.status(500).json({error:'assignment_save_failed'});}finally{client.release();}});
 
+
+const METADATA_PREFIX='FACTORY_EQUIPMENT_METADATA_V1\n';
+async function migrateLegacyRepairs(){
+ const {rows}=await pool.query('SELECT id,notes FROM equipment WHERE notes LIKE $1',[METADATA_PREFIX+'%']);
+ for(const row of rows){let meta;try{meta=JSON.parse(row.notes.slice(METADATA_PREFIX.length));}catch{continue;}
+  for(const record of Array.isArray(meta.repairs)?meta.repairs:[]){if(!record||typeof record.id!=='string'||!record.id)continue;
+   await pool.query('INSERT INTO equipment_repairs(equipment_id,id,data) VALUES($1,$2,$3::jsonb) ON CONFLICT DO NOTHING',[row.id,record.id,JSON.stringify(record)]);
+  }
+ }
+}
+app.post('/api/repairs/:equipmentId',async(req,res)=>{
+ const r=req.body, equipmentId=String(req.params.equipmentId);
+ if(!r||!PHOTO_ID.test(r.id||'')||!inspectionDay(r.date)||r.date>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei'}).format(new Date())||typeof r.issue!=='string'||!r.issue.trim()||r.issue.length>4000||![r.parts,r.notes,r.vendor,r.recorder].every(v=>typeof v==='string'&&v.length<=4000)||(r.cost!==null&&(!Number.isFinite(r.cost)||r.cost<0))||!Number.isFinite(Date.parse(r.createdAt)))return res.status(400).json({error:'invalid_repair'});
+ try{
+  const exists=await pool.query('SELECT 1 FROM equipment WHERE id=$1',[equipmentId]);if(!exists.rowCount)return res.status(404).json({error:'equipment_not_found'});
+  const saved=await pool.query('INSERT INTO equipment_repairs(equipment_id,id,data) VALUES($1,$2,$3::jsonb) ON CONFLICT DO NOTHING RETURNING id',[equipmentId,r.id,JSON.stringify(r)]);
+  if(!saved.rowCount){const old=await pool.query('SELECT data FROM equipment_repairs WHERE equipment_id=$1 AND id=$2',[equipmentId,r.id]);if(inspectionApiCanonical(old.rows[0].data)!==inspectionApiCanonical(r))return res.status(409).json({error:'repair_id_conflict'});}
+  res.json({ok:true,id:r.id,repairVersion:1});
+ }catch{res.status(500).json({error:'repair_save_failed'});}
+});
+
 const loadDeviceLayout=async (_req, res) => {
   try {
-    await ensureSchema();
     const { rows } = await pool.query(
       `SELECT id, name, type, kind, x, z, rotation_y, status,
               cleaning_last_date, cleaning_cycle_days,
               maintenance_last_date, maintenance_cycle_days, commissioned_date, notes, updated_at::text AS version
        FROM equipment ORDER BY id`
     );
-    res.json({ syncVersion:2, positions: rows });
+    const repairs=await pool.query('SELECT equipment_id,data FROM equipment_repairs ORDER BY created_at,id');
+    const byId=new Map();for(const row of repairs.rows){if(!byId.has(row.equipment_id))byId.set(row.equipment_id,[]);byId.get(row.equipment_id).push(row.data);}
+    res.json({ syncVersion:2,repairVersion:1,positions:rows.map(row=>({...row,repairs:byId.get(row.id)||[]})) });
   } catch (error) {
     res.status(500).json({ error: 'layout_load_failed' });
   }
@@ -243,7 +285,6 @@ app.put('/api/layout', async (req, res) => {
     return res.status(400).json({error:'invalid_versioned_positions'});
   const client = await pool.connect();
   try {
-    await ensureSchema();
     await client.query('BEGIN');
     await client.query('LOCK TABLE equipment IN SHARE ROW EXCLUSIVE MODE');
     for(const item of positions){
@@ -284,10 +325,14 @@ app.put('/api/layout', async (req, res) => {
     res.status(500).json({ error:'layout_save_failed' });
   } finally { client.release(); }
 });
-ensureSchema().then(()=>{
-  app.listen(port,'0.0.0.0',()=>console.log(`equipment-manager-api listening on :${port}`));
+export const ready=ensureSchema().then(async()=>{
+  await migrateLegacyRepairs();
+  reminderWorker=startReminderWorker({pool,webpush,enabled:pushReady&&process.env.INSPECTION_PUSH_ENABLED==='true'});
+  if(process.env.NODE_ENV!=='test')app.listen(port,'0.0.0.0',()=>console.log(`equipment-manager-api listening on :${port}`));
 }).catch(error=>{
   console.error('Database schema initialization failed',error);
+  if(process.env.NODE_ENV==='test')throw error;
   process.exit(1);
 });
+export {app,pool,migrateLegacyRepairs};
 

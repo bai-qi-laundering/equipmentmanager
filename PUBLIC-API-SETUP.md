@@ -23,3 +23,9 @@ cd /volume1/docker/equipment-manager
 PROJECT=$(docker inspect equipment-api --format '{{ index .Config.Labels "com.docker.compose.project" }}')
 docker compose -p "$PROJECT" -f docker-compose.yml -f docker-compose.public.yml up -d --no-deps gateway
 ```
+
+## V19 員工查檢寫入更新
+
+請依 README 執行 `update-system.sh`，API 與 gateway 都要更新。新裝置接口只允許新增查檢、上傳照片，仍不允許修改設備與排程。舊 QR 註冊 token 可繼續使用；未更新 NAS 時新前端會保留本機待傳紀錄並提示更新服務。
+
+`setup-public-api.sh` 現在依目前 checkout 的提交下載閘道，不再固定下載舊版本。健康檢查應包含 `deviceWriteVersion:1`；更新後用兩支已註冊手機驗證文字、縮圖及大圖，並測試斷線後補傳。
