@@ -42,7 +42,7 @@ if args[0]=='exec':
   if os.environ['LIVE_KEYS']=='1':print('VAPID_PUBLIC_KEY=preserved-public\\nVAPID_PRIVATE_KEY=preserved-private\\nVAPID_SUBJECT=mailto:old@example.com\\nPUSH_ADMIN_TOKEN=existing-admin')
   sys.exit(0)
  if 'generateVAPIDKeys'in args[-1]:event('generate-keys');print('VAPID_PUBLIC_KEY=new-public\\nVAPID_PRIVATE_KEY=new-private');sys.exit(0)
- if 'fetch('in args[-1]:print('{"ok":true,"deviceWriteVersion":1,"repairVersion":1,"pushReady":true,"reminders":{"enabled":true}}');sys.exit(0)
+ if 'fetch('in args[-1]:print('{"ok":true,"deviceWriteVersion":1,"repairVersion":1,"enrollmentEditVersion":1,"pushReady":true,"reminders":{"enabled":true}}');sys.exit(0)
 sys.exit(1)
 '''
   for name in ['curl','docker']:

@@ -31,7 +31,7 @@ mv update-system.sh.download update-system.sh
 sh update-system.sh
 ```
 
-腳本下載固定的 V19 提交 `0e4e9d5eaee2a5056e980db78cd6436d31048fe8`，所有程式下載及語法檢查成功後，先備份含照片的完整資料庫及舊程式，再更新 API 和公開閘道。下載失敗不替換程式；不重建資料庫服務。原有 `docker-compose.yml`、`.env`、`public-api.env` 及 `data/postgres` 保留。
+腳本下載固定的掃碼授權版本提交 `7061195a1d82727853292531c68285718fb4ad99`，所有程式下載及語法檢查成功後，先備份含照片的完整資料庫及舊程式，再更新 API 和公開閘道。下載失敗不替換程式；不重建資料庫服務。原有 `docker-compose.yml`、`.env`、`public-api.env` 及 `data/postgres` 保留。
 
 推播設定優先沿用執行中 API 容器的金鑰，即使原先直接寫在 Compose 也保留，避免既有手機訂閱失效。僅在沒有任何金鑰時才產生新的金鑰。設定存於僅 NAS 可讀的 `equipment-push.env`，透過 `docker-compose.update.yml` 套用；日後也請使用本更新腳本重建 API，避免遺漏這份 overlay。首次沒有管理員授權碼時會沿用既有公開存取金鑰。
 

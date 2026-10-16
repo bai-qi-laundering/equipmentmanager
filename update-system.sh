@@ -5,7 +5,7 @@ PATH=/usr/local/bin:/usr/bin:/bin:/var/packages/ContainerManager/target/usr/bin:
 export PATH
 cd "${EQUIPMENT_PROJECT_DIR:-/volume1/docker/equipment-manager}"
 umask 077
-release_ref=${EQUIPMENT_UPDATE_REF:-0e4e9d5eaee2a5056e980db78cd6436d31048fe8}
+release_ref=${EQUIPMENT_UPDATE_REF:-7061195a1d82727853292531c68285718fb4ad99}
 case "$release_ref" in *[!a-f0-9]*|'') echo '停止：更新版本必須是完整提交 SHA'; exit 1;; esac
 if test "${#release_ref}" -ne 40; then echo '停止：更新版本必須是完整提交 SHA'; exit 1; fi
 lock=.equipment-update.lock
@@ -103,7 +103,7 @@ else
  echo '尚無公開閘道設定；員工外網連線仍需設定閘道。'
 fi
 attempt=0
-until docker exec equipment-api node -e 'fetch("http://127.0.0.1:3000/api/health").then(r=>r.json()).then(j=>{if(j.ok!==true||j.deviceWriteVersion!==1||j.repairVersion!==1||!j.pushReady||!j.reminders?.enabled)process.exit(1);console.log(JSON.stringify(j))}).catch(()=>process.exit(1))'; do
+until docker exec equipment-api node -e 'fetch("http://127.0.0.1:3000/api/health").then(r=>r.json()).then(j=>{if(j.ok!==true||j.deviceWriteVersion!==1||j.repairVersion!==1||j.enrollmentEditVersion!==1||!j.pushReady||!j.reminders?.enabled)process.exit(1);console.log(JSON.stringify(j))}).catch(()=>process.exit(1))'; do
  attempt=$((attempt+1))
  if test "$attempt" -ge 30; then echo "更新未通過健康檢查，備份位於 $backup_dir，請提供本次日誌"; exit 1; fi
  sleep 1
