@@ -185,7 +185,7 @@ body.panel-open .equipment-tools{display:none}
 <div class="palette"><h3>設備分類 · 點選分類查看機台</h3><div class="items" id="items"></div></div>
 <div class="map-tools" aria-label="地圖操作"><span>地圖</span><button id="mapZoomOut" aria-label="縮小地圖">－</button><button id="mapZoomIn" aria-label="放大地圖">＋</button><button id="mapHome">全圖</button></div>
 
-<div class="touch-help">單指拖曳 · 雙指縮放 · 點設備查看資料</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div id="equipmentVendor">廠商：未填寫</div><div class="muted" id="pt">設備</div><div class="card"><p id="equipmentAccessState" role="status"></p><button type="button" data-management-access style="width:100%;min-height:44px">啟用／重新驗證管理權限</button></div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>廠商</label><input id="eqVendor" placeholder="設備廠商名稱" maxlength="200" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="repairsCard"><h3>維修紀錄</h3><button id="addRepairBtn" type="button" style="width:100%">＋ 新增維修紀錄</button><form id="repairForm" hidden>
+<div class="touch-help">單指拖曳 · 雙指縮放 · 點設備查看資料</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div id="equipmentVendor">廠商：未填寫</div><div class="muted" id="pt">設備</div><div class="card"><p id="equipmentAccessState" role="status"></p></div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>廠商</label><input id="eqVendor" placeholder="設備廠商名稱" maxlength="200" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="repairsCard"><h3>維修紀錄</h3><button id="addRepairBtn" type="button" style="width:100%">＋ 新增維修紀錄</button><form id="repairForm" hidden>
 <label>維修日期 *</label><input id="repairDate" type="date" required>
 <label>故障情形 *</label><textarea id="repairIssue" rows="2" required maxlength="4000" placeholder="例如：無法啟動、漏水、異常聲音"></textarea>
 <label>更換零件</label><input id="repairParts" maxlength="2000" placeholder="例如：軸承、皮帶；未更換可留白">
@@ -199,12 +199,10 @@ body.panel-open .equipment-tools{display:none}
 <button id="inspectionEntry">✓ 查檢清單</button><section id="inspectionOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="inspectionTitle"><header class="ins-header"><button id="inspectionBack">返回地圖</button><h2 id="inspectionTitle">設備查檢清單</h2><button id="inspectionSettingsBtn">設定／備份</button></header><div class="ins-sync"><span id="inspectionSyncStatus">正在連接 NAS…</span> <button id="inspectionSyncBtn" type="button">同步 NAS</button> <button id="inspectionConflictBtn" type="button" hidden>處理版本衝突</button></div><main id="inspectionContent"></main><footer id="inspectionSaveBar" hidden><b id="inspectionProgress">已查檢 0 項</b><button id="inspectionSubmit" class="ins-primary">確認送出查檢</button></footer></section>
 <section id="categoryDrawer" hidden role="dialog" aria-labelledby="categoryTitle"><header><h2 id="categoryTitle">設備清單</h2><button id="categoryClose" aria-label="關閉設備清單">×</button></header><div id="categoryRows"></div></section>
 <dialog id="photoViewer" aria-labelledby="photoViewerTitle"><header><b id="photoViewerTitle">查檢照片</b><button id="photoViewerClose" type="button">關閉 ×</button></header><p id="photoViewerState" role="status"></p><img id="photoViewerImage" alt="查檢照片大圖"></dialog>
-<dialog id="managementAccessDialog" aria-labelledby="managementAccessTitle" style="width:min(440px,calc(100% - 32px));box-sizing:border-box;border:1px solid #5684a4;border-radius:16px;padding:20px;background:#071a2d;color:white">
-<form id="managementAccessForm"><h2 id="managementAccessTitle">啟用這台裝置的管理權限</h2><p>管理權限可編輯設備、廠商、維修紀錄及排程。每台手機或瀏覽器須分別啟用。</p><label for="managementAccessKey">設備系統管理存取金鑰</label><input id="managementAccessKey" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required style="width:100%;box-sizing:border-box;margin:10px 0;padding:12px" placeholder="輸入原有的 64 碼存取金鑰"><p id="managementAccessMessage" role="status" aria-live="polite"></p><div style="display:flex;gap:10px"><button id="managementAccessCancel" type="button">取消</button><button id="managementAccessSubmit" type="submit">驗證並啟用</button></div></form></dialog>
 <script type="module">
 import {INSPECTION_TEMPLATES,validDay,addDays,addMonths,weekOnOrAfter,firstTuesday,advanceTask,machineCategory,machineTasks as sharedMachineTasks,taskDue as sharedTaskDue} from './server/inspection-rules.mjs';
 const API_BASE='https://fileserver.tailbb066f.ts.net:8443',SYNC_KEY='factory3dPositions_C_STYLE_V2';
-function canManage(){return /^[a-f0-9]{64}$/i.test(localStorage.getItem(accessStorageKey)||'');}
+function canManage(){const member=deviceMember();return /^[a-f0-9]{64}$/i.test(localStorage.getItem(accessStorageKey)||'')||member?.canEdit===true&&/^[a-f0-9]{64}$/i.test(member.deviceToken||'');}
 function deviceMember(){try{return JSON.parse(localStorage.getItem('baiqiPushMemberV2')||'null');}catch{return null;}}
 // An invitation activates this browser once; the key is never sent to GitHub.
 const accessStorageKey='equipment_api_access_v1';
@@ -225,8 +223,9 @@ async function apiFetch(url,options={}){
   if(member&&/^[a-f0-9]{64}$/i.test(member.deviceToken||'')){
    const parsed=new URL(url,API_BASE);
    const path=parsed.pathname;
-   if((method==='GET'&&(path==='/api/layout'||path==='/api/inspection-sync'||/^\/api\/checklists\/[^/]+$/.test(path)||/^\/api\/checklist-photos\/[^/]+\/(?:thumbnail|image)$/.test(path)))||(method==='POST'&&['/api/inspection-sync','/api/checklist-photos'].includes(path))){
-    parsed.pathname=path.replace(/^\/api\//,'/api/device-');
+   const editorWrite=member.canEdit===true&&((method==='PUT'&&path==='/api/layout')||(method==='POST'&&(path==='/api/inspection-sync'||/^\/api\/repairs\/[^/]+$/.test(path))));
+   if(editorWrite||(method==='GET'&&(path==='/api/layout'||path==='/api/inspection-sync'||/^\/api\/checklists\/[^/]+$/.test(path)||/^\/api\/checklist-photos\/[^/]+\/(?:thumbnail|image)$/.test(path)))||(method==='POST'&&['/api/inspection-sync','/api/checklist-photos'].includes(path))){
+    parsed.pathname=path.replace(/^\/api\//,editorWrite?'/api/editor-':'/api/device-');
     target=parsed.href;
     headers.set('Authorization','Bearer '+member.deviceToken);
    }
@@ -420,9 +419,11 @@ async function loadRemoteLayout(){
  if(syncing||layoutReading)return false;
  layoutReading=true;
  nasReadState.status='正在讀取 NAS';nasReadState.ok=false;setSyncBadge(nasReadState.status);renderNasReadDetails();
- try{const payload=await fetchNasLayout();const positions=payload.positions.filter(v=>v&&v.id!=null);
+ try{const payload=await fetchNasLayout();
+ if(typeof payload.canEdit==='boolean'){const member=deviceMember();if(member){member.canEdit=payload.canEdit;localStorage.setItem('baiqiPushMemberV2',JSON.stringify(member));setPanelEditable();}}
+ const positions=payload.positions.filter(v=>v&&v.id!=null);
  nasReadState.positions=positions;const byId=new Map(positions.map(v=>[String(v.id).trim(),v]));
- const qrReadOnly=!localStorage.getItem(accessStorageKey)&&(()=>{try{return /^[a-f0-9]{64}$/i.test(JSON.parse(localStorage.getItem('baiqiPushMemberV2')||'null')?.deviceToken||'');}catch{return false;}})();
+ const qrReadOnly=!canManage()&&(()=>{try{return /^[a-f0-9]{64}$/i.test(JSON.parse(localStorage.getItem('baiqiPushMemberV2')||'null')?.deviceToken||'');}catch{return false;}})();
  if(qrReadOnly&&dirtyMetadataIds.size)localStorage.setItem('factoryFixedReadOnlyRecovery',JSON.stringify({at:new Date().toISOString(),positions:getPositionData()}));
  groups.forEach(r=>{const v=byId.get(r.userData.id);if(v&&(qrReadOnly||!dirtyMetadataIds.has(r.userData.id)))applyMetadata(r,v);});
  // QR-enrolled read-only devices must not keep obsolete pending-edit markers
@@ -477,7 +478,7 @@ function saveRemoteLayout(){
  });
  return savePromise;
 }
-function setPanelEditable(){['eqName','eqVendor','eqCommissionedDate','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn'].forEach(id=>document.getElementById(id).disabled=!canManage());document.getElementById('addRepairBtn').disabled=!canManage();const state=document.getElementById('equipmentAccessState');if(state)state.textContent=canManage()?'目前為管理端，可編輯設備及維修紀錄。':'目前為員工端，可提交查檢與照片；編輯設備及維修請先啟用管理權限。';}
+function setPanelEditable(){['eqName','eqVendor','eqCommissionedDate','eqStatus','eqCleaningDate','eqCleaningCycle','eqMaintenanceDate','eqMaintenanceCycle','eqNotes','saveEqBtn'].forEach(id=>document.getElementById(id).disabled=!canManage());document.getElementById('addRepairBtn').disabled=!canManage();const state=document.getElementById('equipmentAccessState');if(state)state.textContent=canManage()?'目前為管理端，可編輯設備及維修紀錄。':'目前為員工端，可提交查檢與照片；編輯設備及維修請重新掃碼，並輸入管理密碼。';}
 function openPanel(r){document.body.classList.add('panel-open');document.getElementById('pn').textContent=r.userData.name;document.getElementById('pt').textContent=r.userData.type;document.getElementById('eqName').value=r.userData.name||'';document.getElementById('eqCommissionedDate').value=r.userData.commissionedDate||'';document.getElementById('eqCommissionedDate').max=taipeiToday();document.getElementById('eqStatus').value=r.userData.status||'正常';document.getElementById('eqCleaningDate').value=r.userData.cleaningLastDate||'';document.getElementById('eqCleaningCycle').value=Number(r.userData.cleaningCycleDays||30);document.getElementById('eqMaintenanceDate').value=r.userData.maintenanceLastDate||'';document.getElementById('eqMaintenanceCycle').value=Number(r.userData.maintenanceCycleDays||180);document.getElementById('eqNotes').value=r.userData.notes||'';document.getElementById('eqId').textContent=r.userData.id||'—';document.getElementById('eqKind').textContent=r.userData.kind||'—';setEquipmentScale(r,r.userData.visualScale||1);setPanelEditable(edit);document.getElementById('panel').classList.add('open');renderInspectionMini(r);refreshEquipmentDates();renderNasReadDetails();renderEquipmentExtras(r);}
 function closePanel(){document.getElementById('panel').classList.remove('open');document.body.classList.remove('panel-open');}
 function toast(s){
@@ -702,7 +703,7 @@ function submitInspection(){if(!canManage()&&!deviceMember()?.deviceToken)return
  if(completedCleaning.length&&canManage()){const root=groups.get(m.id);if(root&&(!root.userData.cleaningLastDate||root.userData.cleaningLastDate<=record.date)){root.userData.cleaningLastDate=record.date;const days=completedCleaning.map(t=>t.period==='custom'?t.days:({weekly:7,monthly:30,quarterly:90,halfyear:180,yearly:365}[t.period])).filter(n=>n>0);if(days.length)root.userData.cleaningCycleDays=Math.min(...days);try{dirtyMetadataIds.add(root.userData.id);savePositions();if(selected===root){document.getElementById('eqCleaningDate').value=root.userData.cleaningLastDate;document.getElementById('eqCleaningCycle').value=root.userData.cleaningCycleDays;refreshEquipmentDates();}}catch(e){toast('查檢已存於本機；地圖日期同步失敗');}}}
  toast('查檢已保存，正在同步 NAS');inspectionPeriod='history';renderInspection();
 }
-function renderInspectionSettings(){inspectContent.innerHTML=`<form id="inspectionSettings" class="ins-card"><h3>現場人員與提醒偏好</h3><button type="button" data-management-access>啟用／重新驗證管理權限</button><label>查檢人員姓名<input name="operator" autocomplete="name" value="${I(inspectionState.profile)}"></label><label>提醒時間（台灣時間）<input name="time" type="time" required value="${I(inspectionState.reminder.time)}"></label><label>提前提醒<select name="lead">${[[0,'到期當天'],[1,'提前 1 天'],[3,'提前 3 天']].map(([v,l])=>`<option value="${v}" ${Number(inspectionState.reminder.lead)===v?'selected':''}>${l}</option>`).join('')}</select></label><button class="ins-primary" type="submit">儲存偏好</button><p class="ins-muted">手機自動提醒需由 NAS 啟用，並讓設備組組長完成通知註冊。啟用後依台灣時間及提前天數每日提醒，每台裝置一天一則彙總。也可匯出未來 90 天行事曆；排程修改後需重新匯出。查檢紀錄與排程透過 NAS 共用；草稿及查檢人員姓名保留在各自裝置。LINE 提醒對象：設備組組長「簡通延」，自動發訊尚未啟用。</p></form><div class="ins-card"><h3>備份與行事曆</h3><div class="ins-actions">${inspectButton('匯出查檢備份','export')}${inspectButton('匯出提醒行事曆','calendar')}</div><label class="ins-file">合併匯入查檢備份<input id="inspectionImport" type="file" accept="application/json,.json"></label><p class="ins-muted">紀錄依 ID 合併；本機同 ID 紀錄優先保留。備份含文字紀錄及照片索引，不含照片檔案；照片保留於此裝置或已上傳的 NAS。排程及提醒偏好同步 NAS，姓名及草稿以本機為準。提醒行事曆是一次性檔案，不會自動更新。</p></div><div class="ins-card"><h3>排程依據</h3><p class="ins-muted">依原檢查表整理 73 個不重複項目。週三／四／五依「每周」表；月排程依「每月」表第一個週二。季、半年、年度及未指定星期的項目，請在各機台設定首次到期日。30K 原表無項目；移載車、軟水、發電機保留為清單設備。初次建立日期：${I(inspectionState.baseline)}。</p></div>`;
+function renderInspectionSettings(){inspectContent.innerHTML=`<form id="inspectionSettings" class="ins-card"><h3>現場人員與提醒偏好</h3><label>查檢人員姓名<input name="operator" autocomplete="name" value="${I(inspectionState.profile)}"></label><label>提醒時間（台灣時間）<input name="time" type="time" required value="${I(inspectionState.reminder.time)}"></label><label>提前提醒<select name="lead">${[[0,'到期當天'],[1,'提前 1 天'],[3,'提前 3 天']].map(([v,l])=>`<option value="${v}" ${Number(inspectionState.reminder.lead)===v?'selected':''}>${l}</option>`).join('')}</select></label><button class="ins-primary" type="submit">儲存偏好</button><p class="ins-muted">手機自動提醒需由 NAS 啟用，並讓設備組組長完成通知註冊。啟用後依台灣時間及提前天數每日提醒，每台裝置一天一則彙總。也可匯出未來 90 天行事曆；排程修改後需重新匯出。查檢紀錄與排程透過 NAS 共用；草稿及查檢人員姓名保留在各自裝置。LINE 提醒對象：設備組組長「簡通延」，自動發訊尚未啟用。</p></form><div class="ins-card"><h3>備份與行事曆</h3><div class="ins-actions">${inspectButton('匯出查檢備份','export')}${inspectButton('匯出提醒行事曆','calendar')}</div><label class="ins-file">合併匯入查檢備份<input id="inspectionImport" type="file" accept="application/json,.json"></label><p class="ins-muted">紀錄依 ID 合併；本機同 ID 紀錄優先保留。備份含文字紀錄及照片索引，不含照片檔案；照片保留於此裝置或已上傳的 NAS。排程及提醒偏好同步 NAS，姓名及草稿以本機為準。提醒行事曆是一次性檔案，不會自動更新。</p></div><div class="ins-card"><h3>排程依據</h3><p class="ins-muted">依原檢查表整理 73 個不重複項目。週三／四／五依「每周」表；月排程依「每月」表第一個週二。季、半年、年度及未指定星期的項目，請在各機台設定首次到期日。30K 原表無項目；移載車、軟水、發電機保留為清單設備。初次建立日期：${I(inspectionState.baseline)}。</p></div>`;
  if(!canManage()){for(const input of document.querySelectorAll('#inspectionSettings input:not([name=operator]),#inspectionSettings select'))input.disabled=true;}
  document.getElementById('inspectionSettings').onsubmit=e=>{e.preventDefault();if(!canManage()){const f=new FormData(e.target);if(editInspection(st=>st.profile=f.get('operator').trim()))toast('查檢姓名已儲存');return;}let f=new FormData(e.target);if(editInspection(st=>{st.profile=f.get('operator').trim();st.reminder={time:f.get('time'),lead:Number(f.get('lead'))};}))toast('偏好已儲存；自動推播以 NAS 啟用狀態為準');};
  document.getElementById('inspectionImport').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>15*1024*1024)throw Error('備份超過 15MB');const incoming=validateInspectionState(JSON.parse(await f.text()));const ids=new Set(inspectionState.records.map(r=>r.id));const extra=incoming.records.filter(r=>!ids.has(r.id));if(editInspection(st=>st.records.push(...extra))){toast('已合併 '+extra.length+' 筆紀錄');renderInspection();}}catch(err){toast('匯入失敗：'+err.message);}};
@@ -785,40 +786,6 @@ if(new URLSearchParams(location.search).has('inspection'))queueMicrotask(()=>ope
 
 
 
-// A manager may authorize their own phone with an existing gateway key.
-// Never grant management from a QR/device token or store an unverified key.
-const managementDialog=document.getElementById('managementAccessDialog');
-let managementActivationBusy=false;
-document.addEventListener('click',e=>{if(!e.target.closest('[data-management-access]'))return;document.getElementById('managementAccessMessage').textContent='';document.getElementById('managementAccessKey').value='';managementDialog.showModal();document.getElementById('managementAccessKey').focus();});
-document.getElementById('managementAccessCancel').onclick=()=>managementDialog.close();
-managementDialog.addEventListener('close',()=>{document.getElementById('managementAccessKey').value='';});
-async function activateManagementKey(value){
- const key=String(value||'').trim().toLowerCase();
- if(!/^[a-f0-9]{64}$/.test(key))throw Error('請輸入原有的 64 碼管理存取金鑰。');
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
- try{
-  const response=await fetch(API_BASE+'/api/layout?access-check=1',{method:'GET',cache:'no-store',headers:{Authorization:'Bearer '+key},signal:controller.signal});
-  if(response.status===401||response.status===403)throw Error('金鑰無效或已停用。請使用設備系統的管理存取金鑰，QR Code 註冊碼無法啟用管理權限。');
-  if(!response.ok)throw Error('NAS 驗證失敗 HTTP '+response.status+'，請稍後再試。');
-  const result=await response.json();
-  if(result.syncVersion!==2||!Array.isArray(result.positions))throw Error('NAS 回應格式不符，尚未啟用權限。');
-  localStorage.setItem(accessStorageKey,key);
- }catch(e){if(e.name==='AbortError')throw Error('NAS 驗證逾時，請確認網路後再試。');throw e;}finally{clearTimeout(timer);}
- setPanelEditable();
- return true;
-}
-document.getElementById('managementAccessForm').onsubmit=async e=>{
- e.preventDefault();if(managementActivationBusy)return;managementActivationBusy=true;
- const button=document.getElementById('managementAccessSubmit'),message=document.getElementById('managementAccessMessage');button.disabled=true;message.textContent='正在驗證 NAS 管理權限…';
- try{
-  await activateManagementKey(document.getElementById('managementAccessKey').value);
-  managementDialog.close();toast('管理權限已啟用，可編輯設備及維修紀錄');
-  await loadRemoteLayout();await syncInspectionNas();
-  if(!inspectEl.hidden&&saveInspectionDraft())renderInspection();
-  await syncPendingRepairs();
- }catch(e){message.textContent=e.name==='TypeError'?'無法連線 NAS，請確認網路後再試。':e.message;}finally{button.disabled=false;managementActivationBusy=false;}
-};
-
 // Refresh server metadata after a successful initial load too. Never interrupt an open editor.
 async function refreshEquipmentFromNas(){
  if(document.visibilityState!=='visible'||syncing||layoutReading||hasUnsyncedLayoutChanges||dirtyMetadataIds.size||document.getElementById('panel').classList.contains('open')||document.getElementById('inspectionForm'))return false;
@@ -857,6 +824,7 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
 <h2 id="pushTitle">設備巡檢通知</h2>
 <p>員工請先將設備管理網站加入 iPhone 主畫面，從主畫面開啟後，到辦公室掃描管理員提供的註冊 QR Code。每個 QR Code 只能成功使用一次。</p>
 <label for="pushMemberName">員工姓名</label><input id="pushMemberName" maxlength="80" autocomplete="name" placeholder="請輸入姓名">
+<label for="pushEditPassword">管理密碼（選填）</label><input id="pushEditPassword" type="password" autocomplete="off" maxlength="128" placeholder="需要編輯設備才填寫；一般員工留白"><small>只在掃碼註冊時驗證一次；留白可填查檢與照片，不能更改設備、維修及排程。</small>
 <div id="pushStatus" class="push-status">尚未啟用通知</div>
 <div><button id="pushAllowNotification" type="button">① 允許 iPhone 通知</button><button id="pushScan" type="button">② 掃描辦公室 QR Code</button><button id="pushClose" type="button">關閉</button></div>
 <div id="pushScanArea" hidden><div id="pushScanner" style="width:100%"></div><button id="pushStopScan" type="button">停止掃描</button></div>
@@ -864,6 +832,7 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
 <div id="pushAdminEntry" hidden>
 <h3>辦公室管理員 · 一次性註冊碼</h3>
 <label for="pushAdminToken">管理員授權碼（僅保留在此頁面）</label><input id="pushAdminToken" type="password" autocomplete="off" placeholder="沿用原本的 NAS 存取金鑰">
+<label for="pushNewEditPassword">這張 QR Code 的管理密碼（選填，至少 6 碼）</label><input id="pushNewEditPassword" type="password" autocomplete="new-password" maxlength="128" placeholder="自訂密碼，另行告知需要編輯的人"><small>密碼不放入 QR Code。沒有設定時，這張碼只能註冊一般員工。</small>
 <button id="pushGenerate" type="button">產生一次性 QR Code（10 分鐘）</button>
 <div id="pushAdminPanel" hidden><div id="pushQrCanvas"></div><p id="pushQrExpiry"></p></div>
 </div>
@@ -883,23 +852,25 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
  if(!mobile)el('pushAdminEntry').hidden=false;
  function message(t){status.textContent=t;}
  const b64=s=>{const p='='.repeat((4-s.length%4)%4),v=(s+p).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(v),a=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i);return a;};
- async function request(path,opts={}){const r=await fetch(base+path,{cache:'no-store',...opts});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(({enrollment_expired_or_used:'註冊碼已使用或超過 10 分鐘，請向管理員重新取得',admin_authorization_required:'管理員授權碼不正確',push_admin_not_configured:'NAS 尚未設定管理員授權碼',use_one_time_enrollment:'請使用辦公室一次性 QR Code'})[data.error]||data.error||'伺服器回應 '+r.status);return data;}
+ async function request(path,opts={}){const r=await fetch(base+path,{cache:'no-store',...opts});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(({enrollment_expired_or_used:'註冊碼已使用或超過 10 分鐘，請向管理員重新取得',admin_authorization_required:'管理員授權碼不正確',push_admin_not_configured:'NAS 尚未設定管理員授權碼',use_one_time_enrollment:'請使用辦公室一次性 QR Code',edit_password_length:'管理密碼請設定至少 6 碼、最多 128 字',edit_password_incorrect:'管理密碼不正確，註冊碼尚未使用；請更正密碼後再掃描',edit_password_locked:'管理密碼嘗試次數已達上限，請重新產生 QR Code'})[data.error]||data.error||'伺服器回應 '+r.status);return data;}
  async function enroll(token){
   if(!installed())throw Error('請先從 iPhone 主畫面的設備管理圖示開啟，再掃描 QR Code');
   const name=el('pushMemberName').value.trim();if(!name)throw Error('請先填寫員工姓名');
   if(!/^[a-f0-9]{64}$/i.test(token))throw Error('不是有效的註冊 QR Code');
   if(!('serviceWorker'in navigator)||!('PushManager'in window))throw Error('此裝置不支援網頁推播');
   message('正在確認通知權限…');
+  const editPassword=el('pushEditPassword').value;
   const cfg=await request('/api/push-config');
+  if(editPassword&&cfg.enrollmentEditVersion!==1)throw Error('NAS 尚未更新掃碼管理授權功能，請先更新 NAS；本次未註冊。');
   if(!cfg.ready||!cfg.publicKey)throw Error('NAS 尚未啟用 Web Push');
   if(Notification.permission!=='granted')throw Error('請先按「① 允許 iPhone 通知」，再重新掃描 QR Code');
   const reg=await navigator.serviceWorker.register('./sw.js');
   let sub=await reg.pushManager.getSubscription();
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(cfg.publicKey)});
   message('正在使用一次性註冊碼…');
-  const data=await request('/api/push-enrollments/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,memberName:name,subscription:sub.toJSON()})});
-  member={id:data.memberId,name:data.memberName,deviceToken:data.deviceToken};localStorage.setItem(memberKey,JSON.stringify(member));localStorage.removeItem(pendingKey);
-  message('✅ '+member.name+' 註冊成功！已啟用 NAS 資料同步，可提交查檢與照片，正在更新設備資料。');
+  const data=await request('/api/push-enrollments/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,memberName:name,subscription:sub.toJSON(),editPassword})});
+  member={id:data.memberId,name:data.memberName,deviceToken:data.deviceToken,canEdit:data.canEdit===true};localStorage.setItem(memberKey,JSON.stringify(member));localStorage.removeItem('equipment_api_access_v1');localStorage.removeItem(pendingKey);el('pushEditPassword').value='';
+  message('✅ '+member.name+' 註冊成功！'+(member.canEdit?'已取得設備編輯權限，之後不用重輸密碼。':'一般員工權限：可填查檢與照片，不能更改設備。'));
   window.dispatchEvent(new Event('baiqi-device-enrolled'));
  }
  async function stopScan(){
@@ -908,8 +879,8 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
   if(current){try{await current.stop();}catch{}try{await current.clear();}catch{}}
   el('pushScanArea').hidden=true;
  }
- el('pushSetupBtn').onclick=()=>{box.hidden=false;message(member?'已註冊：'+member.name:'尚未註冊，請先允許通知，再掃描辦公室 QR Code');};
- el('pushClose').onclick=()=>{stopScan();box.hidden=true;};
+ el('pushSetupBtn').onclick=()=>{box.hidden=false;message(member?'已註冊：'+member.name+'｜'+(member.canEdit?'可編輯設備':'一般員工'):'尚未註冊，請先允許通知，再掃描辦公室 QR Code');};
+ el('pushClose').onclick=()=>{stopScan();el('pushEditPassword').value='';box.hidden=true;};
  el('pushAllowNotification').onclick=async()=>{
   try{
    if(!installed())throw Error('請先將網站加入 iPhone 主畫面，從主畫面開啟');
@@ -949,12 +920,13 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
   if(mobile)return;
   try{
    const secret=el('pushAdminToken').value.trim();if(!secret)throw Error('請先輸入管理員授權碼');
-   const data=await request('/api/push-enrollments',{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},body:'{}'});
+   if(el('pushNewEditPassword').value){const cfg=await request('/api/push-config');if(cfg.enrollmentEditVersion!==1)throw Error('NAS 尚未更新掃碼管理授權功能，請先更新 NAS');}
+   const data=await request('/api/push-enrollments',{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},body:JSON.stringify({editPassword:el('pushNewEditPassword').value})});
    if(typeof QRCode==='undefined')throw Error('QR Code 元件尚未載入，請稍後重試');
    el('pushQrCanvas').replaceChildren();
    new QRCode(el('pushQrCanvas'),{text:data.registrationUrl,width:260,height:260,correctLevel:QRCode.CorrectLevel.M});
    el('pushAdminPanel').hidden=false;el('pushQrExpiry').textContent='此 QR Code 僅限一人使用，10 分鐘後失效。請讓員工從主畫面的設備 App 掃描。';
-   message('已產生一次性 QR Code，請讓員工在辦公室掃描。');
+   message('已產生一次性 QR Code。'+(data.editPasswordEnabled?'需要編輯者掃碼前填入你設定的管理密碼，一般員工留白。':'此碼未設定管理密碼，只能註冊一般員工。'));el('pushNewEditPassword').value='';
   }catch(e){message('⚠️ '+e.message);}
  };
  el('pushTest').onclick=async()=>{

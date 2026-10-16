@@ -3,7 +3,7 @@ import {deviceWriteAllowed} from './device-policy.mjs';
 import {startReminderWorker} from './reminders.mjs';
 import pg from 'pg';
 import webpush from 'web-push';
-import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHash, timingSafeEqual, scryptSync } from 'node:crypto';
 
 const { Pool } = pg;
 const app = express();
@@ -28,7 +28,8 @@ const ensureSchema = async () => {
     ADD COLUMN IF NOT EXISTS notes TEXT NOT NULL DEFAULT ''`);
   await pool.query(`CREATE TABLE IF NOT EXISTS push_enrollment_tokens (token_hash TEXT PRIMARY KEY, expires_at TIMESTAMPTZ NOT NULL, used_at TIMESTAMPTZ, member_id TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS push_members (id TEXT PRIMARY KEY,name TEXT NOT NULL,active BOOLEAN NOT NULL DEFAULT true,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
-  await pool.query(`ALTER TABLE push_members ADD COLUMN IF NOT EXISTS device_token_hash TEXT`);
+  await pool.query(`ALTER TABLE push_members ADD COLUMN IF NOT EXISTS device_token_hash TEXT, ADD COLUMN IF NOT EXISTS can_edit BOOLEAN NOT NULL DEFAULT false`);
+  await pool.query(`ALTER TABLE push_enrollment_tokens ADD COLUMN IF NOT EXISTS edit_password_hash TEXT, ADD COLUMN IF NOT EXISTS edit_attempts INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`CREATE TABLE IF NOT EXISTS push_subscriptions (endpoint TEXT PRIMARY KEY,member_id TEXT NOT NULL REFERENCES push_members(id) ON DELETE CASCADE,subscription JSONB NOT NULL,user_agent TEXT NOT NULL DEFAULT '',enabled BOOLEAN NOT NULL DEFAULT true,created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await pool.query(`CREATE INDEX IF NOT EXISTS push_subscriptions_member_idx ON push_subscriptions(member_id) WHERE enabled`);
   await pool.query(`CREATE TABLE IF NOT EXISTS equipment_assignments (equipment_id TEXT NOT NULL,member_id TEXT NOT NULL REFERENCES push_members(id) ON DELETE CASCADE,PRIMARY KEY(equipment_id,member_id))`);
@@ -50,7 +51,7 @@ app.use((req, res, next) => {
 app.get('/api/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1,inspectionVersion:1,pushVersion:1,deviceReadVersion:1,deviceWriteVersion:1,repairVersion:1,pushReady,reminders:reminderWorker?.status||{enabled:false} });
+    res.json({ ok: true, service: 'equipment-manager-api',photoVersion:1,inspectionVersion:1,pushVersion:1,deviceReadVersion:1,deviceWriteVersion:1,repairVersion:1,enrollmentEditVersion:1,pushReady,reminders:reminderWorker?.status||{enabled:false} });
   } catch (error) {
     res.status(503).json({ ok: false, error: 'database_unavailable' });
   }
@@ -130,8 +131,8 @@ app.get('/api/device-inspection-sync',requireEnrolledDevice,loadDeviceInspection
 const saveInspectionEntity=async(req,res)=>{
  const c=req.body||{};
  if(c.inspectionVersion!==1||!validInspectionEntity(c.kind,c.id,c.data)||(c.expectedRevision!==null&&!/^\d+$/.test(c.expectedRevision||'')))return res.status(400).json({error:'invalid_inspection_entity'});
- if(req.device&&c.kind!=='record')return res.status(403).json({error:'device_append_only'});
- if(req.device){
+ if(req.device&&!req.device.can_edit&&c.kind!=='record')return res.status(403).json({error:'device_append_only'});
+ if(req.device&&c.kind==='record'){
   const exists=await pool.query('SELECT 1 FROM equipment WHERE id=$1',[c.data.machineId]);
   if(!exists.rowCount&&!['CHECK-軟水','CHECK-發電機','CHECK-移載車'].includes(c.data.machineId))return res.status(400).json({error:'unknown_equipment'});
  }
@@ -142,7 +143,7 @@ const saveInspectionEntity=async(req,res)=>{
   await client.query('LOCK TABLE inspection_sync_entities IN SHARE ROW EXCLUSIVE MODE');
   const {rows}=await client.query('SELECT kind,id,data,revision::text AS revision,created_by FROM inspection_sync_entities WHERE kind=$1 AND id=$2 FOR UPDATE',[c.kind,c.id]);
   const old=rows[0];
-  if(req.device&&!deviceWriteAllowed(c,old,req.device.id,inspectionApiCanonical)){await client.query('ROLLBACK');return res.status(403).json({error:'device_append_only'});}
+  if(req.device&&!req.device.can_edit&&!deviceWriteAllowed(c,old,req.device.id,inspectionApiCanonical)){await client.query('ROLLBACK');return res.status(403).json({error:'device_append_only'});}
   if((old?.revision??null)!==c.expectedRevision){
    await client.query('ROLLBACK');
    // Retrying the same acknowledged data after a network timeout is safe.
@@ -163,6 +164,7 @@ const saveInspectionEntity=async(req,res)=>{
 };
 app.post('/api/inspection-sync',saveInspectionEntity);
 app.post('/api/device-inspection-sync',requireEnrolledDevice,saveInspectionEntity);
+app.post('/api/editor-inspection-sync',requireEnrolledDevice,requireDeviceEditor,saveInspectionEntity);
 
 // Scoped device access: a QR-enrolled phone receives its own revocable token.
 // It never receives API_ACCESS_KEYS or PUSH_ADMIN_TOKEN.
@@ -171,7 +173,7 @@ async function requireEnrolledDevice(req,res,next){
  if(!token)return res.status(401).json({error:'device_authorization_required'});
  try{
   const digest=createHash('sha256').update(token.toLowerCase()).digest('hex');
-  const {rows}=await pool.query('SELECT id,name FROM push_members WHERE device_token_hash=$1 AND active=true LIMIT 1',[digest]);
+  const {rows}=await pool.query('SELECT id,name,can_edit FROM push_members WHERE device_token_hash=$1 AND active=true LIMIT 1',[digest]);
   if(!rows.length)return res.status(403).json({error:'device_authorization_required'});
   req.device=rows[0];
   res.setHeader('Cache-Control','no-store');
@@ -179,8 +181,10 @@ async function requireEnrolledDevice(req,res,next){
  }catch{res.status(503).json({error:'device_auth_unavailable'});}
 }
 
+function requireDeviceEditor(req,res,next){if(!req.device?.can_edit)return res.status(403).json({error:'device_editor_required'});next();}
+
 const MEMBER_ID=/^[a-zA-Z0-9_-]{8,80}$/;
-app.get('/api/push-config',(_req,res)=>res.json({pushVersion:1,ready:pushReady,publicKey:pushReady?vapidPublicKey:null}));
+app.get('/api/push-config',(_req,res)=>res.json({pushVersion:1,enrollmentEditVersion:1,ready:pushReady,publicKey:pushReady?vapidPublicKey:null}));
 app.get('/api/push-members',async(_req,res)=>{try{const {rows}=await pool.query('SELECT id,name,active FROM push_members WHERE active=true ORDER BY name');res.json({members:rows});}catch{res.status(500).json({error:'push_members_load_failed'});}});
 const pushAdminToken=String(process.env.PUSH_ADMIN_TOKEN||'').trim();
 function adminAllowed(req){
@@ -194,33 +198,49 @@ function requirePushAdmin(req,res,next){
  if(!adminAllowed(req))return res.status(403).json({error:'admin_authorization_required'});
  next();
 }
+function makeEditPasswordHash(password){const salt=randomBytes(16).toString('hex');return salt+':'+scryptSync(password,salt,32).toString('hex');}
+function checkEditPassword(password,encoded){const [salt,hash]=String(encoded||'').split(':');if(!/^[a-f0-9]{32}$/.test(salt||'')||!/^[a-f0-9]{64}$/.test(hash||''))return false;return timingSafeEqual(scryptSync(password,salt,32),Buffer.from(hash,'hex'));}
 app.post('/api/push-enrollments',requirePushAdmin,async(req,res)=>{
+ const password=req.body?.editPassword??'';
+ if(typeof password!=='string'||password.length>128||(password&&password.trim().length<6))return res.status(400).json({error:'edit_password_length'});
  try{
   const token=randomBytes(32).toString('hex');
   const hash=createHash('sha256').update(token).digest('hex');
-  await pool.query('INSERT INTO push_enrollment_tokens(token_hash,expires_at) VALUES($1,now()+interval \'10 minutes\')',[hash]);
+  await pool.query('INSERT INTO push_enrollment_tokens(token_hash,expires_at,edit_password_hash) VALUES($1,now()+interval \'10 minutes\',$2)',[hash,password?makeEditPasswordHash(password):null]);
   res.setHeader('Cache-Control','no-store');
-  res.json({token,expiresInSeconds:600,registrationUrl:'https://bai-qi-laundering.github.io/equipmentmanager/#enroll='+token});
+  res.json({token,editPasswordEnabled:!!password,expiresInSeconds:600,registrationUrl:'https://bai-qi-laundering.github.io/equipmentmanager/#enroll='+token});
  }catch(e){res.status(500).json({error:'enrollment_create_failed'});}
 });
 app.post('/api/push-enrollments/redeem',async(req,res)=>{
- const b=req.body||{},sub=b.subscription;
+ const b=req.body||{},sub=b.subscription,password=b.editPassword??'';
+ if(typeof password!=='string'||password.length>128)return res.status(400).json({error:'invalid_edit_password'});
  if(!/^[a-f0-9]{64}$/i.test(String(b.token||''))||typeof b.memberName!=='string'||!b.memberName.trim()||b.memberName.trim().length>80||!sub||typeof sub.endpoint!=='string'||!sub.endpoint.startsWith('https://')||typeof sub.keys?.p256dh!=='string'||typeof sub.keys?.auth!=='string')return res.status(400).json({error:'invalid_enrollment'});
  const hash=createHash('sha256').update(String(b.token).toLowerCase()).digest('hex');
  const client=await pool.connect();
  try{
   await client.query('BEGIN');
-  const {rows}=await client.query('UPDATE push_enrollment_tokens SET used_at=now() WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() RETURNING token_hash',[hash]);
+  const {rows}=await client.query('SELECT token_hash,edit_password_hash,edit_attempts FROM push_enrollment_tokens WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() FOR UPDATE',[hash]);
   if(!rows.length){await client.query('ROLLBACK');return res.status(410).json({error:'enrollment_expired_or_used'});}
+  const invitation=rows[0];let canEdit=false;
+  if(password){
+   if(invitation.edit_attempts>=5){await client.query('ROLLBACK');return res.status(429).json({error:'edit_password_locked'});}
+   if(!checkEditPassword(password,invitation.edit_password_hash)){
+    await client.query('UPDATE push_enrollment_tokens SET edit_attempts=edit_attempts+1 WHERE token_hash=$1',[hash]);
+    await client.query('COMMIT');return res.status(403).json({error:'edit_password_incorrect'});
+   }
+   canEdit=true;
+  }
+  await client.query('UPDATE push_enrollment_tokens SET used_at=now() WHERE token_hash=$1',[hash]);
   const memberId=randomBytes(16).toString('hex');
   const deviceToken=randomBytes(32).toString('hex');
   const deviceTokenHash=createHash('sha256').update(deviceToken).digest('hex');
-  await client.query('INSERT INTO push_members(id,name,device_token_hash) VALUES($1,$2,$3)',[memberId,b.memberName.trim(),deviceTokenHash]);
+  await client.query('INSERT INTO push_members(id,name,device_token_hash,can_edit) VALUES($1,$2,$3,$4)',[memberId,b.memberName.trim(),deviceTokenHash,canEdit]);
+  await client.query('UPDATE push_members SET active=false WHERE id IN (SELECT member_id FROM push_subscriptions WHERE endpoint=$1)',[sub.endpoint]);
   await client.query('INSERT INTO push_subscriptions(endpoint,member_id,subscription,user_agent) VALUES($1,$2,$3::jsonb,$4) ON CONFLICT(endpoint) DO UPDATE SET member_id=EXCLUDED.member_id,subscription=EXCLUDED.subscription,user_agent=EXCLUDED.user_agent,enabled=true,updated_at=now()',[sub.endpoint,memberId,JSON.stringify(sub),String(req.headers['user-agent']||'').slice(0,500)]);
   await client.query('UPDATE push_enrollment_tokens SET member_id=$2 WHERE token_hash=$1',[hash,memberId]);
   await client.query('COMMIT');
   res.setHeader('Cache-Control','no-store');
-  res.json({ok:true,memberId,memberName:b.memberName.trim(),deviceToken});
+  res.json({ok:true,memberId,memberName:b.memberName.trim(),deviceToken,canEdit});
  }catch(e){await client.query('ROLLBACK').catch(()=>{});res.status(500).json({error:'enrollment_save_failed'});}finally{client.release();}
 });
 app.post('/api/push-subscriptions',(_req,res)=>res.status(410).json({error:'use_one_time_enrollment'}));
@@ -247,7 +267,7 @@ async function migrateLegacyRepairs(){
   }
  }
 }
-app.post('/api/repairs/:equipmentId',async(req,res)=>{
+const saveRepair=async(req,res)=>{
  const r=req.body, equipmentId=String(req.params.equipmentId);
  if(!r||!PHOTO_ID.test(r.id||'')||!inspectionDay(r.date)||r.date>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei'}).format(new Date())||typeof r.issue!=='string'||!r.issue.trim()||r.issue.length>4000||![r.parts,r.notes,r.vendor,r.recorder].every(v=>typeof v==='string'&&v.length<=4000)||(r.cost!==null&&(!Number.isFinite(r.cost)||r.cost<0))||!Number.isFinite(Date.parse(r.createdAt)))return res.status(400).json({error:'invalid_repair'});
  try{
@@ -256,9 +276,11 @@ app.post('/api/repairs/:equipmentId',async(req,res)=>{
   if(!saved.rowCount){const old=await pool.query('SELECT data FROM equipment_repairs WHERE equipment_id=$1 AND id=$2',[equipmentId,r.id]);if(inspectionApiCanonical(old.rows[0].data)!==inspectionApiCanonical(r))return res.status(409).json({error:'repair_id_conflict'});}
   res.json({ok:true,id:r.id,repairVersion:1});
  }catch{res.status(500).json({error:'repair_save_failed'});}
-});
+};
+app.post('/api/repairs/:equipmentId',saveRepair);
+app.post('/api/editor-repairs/:equipmentId',requireEnrolledDevice,requireDeviceEditor,saveRepair);
 
-const loadDeviceLayout=async (_req, res) => {
+const loadDeviceLayout=async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT id, name, type, kind, x, z, rotation_y, status,
@@ -268,7 +290,7 @@ const loadDeviceLayout=async (_req, res) => {
     );
     const repairs=await pool.query('SELECT equipment_id,data FROM equipment_repairs ORDER BY created_at,id');
     const byId=new Map();for(const row of repairs.rows){if(!byId.has(row.equipment_id))byId.set(row.equipment_id,[]);byId.get(row.equipment_id).push(row.data);}
-    res.json({ syncVersion:2,repairVersion:1,positions:rows.map(row=>({...row,repairs:byId.get(row.id)||[]})) });
+    res.json({ syncVersion:2,repairVersion:1,...(req.device?{canEdit:!!req.device.can_edit}:{}),positions:rows.map(row=>({...row,repairs:byId.get(row.id)||[]})) });
   } catch (error) {
     res.status(500).json({ error: 'layout_load_failed' });
   }
@@ -276,7 +298,7 @@ const loadDeviceLayout=async (_req, res) => {
 
 app.get('/api/layout',loadDeviceLayout);
 app.get('/api/device-layout',requireEnrolledDevice,loadDeviceLayout);
-app.put('/api/layout', async (req, res) => {
+const saveLayout=async (req, res) => {
   if(req.body?.syncVersion!==2)return res.status(428).json({error:'sync_upgrade_required'});
   const positions = Array.isArray(req.body?.positions) ? req.body.positions : null;
   if (!positions) return res.status(400).json({ error: 'positions must be an array' });
@@ -324,7 +346,9 @@ app.put('/api/layout', async (req, res) => {
     await client.query('ROLLBACK');
     res.status(500).json({ error:'layout_save_failed' });
   } finally { client.release(); }
-});
+};
+app.put('/api/layout',saveLayout);
+app.put('/api/editor-layout',requireEnrolledDevice,requireDeviceEditor,saveLayout);
 export const ready=ensureSchema().then(async()=>{
   await migrateLegacyRepairs();
   reminderWorker=startReminderWorker({pool,webpush,enabled:pushReady&&process.env.INSPECTION_PUSH_ENABLED==='true'});

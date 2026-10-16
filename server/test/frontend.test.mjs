@@ -26,7 +26,7 @@ async function setup(manager=false){
   throw Error('unexpected request '+path);
  };
  const context=dom.getInternalVMContext();
- const m=new vm.SourceTextModule(source+`\nglobalThis.hooks={groups,view,canManage,loadRemoteLayout,openPanel,openInspection,editInspection,syncInspectionNas,apiFetch,renderMapStatus,activateManagementKey,getState:()=>inspectionState};`,{context});
+ const m=new vm.SourceTextModule(source+`\nglobalThis.hooks={groups,view,canManage,loadRemoteLayout,openPanel,openInspection,editInspection,syncInspectionNas,apiFetch,renderMapStatus,getState:()=>inspectionState};`,{context});
  await m.link(()=>new vm.SourceTextModule(rules,{context}));await m.evaluate();
  return {dom,w,h:w.hooks,calls,remote};
 }
@@ -59,20 +59,16 @@ test('manager retains equipment and schedule controls',async()=>{
 });
 
 
-test('a phone only unlocks management after the gateway accepts the existing key',async()=>{
+test('a QR editor uses scoped write routes and role refresh can remove edit access',async()=>{
  const {dom,w,h,calls}=await setup();
  try{
-  h.openPanel(h.groups.get('VERT-01'));assert.equal(w.document.getElementById('eqVendor').disabled,true);
-  const normalFetch=w.fetch;
-  w.fetch=async()=>Response.json({error:'access_required'},{status:401});
-  await assert.rejects(h.activateManagementKey('c'.repeat(64)),/金鑰無效/);
-  assert.equal(w.localStorage.getItem('equipment_api_access_v1'),null);
-  assert.equal(w.document.getElementById('eqVendor').disabled,true);
-  w.fetch=normalFetch;
-  await h.activateManagementKey('a'.repeat(64));
-  assert.equal(w.localStorage.getItem('equipment_api_access_v1'),'a'.repeat(64));
-  assert.equal(w.document.getElementById('eqVendor').disabled,false);
-  assert.equal(w.document.getElementById('addRepairBtn').disabled,false);
-  assert.ok(calls.some(c=>c.path==='/api/layout'&&c.headers.Authorization==='Bearer '+'a'.repeat(64)));
+  w.localStorage.setItem('baiqiPushMemberV2',JSON.stringify({id:'memberone',name:'主管',deviceToken:'b'.repeat(64),canEdit:true}));
+  h.openPanel(h.groups.get('VERT-01'));assert.equal(w.document.getElementById('eqName').disabled,false);
+  await h.apiFetch('https://fileserver.tailbb066f.ts.net:8443/api/layout',{method:'PUT',body:'{}'});
+  assert.equal(calls.at(-1).path,'/api/editor-layout');
+  assert.equal(calls.at(-1).headers.get('Authorization'),'Bearer '+'b'.repeat(64));
+  const normalFetch=w.fetch;w.fetch=async(url,opts)=>{const r=await normalFetch(url,opts);const j=await r.json();return Response.json({...j,canEdit:false});};
+  await h.loadRemoteLayout();assert.equal(h.canManage(),false);assert.equal(w.document.getElementById('eqName').disabled,true);
+  assert.equal(w.document.querySelector('[data-management-access]'),null);
  }finally{dom.window.close();}
 });

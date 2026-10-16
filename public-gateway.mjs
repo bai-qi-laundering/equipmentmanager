@@ -28,7 +28,7 @@ http.createServer(async(req,res)=>{
   /^\/api\/device-checklists\/[^/]+$/.test(url.pathname)||
   /^\/api\/device-checklist-photos\/[^/]+\/(?:image|thumbnail)$/.test(url.pathname)
  );
- const deviceWriteRoute=req.method==='POST'&&['/api/device-inspection-sync','/api/device-checklist-photos'].includes(url.pathname);
+ const deviceWriteRoute=(req.method==='POST'&&(['/api/device-inspection-sync','/api/device-checklist-photos','/api/editor-inspection-sync'].includes(url.pathname)||/^\/api\/editor-repairs\/[^/]+$/.test(url.pathname)))||(req.method==='PUT'&&url.pathname==='/api/editor-layout');
  if(url.pathname!=='/api/health'&&!pushPublicRoute&&!deviceReadRoute&&!deviceWriteRoute){
   const match=/^Bearer ([a-f0-9]{64})$/i.exec(req.headers.authorization||'');
   if(!match){res.writeHead(401);return res.end(JSON.stringify({error:'access_required'}));}
