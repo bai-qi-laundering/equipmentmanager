@@ -16,20 +16,25 @@ GitHub Pages 提供前端，公開閘道轉送 API，NAS PostgreSQL 儲存設備
 
 ## NAS 更新
 
-先把以下命令放入原有 DSM「使用者定義的指令碼」任務並執行一次：
+此更新方式不需要 NAS 安裝 Git，也不要求專案目錄是 Git checkout。將以下內容放入 DSM 更新任務：
 
 ```sh
 set -eu
 PATH=/usr/local/bin:/usr/bin:/bin:/var/packages/ContainerManager/target/usr/bin:$PATH
 export PATH
 cd /volume1/docker/equipment-manager
-git pull --ff-only
+exec > update-system.log 2>&1
+date
+curl -fL --connect-timeout 20 --max-time 120 https://raw.githubusercontent.com/bai-qi-laundering/equipmentmanager/main/update-system.sh -o update-system.sh.download
+mv update-system.sh.download update-system.sh
 sh update-system.sh
 ```
 
-更新腳本會先建立含照片的資料庫備份，再建置 API 及重啟公開閘道。首次缺少設定時會產生 VAPID 金鑰、啟用 NAS 提醒，並使用既有公開存取金鑰作為 QR 管理員授權碼；既有 `.env` 設定保留，不列印金鑰。
+腳本下載固定的 V19 提交 `0e4e9d5eaee2a5056e980db78cd6436d31048fe8`，所有程式下載及語法檢查成功後，先備份含照片的完整資料庫及舊程式，再更新 API 和公開閘道。下載失敗不替換程式；不重建資料庫服務。原有 `docker-compose.yml`、`.env`、`public-api.env` 及 `data/postgres` 保留。
 
-若 git 提示本機修改衝突，腳本會停止，請保留原資料庫密碼並處理衝突後再更新。不要刪除 `data/postgres`，不要執行 `docker compose down -v`。若已有設定但值留白，需補齊後重建 API。
+推播設定優先沿用執行中 API 容器的金鑰，即使原先直接寫在 Compose 也保留，避免既有手機訂閱失效。僅在沒有任何金鑰時才產生新的金鑰。設定存於僅 NAS 可讀的 `equipment-push.env`，透過 `docker-compose.update.yml` 套用；日後也請使用本更新腳本重建 API，避免遺漏這份 overlay。首次沒有管理員授權碼時會沿用既有公開存取金鑰。
+
+執行日誌：`update-system.log`。成功時會印出健康檢查及「更新完成」。資料庫／舊程式備份位於 `backups/update-日期時間/`。請勿將私密設定檔或備份上傳 GitHub，不要執行 `docker compose down -v`。
 
 健康檢查：`https://fileserver.tailbb066f.ts.net:8443/api/health` 應包含 `deviceWriteVersion:1`、`repairVersion:1`。`reminders.enabled:true` 代表 NAS 提醒工作已啟用，仍需組長的有效訂閱才能收到通知。GitHub 更新不會自動更新 NAS。
 
@@ -39,7 +44,7 @@ sh update-system.sh
 
 組長需從 iPhone 主畫面 App 允許通知並完成一次性 QR 註冊，再按「傳送測試通知」。LINE 發訊未加入；此版使用 Web Push。API 必須持續運作；暫時失敗會重試，推播服務接受通知不等於裝置保證響鈴。
 
-設定：`INSPECTION_PUSH_ENABLED=true`、`VAPID_PUBLIC_KEY`、`VAPID_PRIVATE_KEY`、`VAPID_SUBJECT` 及 `PUSH_ADMIN_TOKEN` 由 Compose `.env` 載入。已有 VAPID 金鑰不可隨意更換，否則舊訂閱需重新註冊。
+更新腳本透過專用 overlay 啟用 `INSPECTION_PUSH_ENABLED=true`，並沿用 `VAPID_PUBLIC_KEY`、`VAPID_PRIVATE_KEY`、`VAPID_SUBJECT` 及 `PUSH_ADMIN_TOKEN`。已有 VAPID 金鑰不可隨意更換，否則舊訂閱需重新註冊。
 
 ## 完整備份
 
@@ -66,3 +71,5 @@ npm test
 ```
 
 測試包含 PostgreSQL 相容引擎的 API 整合、閘道權限、重試去重、舊維修遷移、提醒對象及時間、DOM 操作與管理／員工介面。測試推播使用替身，不會發送真實訊息；DOM 測試不代替實機 iPhone 視覺、手勢與通知驗證。
+
+免 Git 更新腳本的隔離測試：`python tests/test_nas_update.py`（不連 NAS、不執行真實 Docker、不下載網路檔案）。

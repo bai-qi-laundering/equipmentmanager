@@ -4,3 +4,7 @@ public-api.env
 data/
 backups/
 *.log
+equipment-push.env
+docker-compose.update.yml
+.equipment-update.*
+equipment-update-version
