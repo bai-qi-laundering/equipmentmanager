@@ -19221,6 +19221,67 @@ void main() {
       return this;
     }
   };
+  var RingGeometry = class _RingGeometry extends BufferGeometry {
+    constructor(innerRadius = 0.5, outerRadius = 1, thetaSegments = 32, phiSegments = 1, thetaStart = 0, thetaLength = Math.PI * 2) {
+      super();
+      this.type = "RingGeometry";
+      this.parameters = {
+        innerRadius,
+        outerRadius,
+        thetaSegments,
+        phiSegments,
+        thetaStart,
+        thetaLength
+      };
+      thetaSegments = Math.max(3, thetaSegments);
+      phiSegments = Math.max(1, phiSegments);
+      const indices = [];
+      const vertices = [];
+      const normals = [];
+      const uvs = [];
+      let radius = innerRadius;
+      const radiusStep = (outerRadius - innerRadius) / phiSegments;
+      const vertex2 = new Vector3();
+      const uv = new Vector2();
+      for (let j = 0; j <= phiSegments; j++) {
+        for (let i = 0; i <= thetaSegments; i++) {
+          const segment = thetaStart + i / thetaSegments * thetaLength;
+          vertex2.x = radius * Math.cos(segment);
+          vertex2.y = radius * Math.sin(segment);
+          vertices.push(vertex2.x, vertex2.y, vertex2.z);
+          normals.push(0, 0, 1);
+          uv.x = (vertex2.x / outerRadius + 1) / 2;
+          uv.y = (vertex2.y / outerRadius + 1) / 2;
+          uvs.push(uv.x, uv.y);
+        }
+        radius += radiusStep;
+      }
+      for (let j = 0; j < phiSegments; j++) {
+        const thetaSegmentLevel = j * (thetaSegments + 1);
+        for (let i = 0; i < thetaSegments; i++) {
+          const segment = i + thetaSegmentLevel;
+          const a = segment;
+          const b = segment + thetaSegments + 1;
+          const c = segment + thetaSegments + 2;
+          const d = segment + 1;
+          indices.push(a, b, d);
+          indices.push(b, c, d);
+        }
+      }
+      this.setIndex(indices);
+      this.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+      this.setAttribute("normal", new Float32BufferAttribute(normals, 3));
+      this.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
+    }
+    copy(source) {
+      super.copy(source);
+      this.parameters = Object.assign({}, source.parameters);
+      return this;
+    }
+    static fromJSON(data) {
+      return new _RingGeometry(data.innerRadius, data.outerRadius, data.thetaSegments, data.phiSegments, data.thetaStart, data.thetaLength);
+    }
+  };
   var SphereGeometry = class _SphereGeometry extends BufferGeometry {
     constructor(radius = 1, widthSegments = 32, heightSegments = 16, phiStart = 0, phiLength = Math.PI * 2, thetaStart = 0, thetaLength = Math.PI) {
       super();
@@ -23076,7 +23137,7 @@ void main() {
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
     pmrem.dispose();
     const renderPass = new RenderPass(scene, camera);
-    bloomPass = new UnrealBloomPass(new Vector2(innerWidth, innerHeight), 0.42, 0.45, 0.88);
+    bloomPass = new UnrealBloomPass(new Vector2(innerWidth, innerHeight), 0.28, 0.38, 0.86);
     composer = new EffectComposer(renderer);
     composer.addPass(renderPass);
     composer.addPass(bloomPass);
@@ -23100,8 +23161,8 @@ void main() {
       tween = null;
       spin = null;
     });
-    scene.add(new AmbientLight(12044760, 0.38));
-    scene.add(new HemisphereLight(14150911, 1056816, 0.48));
+    scene.add(new AmbientLight(12044760, 0.55));
+    scene.add(new HemisphereLight(14150911, 1056816, 0.62));
     const sun = new DirectionalLight(16251903, 2.35);
     sun.position.set(10, 22, 8);
     sun.castShadow = true;
@@ -23116,10 +23177,15 @@ void main() {
     sun.shadow.normalBias = 0.035;
     scene.add(sun, sun.target);
     sun.target.position.set(0, 0, 1);
-    const rim = new DirectionalLight(8050687, 0.85);
+    const rim = new DirectionalLight(8050687, 0.55);
     rim.position.set(-14, 9, -10);
     scene.add(rim);
-    selectLight = new PointLight(16777215, 0, 7, 2);
+    for (const [x, z] of [[-4, -3], [6, 4], [1, 12]]) {
+      const fill = new PointLight(14149878, 4.5, 26, 2);
+      fill.position.set(x, 5.8, z);
+      scene.add(fill);
+    }
+    selectLight = new PointLight(16777215, 0, 5.5, 2);
     selectLight.castShadow = false;
     scene.add(selectLight);
     resize();
@@ -23131,8 +23197,8 @@ void main() {
     MAT.rubber = new MeshStandardMaterial({ color: 1054236, metalness: 0.15, roughness: 0.86 });
     MAT.glass = new MeshStandardMaterial({
       color: 1325132,
-      emissive: 1464430,
-      emissiveIntensity: 0.45,
+      emissive: 864320,
+      emissiveIntensity: 0.12,
       metalness: 0.08,
       roughness: 0.08,
       transparent: true,
@@ -23185,8 +23251,8 @@ void main() {
         g.fillStyle = (x / tile + y / tile) % 2 === 0 ? "#143044" : "#102838";
         g.fillRect(x + 2, y + 2, tile - 4, tile - 4);
         const major = x % (tile * 4) === 0 || y % (tile * 4) === 0;
-        g.strokeStyle = major ? "rgba(150, 225, 255, .8)" : "rgba(90, 180, 220, .45)";
-        g.lineWidth = major ? 2 : 1;
+        g.strokeStyle = major ? "rgba(120, 170, 200, .22)" : "rgba(80, 130, 160, .12)";
+        g.lineWidth = 1;
         g.strokeRect(x + 1, y + 1, tile - 2, tile - 2);
       }
     }
@@ -23249,50 +23315,16 @@ void main() {
       opacity: 0.28,
       side: DoubleSide,
       emissive: 799048,
-      emissiveIntensity: 0.35
+      emissiveIntensity: 0.08
     });
     const wallH = 1.25;
     addBox(scene, w, wallH, 0.08, wallMat, cx, wallH / 2, HALL.minZ, false);
     addBox(scene, w, wallH, 0.08, wallMat, cx, wallH / 2, HALL.maxZ, false);
     addBox(scene, 0.08, wallH, d, wallMat, HALL.minX, wallH / 2, cz, false);
     addBox(scene, 0.08, wallH, d, wallMat, HALL.maxX, wallH / 2, cz, false);
-    const stripMat = new MeshStandardMaterial({
-      color: 14678015,
-      emissive: 14219007,
-      emissiveIntensity: 2.4,
-      toneMapped: false
-    });
-    for (const z of [-8.5, -2.2, 4.2, 10.5]) {
-      const strip = addBox(scene, 22.5, 0.06, 0.14, stripMat, cx, 6.55, z, false);
-      strip.receiveShadow = false;
-      const lamp = new PointLight(14020863, 10, 14, 2);
-      lamp.position.set(cx, 6.1, z);
-      scene.add(lamp);
-    }
-    const ribMat = new MeshStandardMaterial({
-      color: 3790847,
-      emissive: 3790847,
-      emissiveIntensity: 0.55,
-      toneMapped: false
-    });
-    for (const x of [HALL.minX + 0.35, HALL.maxX - 0.35]) {
-      addBox(scene, 0.045, HALL.height * 0.92, 0.045, ribMat, x, HALL.height * 0.46, cz, false);
-    }
-    for (const z of [HALL.minZ + 0.35, HALL.maxZ - 0.35]) {
-      addBox(scene, 0.045, HALL.height * 0.92, 0.045, ribMat, cx, HALL.height * 0.46, z, false);
-    }
     const tray = new MeshStandardMaterial({ color: 2373702, metalness: 0.8, roughness: 0.35 });
     addBox(scene, 0.18, 0.08, d * 0.72, tray, -2.4, 6.35, cz, false);
     addBox(scene, 0.18, 0.08, d * 0.72, tray, 6.4, 6.35, cz, false);
-    const aisleMat = new MeshStandardMaterial({
-      color: 4841727,
-      emissive: 4841727,
-      emissiveIntensity: 1.35,
-      toneMapped: false
-    });
-    addBox(scene, 0.045, 0.012, 13.5, aisleMat, -6.15, 0.03, -2.4, false);
-    addBox(scene, 0.045, 0.012, 11, aisleMat, 2.15, 0.03, -1.5, false);
-    addBox(scene, 8, 0.012, 0.04, aisleMat, 1.2, 0.03, 12.4, false);
     addDeck(4.55, 4.55, 2.7, 1.55, 2.2);
     addPosts(4.55, 4.55, 2.7, 1.55, 2.2, "front");
     addLadder(3.35, 3.55, 2.2);
@@ -23301,14 +23333,9 @@ void main() {
     const railY = 4.35;
     const railZ = 73 * 0.05;
     addBox(scene, 5.3, 0.08, 0.14, MAT.steel, 4.55, railY, railZ);
-    addBox(scene, 5.3, 0.02, 0.05, aisleMat, 4.55, railY - 0.06, railZ, false);
     for (const x of [2.05, 7.05]) {
       addBox(scene, 0.1, railY, 0.1, MAT.steel, x, railY / 2, railZ);
     }
-    const door = new MeshStandardMaterial({ color: 8316671, emissive: 8316671, emissiveIntensity: 1.1, toneMapped: false });
-    addBox(scene, 1.5, 0.04, 0.04, door, -4.2, 2.15, HALL.minZ + 0.08, false);
-    addBox(scene, 0.04, 2.2, 0.04, door, -4.95, 1.1, HALL.minZ + 0.08, false);
-    addBox(scene, 0.04, 2.2, 0.04, door, -3.45, 1.1, HALL.minZ + 0.08, false);
     const zones = [
       ["\u51FA\u8CA8", -8.2, -13.2],
       ["\u6298\u758A", -11.5, -3.2],
@@ -23332,11 +23359,6 @@ void main() {
   function addDeck(x, z, w, d, y) {
     const slab = addBox(scene, w, 0.06, d, MAT.deck, x, y - 0.04, z, false);
     slab.castShadow = false;
-    const edge = new MeshStandardMaterial({ color: 4841727, emissive: 4841727, emissiveIntensity: 1.5, toneMapped: false });
-    addBox(scene, w + 0.04, 0.015, 0.025, edge, x, y - 0.07, z - d / 2, false);
-    addBox(scene, w + 0.04, 0.015, 0.025, edge, x, y - 0.07, z + d / 2, false);
-    addBox(scene, 0.025, 0.015, d, edge, x - w / 2, y - 0.07, z, false);
-    addBox(scene, 0.025, 0.015, d, edge, x + w / 2, y - 0.07, z, false);
   }
   function addPosts(x, z, w, d, y, mode) {
     const corners = [
@@ -23374,22 +23396,28 @@ void main() {
     vertical: { w: 1.12, d: 0.78, h: 1.46, build: buildWasher },
     dryer: { w: 1.02, d: 1.12, h: 1.26, build: buildDryer },
     manganese: { w: 2.15, d: 1.05, h: 1.12, build: buildFilters },
-    crane: { w: 0.72, d: 0.5, h: 1.05, centerY: -0.52, beaconY: -0.95, floating: true, noBeam: true, build: buildCrane },
+    crane: { w: 0.72, d: 0.5, h: 1.05, centerY: -0.52, beaconY: -0.95, floating: true, build: buildCrane },
     boiler: { w: 1.35, d: 1.2, h: 1.85, build: buildBoiler },
     water: { w: 1.9, d: 1.3, h: 1.15, build: buildWater },
     tank: { w: 1.2, d: 1.2, h: 2.15, build: buildTank }
   };
+  function addDot(group, em, x, y, z, radius = 0.055) {
+    const dot = new Mesh(new SphereGeometry(radius, 16, 12), em);
+    dot.position.set(x, y, z);
+    dot.castShadow = false;
+    group.add(dot);
+  }
   function buildWasher(group, spec, em) {
     addBox(group, spec.w, spec.h, spec.d, MAT.chassis, 0, spec.h / 2, 0);
     addBox(group, spec.w * 0.72, spec.h * 0.16, 0.02, MAT.panel, 0, spec.h * 0.82, spec.d / 2 + 0.012, false);
-    const drum = new Mesh(new TorusGeometry(Math.min(spec.w, spec.h) * 0.24, 0.03, 10, 28), em);
+    const drum = new Mesh(new TorusGeometry(Math.min(spec.w, spec.h) * 0.24, 0.03, 10, 28), MAT.steel);
     drum.position.set(0, spec.h * 0.48, spec.d / 2 + 0.02);
     drum.castShadow = false;
     group.add(drum);
     const glass = new Mesh(new CircleGeometry(Math.min(spec.w, spec.h) * 0.2, 24), MAT.glass);
     glass.position.set(0, spec.h * 0.48, spec.d / 2 + 0.028);
     group.add(glass);
-    addBox(group, spec.w * 0.78, 0.04, 0.02, em, 0, spec.h * 0.92, spec.d / 2 + 0.02, false);
+    addDot(group, em, spec.w * 0.34, spec.h * 0.86, spec.d / 2 + 0.05);
   }
   function buildDryer(group, spec, em) {
     buildWasher(group, spec, em);
@@ -23405,26 +23433,26 @@ void main() {
       roller.castShadow = true;
       group.add(roller);
     }
-    addBox(group, spec.w * 0.55, 0.035, 0.02, em, 0, spec.h * 0.42, spec.d / 2 + 0.01, false);
+    addDot(group, em, spec.w * 0.38, spec.h * 0.42, spec.d / 2 + 0.05);
   }
   function buildLine(group, spec, em) {
     addBox(group, spec.w, spec.h * 0.42, spec.d, MAT.chassis, 0, spec.h * 0.22, 0);
     addBox(group, spec.w * 0.9, 0.07, spec.d * 0.68, MAT.steel, 0, spec.h * 0.48, 0);
-    addBox(group, spec.w * 0.72, 0.025, spec.d * 0.16, em, 0, spec.h * 0.54, 0, false);
+    addBox(group, spec.w * 0.72, 0.025, spec.d * 0.16, MAT.panel, 0, spec.h * 0.54, 0, false);
     addBox(group, spec.w * 0.1, spec.h, spec.d, MAT.panel, -spec.w * 0.44, spec.h / 2, 0);
-    addBox(group, 0.035, spec.h * 0.45, 0.02, em, spec.w * 0.47, spec.h * 0.55, spec.d / 2, false);
+    addDot(group, em, spec.w * 0.42, spec.h * 0.62, spec.d / 2 + 0.05);
   }
   function buildPress(group, spec, em) {
     addBox(group, spec.w, spec.h * 0.38, spec.d, MAT.chassis, 0, spec.h * 0.2, 0);
     addBox(group, spec.w * 0.16, spec.h * 0.62, spec.d * 0.16, MAT.steel, 0, spec.h * 0.52, -spec.d * 0.12);
     addBox(group, spec.w * 0.68, 0.07, spec.d * 0.5, MAT.steel, 0, spec.h * 0.84, spec.d * 0.02);
-    addBox(group, spec.w * 0.5, 0.03, 0.02, em, 0, spec.h * 0.32, spec.d / 2 + 0.01, false);
+    addDot(group, em, spec.w * 0.28, spec.h * 0.34, spec.d / 2 + 0.05);
   }
   function buildPressZone(group, spec, em) {
     addBox(group, spec.w, spec.h * 0.28, spec.d, MAT.chassis, 0, spec.h * 0.16, 0);
     for (const x of [-0.38, 0.38]) {
       addBox(group, spec.w * 0.22, spec.h * 0.7, spec.d * 0.45, MAT.panel, x, spec.h * 0.55, 0);
-      addBox(group, spec.w * 0.2, 0.04, 0.02, em, x, spec.h * 0.9, spec.d / 2, false);
+      addDot(group, em, x, spec.h * 0.9, spec.d / 2 + 0.05);
     }
   }
   function buildTable(group, spec, em) {
@@ -23434,18 +23462,18 @@ void main() {
         addBox(group, 0.06, spec.h - 0.08, 0.06, MAT.chassis, x * (spec.w / 2 - 0.1), (spec.h - 0.08) / 2, z * (spec.d / 2 - 0.1));
       }
     }
-    addBox(group, spec.w * 0.28, 0.025, 0.02, em, 0, spec.h + 0.01, spec.d / 2, false);
+    addDot(group, em, spec.w * 0.28, spec.h + 0.05, 0);
   }
   function buildPacker(group, spec, em) {
     addBox(group, spec.w, spec.h * 0.72, spec.d, MAT.chassis, 0, spec.h * 0.36, 0);
     addBox(group, spec.w * 0.2, spec.h * 0.55, spec.d * 0.2, MAT.steel, spec.w * 0.28, spec.h * 0.78, 0);
     addBox(group, spec.w * 0.55, 0.05, spec.d * 0.35, MAT.steel, 0, spec.h * 0.98, 0);
-    addBox(group, spec.w * 0.4, 0.03, 0.02, em, 0, spec.h * 0.5, spec.d / 2 + 0.01, false);
+    addDot(group, em, -spec.w * 0.22, spec.h * 0.55, spec.d / 2 + 0.05);
   }
   function buildBooth(group, spec, em) {
     addBox(group, spec.w, spec.h, spec.d, MAT.panel, 0, spec.h / 2, 0);
     addBox(group, spec.w * 0.38, spec.h * 0.62, 0.03, MAT.chassis, 0, spec.h * 0.38, spec.d / 2 + 0.01);
-    addBox(group, spec.w * 0.45, 0.035, 0.02, em, 0, spec.h * 0.9, spec.d / 2 + 0.02, false);
+    addDot(group, em, spec.w * 0.28, spec.h * 0.88, spec.d / 2 + 0.05);
   }
   function buildFan(group, spec, em) {
     addBox(group, spec.w, spec.h * 0.35, spec.d, MAT.chassis, 0, spec.h * 0.18, 0);
@@ -23453,11 +23481,12 @@ void main() {
     fan.position.y = spec.h * 0.62;
     fan.castShadow = true;
     group.add(fan);
-    const ring = new Mesh(new TorusGeometry(spec.w * 0.28, 0.02, 8, 24), em);
+    const ring = new Mesh(new TorusGeometry(spec.w * 0.28, 0.02, 8, 24), MAT.steel);
     ring.rotation.x = Math.PI / 2;
     ring.position.y = spec.h * 0.74;
     ring.castShadow = false;
     group.add(ring);
+    addDot(group, em, spec.w * 0.32, spec.h * 0.28, spec.d / 2 + 0.04);
   }
   function buildCompressor(group, spec, em) {
     const tank = new Mesh(new CylinderGeometry(0.22, 0.22, spec.w * 0.7, 20), MAT.steel);
@@ -23467,7 +23496,7 @@ void main() {
     group.add(tank);
     addBox(group, spec.w, 0.08, spec.d, MAT.chassis, 0, 0.06, 0);
     addBox(group, 0.38, 0.42, 0.38, MAT.panel, spec.w * 0.28, 0.32, 0);
-    addBox(group, 0.08, 0.08, 0.02, em, spec.w * 0.28, 0.48, 0.2, false);
+    addDot(group, em, spec.w * 0.28, 0.52, 0.22, 0.045);
   }
   function buildFilters(group, spec, em) {
     addBox(group, spec.w, 0.1, spec.d, MAT.chassis, 0, 0.08, 0);
@@ -23477,14 +23506,14 @@ void main() {
       tank.castShadow = true;
       group.add(tank);
     }
-    addBox(group, spec.w * 0.7, 0.04, 0.03, em, 0, 0.16, spec.d / 2, false);
+    addDot(group, em, 0, 0.2, spec.d / 2 + 0.05);
   }
   function buildCrane(group, spec, em) {
     addBox(group, 0.55, 0.1, 0.28, MAT.steel, 0, -0.02, 0, false);
     addBox(group, 0.02, 0.55, 0.02, MAT.steel, -0.12, -0.36, 0);
     addBox(group, 0.02, 0.55, 0.02, MAT.steel, 0.12, -0.36, 0);
     addBox(group, 0.5, 0.32, 0.36, MAT.chassis, 0, -0.72, 0);
-    addBox(group, 0.36, 0.035, 0.02, em, 0, -0.58, 0.2, false);
+    addDot(group, em, 0, -0.55, 0.22, 0.045);
   }
   function buildBoiler(group, spec, em) {
     const r = spec.w * 0.34;
@@ -23496,7 +23525,7 @@ void main() {
     stack.position.set(r * 0.35, spec.h * 0.86, 0);
     stack.castShadow = true;
     group.add(stack);
-    addBox(group, r * 1.3, 0.045, 0.03, em, 0, spec.h * 0.45, r + 0.02, false);
+    addDot(group, em, 0, spec.h * 0.45, r + 0.06);
   }
   function buildTank(group, spec, em) {
     const r = spec.w * 0.4;
@@ -23507,7 +23536,7 @@ void main() {
     const cap = new Mesh(new SphereGeometry(r * 0.98, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), MAT.chassis);
     cap.position.y = spec.h * 0.84;
     group.add(cap);
-    addBox(group, r, 0.04, 0.03, em, 0, spec.h * 0.35, r + 0.02, false);
+    addDot(group, em, 0, spec.h * 0.35, r + 0.06);
   }
   function buildWater(group, spec, em) {
     addBox(group, spec.w, 0.12, spec.d, MAT.chassis, 0, 0.08, 0);
@@ -23522,7 +23551,7 @@ void main() {
     pipe.rotation.z = Math.PI / 2;
     pipe.position.set(0, 0.78, 0);
     group.add(pipe);
-    addBox(group, 0.16, 0.05, 0.02, em, -0.45, 0.62, 0.24, false);
+    addDot(group, em, -0.45, 0.64, 0.26, 0.045);
   }
   function buildOffice(group, spec, em) {
     addBox(group, spec.w, spec.h, spec.d, MAT.chassis, 0, spec.h / 2, 0);
@@ -23531,7 +23560,7 @@ void main() {
       addBox(group, spec.w * 0.7, spec.h * 0.18, 0.03, MAT.glass, 0, spec.h * floor, spec.d / 2 + 0.012, false);
       addBox(group, 0.03, spec.h * 0.18, spec.d * 0.55, MAT.glass, spec.w / 2 + 0.012, spec.h * floor, 0, false);
     }
-    addBox(group, spec.w * 0.32, 0.035, 0.02, em, spec.w * 0.22, spec.h * 0.94, spec.d / 2 + 0.02, false);
+    addDot(group, em, spec.w * 0.22, spec.h * 0.94, spec.d / 2 + 0.06);
   }
   function buildMachines() {
     const glowMap = glowTexture();
@@ -23556,7 +23585,7 @@ void main() {
       spec.build(group, spec, em);
       const centerY = spec.centerY ?? spec.h / 2;
       const beaconY = spec.beaconY ?? spec.h + 0.07;
-      const beacon = new Mesh(new SphereGeometry(0.11, 16, 12), em);
+      const beacon = new Mesh(new SphereGeometry(0.07, 16, 12), em);
       beacon.position.set(0, beaconY, 0);
       beacon.castShadow = false;
       group.add(beacon);
@@ -23567,11 +23596,11 @@ void main() {
         blending: AdditiveBlending,
         depthWrite: false,
         toneMapped: false,
-        opacity: 0.9
+        opacity: 0.72
       });
       const sprite = new Sprite(spriteMat);
       sprite.position.copy(beacon.position);
-      sprite.scale.setScalar(1.15);
+      sprite.scale.setScalar(0.46);
       group.add(sprite);
       const edges = new LineSegments(
         new EdgesGeometry(new BoxGeometry(spec.w + 0.12, spec.h + 0.12, spec.d + 0.12)),
@@ -23585,32 +23614,40 @@ void main() {
       );
       shell.position.y = centerY;
       group.add(shell);
+      const footprint = 0.5 * Math.hypot(spec.w, spec.d);
+      const ringY = spec.floating ? -0.06 : 0.03;
       const ring = new Mesh(
-        new TorusGeometry(0.5 * Math.hypot(spec.w, spec.d) + 0.12, 0.014, 8, 48),
-        em
+        new RingGeometry(footprint + 0.05, footprint + 0.2, 64),
+        new MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0,
+          side: DoubleSide,
+          depthWrite: false,
+          blending: AdditiveBlending,
+          toneMapped: false
+        })
       );
-      ring.rotation.x = Math.PI / 2;
-      ring.position.y = spec.floating ? centerY : 0.045;
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = ringY;
       ring.visible = false;
-      ring.castShadow = false;
       group.add(ring);
-      let beam = null;
-      if (!spec.noBeam) {
-        beam = new Mesh(
-          new CylinderGeometry(0.035, 0.16, 2.3, 16, 1, true),
-          new MeshBasicMaterial({
-            color,
-            transparent: true,
-            opacity: 0,
-            side: DoubleSide,
-            depthWrite: false,
-            blending: AdditiveBlending,
-            toneMapped: false
-          })
-        );
-        beam.position.y = beaconY + 1.05;
-        group.add(beam);
-      }
+      const halo = new Mesh(
+        new CircleGeometry(footprint + 0.16, 48),
+        new MeshBasicMaterial({
+          map: glowMap,
+          color,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+          blending: AdditiveBlending,
+          toneMapped: false
+        })
+      );
+      halo.rotation.x = -Math.PI / 2;
+      halo.position.y = ringY - 4e-3;
+      halo.visible = false;
+      group.add(halo);
       const hit = new Mesh(
         new BoxGeometry(Math.max(spec.w, 0.7), Math.max(spec.h, 0.7), Math.max(spec.d, 0.7)),
         new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
@@ -23630,7 +23667,7 @@ void main() {
         selectDevice(device.id);
       });
       labelRoot.appendChild(label);
-      const record = { device, spec, group, em, sprite, spriteMat, edges, shell, ring, beam, beacon, label, centerY };
+      const record = { device, spec, group, em, sprite, spriteMat, edges, shell, ring, halo, beacon, label, centerY };
       machineViews.push(record);
       machineById.set(device.id, record);
       scene.add(group);
@@ -24013,24 +24050,26 @@ void main() {
     for (const record of machineViews) {
       const selected = record.device.id === selectedId;
       const key = indicatorOf(record.device);
-      let intensity = key === "stopped" ? 0.28 : key === "ok" ? 1.15 : 1.4;
-      if (selected) intensity = 2.6 + 1.8 * (0.5 + 0.5 * Math.sin(time * 3.5));
-      else if (key === "alarm") intensity = 0.45 + 1.7 * (0.5 + 0.5 * Math.sin(time * 6.4));
-      else if (key === "warn") intensity = 1.15 + 0.45 * Math.sin(time * 2.3);
-      else if (key === "due") intensity = 1.05 + 0.35 * Math.sin(time * 2);
+      const pulse = 0.5 + 0.5 * Math.sin(time * 3.5);
+      let intensity = key === "stopped" ? 0.35 : key === "ok" ? 0.8 : 1.05;
+      if (selected) intensity = 2.1 + 1.1 * pulse;
+      else if (key === "alarm") intensity = 0.55 + 1.15 * (0.5 + 0.5 * Math.sin(time * 6.4));
+      else if (key === "warn") intensity = 0.9 + 0.35 * Math.sin(time * 2.3);
+      else if (key === "due") intensity = 0.85 + 0.25 * Math.sin(time * 2);
       record.em.emissiveIntensity = intensity;
-      const halo = selected ? 2.1 + 0.7 * Math.sin(time * 3.5) : key === "alarm" ? 1.35 + 0.55 * Math.sin(time * 6.4) : 1.05;
-      record.sprite.scale.setScalar(halo);
-      record.spriteMat.opacity = selected ? 1 : key === "stopped" ? 0.35 : 0.8;
+      const dotGlow = selected ? 1.05 + 0.28 * Math.sin(time * 3.5) : key === "alarm" ? 0.62 + 0.18 * Math.sin(time * 6.4) : 0.42;
+      record.sprite.scale.setScalar(dotGlow);
+      record.spriteMat.opacity = selected ? 0.95 : key === "stopped" ? 0.28 : 0.62;
       record.edges.visible = selected;
       record.shell.visible = selected;
       record.ring.visible = selected;
+      record.halo.visible = selected;
       if (selected) {
-        const pulse = 0.5 + 0.5 * Math.sin(time * 3.5);
-        record.edges.material.opacity = 0.55 + 0.45 * pulse;
-        record.shell.material.opacity = 0.12 + 0.16 * pulse;
-        if (record.beam) record.beam.material.opacity = 0.05 + 0.08 * pulse;
-      } else if (record.beam) record.beam.material.opacity = 0;
+        record.edges.material.opacity = 0.5 + 0.4 * pulse;
+        record.shell.material.opacity = 0.16 + 0.18 * pulse;
+        record.ring.material.opacity = 0.55 + 0.4 * pulse;
+        record.halo.material.opacity = 0.22 + 0.16 * pulse;
+      }
       record.label.classList.toggle("on", selected || record.device.id === hoveredId);
     }
     if (selectedId && machineById.get(selectedId)) {
@@ -24038,7 +24077,7 @@ void main() {
       record.beacon.getWorldPosition(tmp);
       selectLight.position.copy(tmp);
       selectLight.color.copy(record.em.color);
-      selectLight.intensity = 7 + 4 * (0.5 + 0.5 * Math.sin(time * 3.5));
+      selectLight.intensity = 3.2 + 1.6 * (0.5 + 0.5 * Math.sin(time * 3.5));
     } else selectLight.intensity = 0;
   }
   function updateLabels() {
