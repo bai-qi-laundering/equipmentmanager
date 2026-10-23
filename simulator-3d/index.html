@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#03070d">
+<title>百麒設備監控台（模擬）</title>
+<style>
+:root {
+  --bg: #03070d;
+  --text: #e5f3fb;
+  --muted: #8eabc0;
+  --line: rgba(92, 196, 255, .32);
+  --cyan: #3ad7ff;
+  --ok: #2ee6a6;
+  --warn: #ffc14a;
+  --alarm: #ff4b4d;
+  --off: #8b98a6;
+  --due: #3ec6ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
+  font-family: "PingFang TC", "Noto Sans CJK TC", "Noto Sans TC", "Microsoft JhengHei", "WenQuanYi Micro Hei", "Droid Sans Fallback", sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+#view { position: fixed; inset: 0; }
+#view canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#view::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 62%, rgba(0, 0, 0, .28) 100%); }
+#labels { position: fixed; inset: 0; pointer-events: none; z-index: 6; }
+.label { position: absolute; transform: translate(-50%, -130%); display: flex; align-items: center; gap: 6px;
+  max-width: 180px; padding: 3px 8px 3px 6px; border-radius: 999px; border: 1px solid var(--c, var(--cyan));
+  background: rgba(4, 12, 22, .84); color: #f3fbff; font-size: 11px; line-height: 1.2; white-space: nowrap;
+  pointer-events: auto; cursor: pointer; box-shadow: 0 0 14px color-mix(in srgb, var(--c, var(--cyan)) 45%, transparent); }
+.label i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); flex: none; }
+.label b { font-weight: 650; overflow: hidden; text-overflow: ellipsis; }
+.label.on { box-shadow: 0 0 18px var(--c); }
+.glass { background: linear-gradient(180deg, rgba(7, 18, 32, .86), rgba(4, 10, 18, .78));
+  border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(190, 230, 255, .14);
+  backdrop-filter: blur(16px); }
+.top { position: fixed; z-index: 20; top: 12px; left: 12px; right: 12px; min-height: 64px; display: flex; align-items: center; gap: 14px;
+  padding: 10px 14px; border-radius: 16px; }
+.mark { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; letter-spacing: .04em;
+  background: #062033; border: 1px solid var(--cyan); color: var(--cyan); box-shadow: 0 0 16px rgba(58, 215, 255, .35); flex: none; }
+.brand b { display: block; font-size: 15px; letter-spacing: .04em; }
+.brand small, .muted { color: var(--muted); }
+.brand small { font-size: 11px; }
+.stats { display: flex; gap: 8px; margin-left: 8px; }
+.stat { min-width: 64px; padding: 4px 8px; border-radius: 10px; background: rgba(5, 16, 28, .65); border: 1px solid rgba(90, 150, 180, .25); }
+.stat b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 10px; color: var(--muted); }
+.stat.ok b { color: var(--ok); } .stat.warn b { color: var(--warn); } .stat.alarm b { color: var(--alarm); } .stat.off b { color: var(--off); }
+.clock { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
+.clock b { display: block; font-size: 16px; color: var(--cyan); text-shadow: 0 0 12px rgba(58, 215, 255, .45); }
+.clock span { font-size: 11px; color: var(--muted); }
+.badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-size: 11px; border: 1px solid rgba(255, 196, 74, .5); color: #ffd98a; }
+.side { position: fixed; z-index: 20; top: 88px; left: 12px; width: 268px; max-height: calc(100vh - 168px); overflow: auto;
+  padding: 12px; border-radius: 16px; }
+.side h3 { margin: 10px 0 6px; font-size: 12px; font-weight: 700; color: #b7d4e6; }
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.row button, select, .search { background: rgba(8, 28, 46, .9); border: 1px solid rgba(80, 150, 190, .4); border-radius: 9px; padding: 7px 8px; }
+.row button { padding: 6px 8px; font-size: 12px; }
+.row button[aria-pressed="true"] { border-color: var(--cyan); color: white; box-shadow: 0 0 12px rgba(58, 215, 255, .28); background: #0c4568; }
+.search, select { width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: 11px; color: var(--muted); }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; box-shadow: 0 0 8px currentColor; }
+.legend .ok { background: var(--ok); color: var(--ok); } .legend .warn { background: var(--warn); color: var(--warn); }
+.legend .alarm { background: var(--alarm); color: var(--alarm); } .legend .due { background: var(--due); color: var(--due); }
+.legend .off { background: var(--off); color: var(--off); }
+.alert-list { display: flex; flex-direction: column; gap: 6px; }
+.alert-row { display: flex; gap: 8px; align-items: center; text-align: left; width: 100%; padding: 7px 8px; border-radius: 10px;
+  background: rgba(6, 18, 30, .72); border: 1px solid rgba(80, 140, 170, .28); }
+.alert-row[aria-current="true"] { border-color: var(--c, var(--cyan)); box-shadow: 0 0 12px color-mix(in srgb, var(--c) 40%, transparent); }
+.alert-row i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); flex: none; }
+.alert-row b { display: block; font-size: 12px; } .alert-row small { color: var(--muted); font-size: 10px; }
+.dock { position: fixed; z-index: 20; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
+  padding: 8px; border-radius: 14px; max-width: calc(100% - 24px); }
+.dock button { background: rgba(8, 28, 46, .9); border: 1px solid rgba(80, 150, 190, .45); border-radius: 9px; padding: 8px 10px; font-size: 12px; min-height: 36px; }
+.dock button:hover, .row button:hover, .alert-row:hover { border-color: var(--cyan); }
+.bearing { min-width: 72px; text-align: center; color: var(--cyan); font-variant-numeric: tabular-nums; font-size: 12px; }
+.panel { position: fixed; z-index: 25; top: 88px; right: 12px; width: min(360px, calc(100vw - 24px)); max-height: calc(100vh - 110px);
+  overflow: auto; padding: 16px 16px 14px; border-radius: 16px; transform: translateX(115%); transition: transform .35s ease; pointer-events: none;
+  border-color: color-mix(in srgb, var(--accent, var(--cyan)) 70%, transparent); }
+.panel.open { transform: none; pointer-events: auto; }
+html[data-shot] .panel { transition: none; }
+.panel header { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.panel h2 { margin: 2px 0; font-size: 22px; letter-spacing: .02em; }
+.panel .sub { color: var(--muted); font-size: 12px; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.pill { border-radius: 999px; padding: 4px 8px; font-size: 12px; border: 1px solid var(--c, var(--line)); color: var(--c, var(--text));
+  box-shadow: inset 0 0 12px color-mix(in srgb, var(--c, transparent) 25%, transparent); }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid rgba(90, 150, 180, .16); font-size: 12px; }
+.kv span { color: var(--muted); } .kv b { font-weight: 650; text-align: right; }
+.panel h3 { margin: 14px 0 0; font-size: 12px; color: #b7d4e6; }
+.note, .fine, .repair { font-size: 12px; line-height: 1.55; color: #c5d8e6; }
+.fine { color: var(--muted); margin-top: 12px; }
+.repair { padding-top: 8px; border-top: 1px solid rgba(90, 150, 180, .16); }
+.close { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(120, 180, 210, .4); background: rgba(8, 24, 40, .8); font-size: 20px; }
+#hover { position: fixed; z-index: 30; pointer-events: none; padding: 8px 10px; border-radius: 12px; max-width: 240px; }
+#hover b { display: block; } #hover span { color: var(--muted); font-size: 12px; }
+#boot { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: #03070d; transition: opacity .4s ease; }
+#boot.hide { opacity: 0; pointer-events: none; }
+#boot div { text-align: center; } #boot b { display: block; font-size: 20px; letter-spacing: .12em; color: var(--cyan); }
+#boot span { color: var(--muted); font-size: 13px; }
+html[data-shot] #boot { display: none; }
+body.bare .top, body.bare .side, body.bare .dock, body.bare .panel, body.bare #labels { display: none !important; }
+@media (max-width: 860px) {
+  .stats, .badge { display: none; }
+  .side { width: min(230px, calc(100vw - 24px)); max-height: 34vh; }
+  .panel { top: auto; bottom: 74px; max-height: 48vh; }
+  .brand b { font-size: 13px; }
+}
+</style>
+<script>if (new URLSearchParams(location.search).has("shot")) document.documentElement.dataset.shot = "1";</script>
+</head>
+<body>
+<div id="view" aria-label="設備機房三維場景"></div>
+<div id="labels"></div>
+<header class="top glass">
+  <div class="mark">BQ</div>
+  <div class="brand"><b>百麒洗滌廠 · 設備監控台</b><small>機房視角模擬 · 座標沿用正式配置</small></div>
+  <div class="stats" id="stats"></div>
+  <div class="badge">獨立模擬 · 未連接正式系統</div>
+  <div class="clock"><b id="clockTime">--:--:--</b><span id="clockDate">台北時間</span></div>
+</header>
+<aside class="side glass" aria-label="篩選與告警">
+  <input class="search" id="search" placeholder="搜尋名稱或編號" aria-label="搜尋設備">
+  <h3>分類</h3>
+  <select id="typeFilter" aria-label="設備分類"></select>
+  <h3>狀態</h3>
+  <div class="row" id="statusFilters"></div>
+  <h3>指示</h3>
+  <div class="legend">
+    <span><i class="ok"></i>正常</span>
+    <span><i class="due"></i>今日查檢</span>
+    <span><i class="warn"></i>待保養／逾期</span>
+    <span><i class="alarm"></i>維修／異常</span>
+    <span><i class="off"></i>停用</span>
+  </div>
+  <h3 id="listTitle">需關注</h3>
+  <div class="alert-list" id="alertList"></div>
+</aside>
+<aside class="panel glass" id="panel" aria-hidden="true" aria-label="設備資料"></aside>
+<div class="dock glass" aria-label="視角操作">
+  <button type="button" id="viewIso">機房</button>
+  <button type="button" id="viewSide">側視</button>
+  <button type="button" id="viewTop">俯視</button>
+  <button type="button" id="viewSpin">環視一圈</button>
+  <button type="button" id="zoomIn" aria-label="拉近">＋</button>
+  <button type="button" id="zoomOut" aria-label="拉遠">－</button>
+  <button type="button" id="toggleLabels" aria-pressed="false">全部名稱</button>
+  <span class="bearing" id="bearing">方位 0°</span>
+</div>
+<div id="hover" class="glass" hidden></div>
+<div id="boot"><div><b>監控台連線中</b><span>正在建立機房場景</span></div></div>
+<script src="./app.js"></script>
+</body>
+</html>
