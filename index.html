@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes">
-<title>洗滌廠設備地圖</title>
+<title>百麒洗滌廠 3D 設備監控</title>
 <link rel="manifest" href="./manifest.webmanifest">
-<meta name="theme-color" content="#071a2d">
+<meta name="theme-color" content="#060d18">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="百麒設備">
@@ -172,20 +172,21 @@ body.panel-open .equipment-tools{display:none}
 .map-hotspot[data-state="stopped"]::after{content:"停用";background:#4a5560}
 </style>
 </head>
-<body>
-<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">設備地圖 V19 · 查檢清單 V6 · 同步 R4</div><div id="app"><div id="canvas"><div id="flatViewport" aria-label="工廠設備地圖"><div id="flatMap"><img id="flatImage" src="factory-map-clean-v13.svg" alt="已確認的工廠設備配置" width="1024" height="1536" draggable="false" decoding="async" fetchpriority="high"><div id="oldFinishingFloor" aria-hidden="true"></div><div id="shiftedSMF" class="shiftedFinishing" aria-hidden="true"></div><div id="shiftedICC" class="shiftedFinishing" aria-hidden="true"></div><img id="drycleanFront" src="assets/dryclean-front.svg" alt="" width="94" height="119" draggable="false"><div id="hotspots"></div></div></div></div>
+<body class="view-3d">
+<div id="modelVersion" style="position:fixed;z-index:37;left:8px;bottom:2px;color:#a9c9df;font-size:10px;pointer-events:none">設備地圖 V19 · 3D 預設 · 查檢清單 V6 · 同步 R4</div><div id="app"><div id="factory3d" aria-label="工廠 3D 視圖"></div><div id="factory3dLabels"></div><p id="factory3dLoading" role="status">正在建立廠區 3D 視圖…</p><div id="canvas"><div id="flatViewport" aria-label="工廠設備地圖"><div id="flatMap"><img id="flatImage" src="factory-map-clean-v13.svg" alt="已確認的工廠設備配置" width="1024" height="1536" draggable="false" decoding="async" fetchpriority="high"><div id="oldFinishingFloor" aria-hidden="true"></div><div id="shiftedSMF" class="shiftedFinishing" aria-hidden="true"></div><div id="shiftedICC" class="shiftedFinishing" aria-hidden="true"></div><img id="drycleanFront" src="assets/dryclean-front.svg" alt="" width="94" height="119" draggable="false"><div id="hotspots"></div></div></div></div>
 <div class="top">
-  <div class="logo">▱ 洗滌廠設備地圖</div>
+  <div class="logo"><span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 20h18M4 20V9l5-3v14M13 20V5l7-3v18"/></svg></span><span class="logo-text"><b>百麒洗滌廠</b><small>3D 設備監控</small></span></div>
   <select id="filter"><option>全部設備</option><option>洗衣設備</option><option>折疊設備</option><option>烘乾設備</option><option>燙床設備</option><option>整燙設備</option><option>周邊設備</option></select>
   <input class="search" id="search" placeholder="搜尋設備名稱…">
-  <div class="mode"><button id="resetBtn">全圖</button><button id="refreshAllBtn" type="button">同步資料</button></div>
+  <div class="mode"><button id="view3dBtn" type="button" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5 12 12l8-4.5L12 3Z"/><path d="M4 12.5 12 17l8-4.5M4 16.5 12 21l8-4.5"/></svg>3D 全景</button><button id="viewTopBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM4 10h16M9 6v12"/></svg>平面俯視</button><button id="viewFlatBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h7v7H4zM13 5h7v7h-7zM4 14h7v5H4zM13 14h7v5h-7z"/></svg>平面地圖</button><button id="resetBtn" type="button">全圖</button><button id="refreshAllBtn" type="button">同步資料</button></div>
 </div>
-<div class="hint" id="hint">拖曳移動地圖 · 滾輪縮放 · 右鍵旋轉 · 點設備查看資料</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
+<div class="hint" id="hint">單指旋轉 · 可切換平移 · 雙指縮放 · 點設備查看資料</div><div id="syncBadge" style="position:fixed;z-index:11;right:18px;top:82px;padding:6px 10px;border-radius:999px;background:rgba(5,20,38,.72);border:1px solid #245b88;color:#a9c9df;font-size:12px;pointer-events:none">資料同步：檢查中</div>
 <div class="side"><button>▧<br>地圖</button><button>⚙<br>設備</button><button>✓<br>清潔</button><button>◷<br>保養</button><button>⚒<br>維修</button></div>
 <div class="palette"><h3>設備分類 · 點選分類查看機台</h3><div class="items" id="items"></div></div>
-<div class="map-tools" aria-label="地圖操作"><span>地圖</span><button id="mapZoomOut" aria-label="縮小地圖">－</button><button id="mapZoomIn" aria-label="放大地圖">＋</button><button id="mapHome">全圖</button></div>
+<div class="map-tools" aria-label="地圖操作"><span class="map-title">地圖</span><button id="mapZoomOut" aria-label="縮小地圖">－</button><button id="mapZoomIn" aria-label="放大地圖">＋</button><button id="mapHome">全圖</button></div>
+<button id="orbitPanBtn" type="button">單指平移</button>
 
-<div class="touch-help">單指拖曳 · 雙指縮放 · 點設備查看資料</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div id="equipmentVendor">廠商：未填寫</div><div class="muted" id="pt">設備</div><div class="card"><p id="equipmentAccessState" role="status"></p></div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>廠商</label><input id="eqVendor" placeholder="設備廠商名稱" maxlength="200" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="repairsCard"><h3>維修紀錄</h3><button id="addRepairBtn" type="button" style="width:100%">＋ 新增維修紀錄</button><form id="repairForm" hidden>
+<div class="touch-help">單指旋轉 · 雙指捏合縮放 · 點設備開啟資料</div><div class="panel" id="panel"><button class="close" id="close">×</button><h2 id="pn">設備</h2><div id="eqStatusChip" class="status-chip" data-status="ok"><i></i><span>正常</span></div><div id="panelStats" class="panel-stats"><div><span>上次清潔</span><b id="eqLastClean">—</b></div><div><span>下次查檢</span><b id="eqNextCheck">—</b></div></div><div id="equipmentVendor">廠商：未填寫</div><div class="muted" id="pt">設備</div><div class="card"><p id="equipmentAccessState" role="status"></p></div><div class="card"><label>設備名稱</label><input id="eqName" style="width:100%"><label>廠商</label><input id="eqVendor" placeholder="設備廠商名稱" maxlength="200" style="width:100%"><div id="nasReadDetails" class="muted" style="margin:10px 0;font-size:12px;white-space:pre-line;overflow-wrap:anywhere">同步 R3｜尚未讀取 NAS</div><button id="reloadNasBtn" type="button" style="width:100%;margin-bottom:10px">重新讀取 NAS</button><label>狀態</label><select id="eqStatus" style="width:100%"><option>正常</option><option>待保養</option><option>維修中</option><option>停用</option></select><label>設備啟用日期</label><input id="eqCommissionedDate" type="date" style="width:100%"><div id="eqServiceAge" class="muted" style="margin:8px 0"></div><label>上次清潔</label><input id="eqCleaningDate" type="date" style="width:100%"><label>清潔週期（天）</label><input id="eqCleaningCycle" type="number" min="0" style="width:100%"><div id="eqNextCleaning" class="muted" style="margin:8px 0"></div><label>上次保養</label><input id="eqMaintenanceDate" type="date" style="width:100%"><label>保養週期（天）</label><input id="eqMaintenanceCycle" type="number" min="0" style="width:100%"><label>備註</label><textarea id="eqNotes" rows="4" style="width:100%;resize:vertical"></textarea><button id="saveEqBtn" style="width:100%;margin-top:14px">💾 儲存設備資料</button></div><div class="card" style="color:#91abc2;font-size:12px"><div class="row"><span>設備編號</span><b id="eqId">—</b></div><div class="row"><span>模型</span><b id="eqKind">—</b></div></div><div class="card" id="repairsCard"><h3>維修紀錄</h3><button id="addRepairBtn" type="button" style="width:100%">＋ 新增維修紀錄</button><form id="repairForm" hidden>
 <label>維修日期 *</label><input id="repairDate" type="date" required>
 <label>故障情形 *</label><textarea id="repairIssue" rows="2" required maxlength="4000" placeholder="例如：無法啟動、漏水、異常聲音"></textarea>
 <label>更換零件</label><input id="repairParts" maxlength="2000" placeholder="例如：軸承、皮帶；未更換可留白">
@@ -199,6 +200,8 @@ body.panel-open .equipment-tools{display:none}
 <button id="inspectionEntry">✓ 查檢清單</button><section id="inspectionOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="inspectionTitle"><header class="ins-header"><button id="inspectionBack">返回地圖</button><h2 id="inspectionTitle">設備查檢清單</h2><button id="inspectionSettingsBtn">設定／備份</button></header><div class="ins-sync"><span id="inspectionSyncStatus">正在連接 NAS…</span> <button id="inspectionSyncBtn" type="button">同步 NAS</button> <button id="inspectionConflictBtn" type="button" hidden>處理版本衝突</button></div><main id="inspectionContent"></main><footer id="inspectionSaveBar" hidden><b id="inspectionProgress">已查檢 0 項</b><button id="inspectionSubmit" class="ins-primary">確認送出查檢</button></footer></section>
 <section id="categoryDrawer" hidden role="dialog" aria-labelledby="categoryTitle"><header><h2 id="categoryTitle">設備清單</h2><button id="categoryClose" aria-label="關閉設備清單">×</button></header><div id="categoryRows"></div></section>
 <dialog id="photoViewer" aria-labelledby="photoViewerTitle"><header><b id="photoViewerTitle">查檢照片</b><button id="photoViewerClose" type="button">關閉 ×</button></header><p id="photoViewerState" role="status"></p><img id="photoViewerImage" alt="查檢照片大圖"></dialog>
+<script src="./vendor/three-0.128.0.min.js" defer></script>
+<script src="./vendor/OrbitControls-0.128.0.js" defer></script>
 <script type="module">
 import {INSPECTION_TEMPLATES,validDay,addDays,addMonths,weekOnOrAfter,firstTuesday,advanceTask,machineCategory,machineTasks as sharedMachineTasks,taskDue as sharedTaskDue} from './server/inspection-rules.mjs';
 const API_BASE='https://fileserver.tailbb066f.ts.net:8443',SYNC_KEY='factory3dPositions_C_STYLE_V2';
@@ -250,13 +253,13 @@ const regions=[["DESK-01", 56, 65, 60, 100], ["PACK-01", 132, 39, 65, 105], ["DE
 const viewport=document.getElementById('flatViewport'),flatMap=document.getElementById('flatMap');
 const view={scale:1,x:0,y:0};let fitScale=1;
 function setEquipmentScale(){}function syncEquipmentTools(){}function syncQuickRotate(){}function syncEquipmentSprite(){requestSceneRender();}
-function select(root){selected=root||null;groups.forEach(r=>r.userData.hotspot.classList.toggle('selected',r===selected));if(root)openPanel(root);else closePanel();}
-function requestSceneRender(){applyFilters();groups.forEach(root=>{const el=root.userData.hotspot;el.setAttribute('aria-label',root.userData.name);const changed=root.userData.name!==root.userData.originalName;el.classList.toggle('renamed',changed);el.querySelector('.live-name').textContent=root.userData.name;});}
+function select(root){selected=root||null;groups.forEach(r=>{r.userData.hotspot.classList.toggle('selected',r===selected);r.userData.label3d?.classList.toggle('selected',r===selected);});if(root)openPanel(root);else closePanel();}
+function requestSceneRender(){applyFilters();groups.forEach(root=>{const el=root.userData.hotspot;el.setAttribute('aria-label',root.userData.name);const changed=root.userData.name!==root.userData.originalName;el.classList.toggle('renamed',changed);el.querySelector('.live-name').textContent=root.userData.name;});syncFactory3DScene();}
 function applyFilters(){const q=document.getElementById('search').value.trim().toLowerCase(),type=document.getElementById('filter').value;groups.forEach(r=>{r.visible=(!q||r.userData.name.toLowerCase().includes(q))&&(type==='全部設備'||r.userData.type===type);r.userData.hotspot.classList.toggle('dimmed',!r.visible);r.userData.hotspot.disabled=!r.visible;});}
 function applyView(){flatMap.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.scale})`;flatMap.style.setProperty('--map-scale',view.scale);}
 function frameFactory(){const w=viewport.clientWidth,h=viewport.clientHeight;fitScale=Math.min((w-20)/1024,(h-20)/1536);view.scale=fitScale;view.x=(w-1024*view.scale)/2;view.y=(h-1536*view.scale)/2;applyView();}
 function zoomMap(factor,point){const rect=viewport.getBoundingClientRect(),px=point?point.clientX-rect.left:rect.width/2,py=point?point.clientY-rect.top:rect.height/2;const x=(px-view.x)/view.scale,y=(py-view.y)/view.scale;view.scale=Math.max(fitScale*.35,Math.min(8,view.scale*factor));view.x=px-x*view.scale;view.y=py-y*view.scale;applyView();}
-function focusEquipment(root){if(!root)return;document.getElementById('categoryDrawer').hidden=true;document.getElementById('search').value='';document.getElementById('filter').value='全部設備';const b=root.userData.region;view.scale=Math.max(fitScale,Math.min(1.6,viewport.clientWidth/(b[2]+150)));view.x=viewport.clientWidth/2-(b[0]+b[2]/2)*view.scale;view.y=viewport.clientHeight*.40-(b[1]+b[3]/2)*view.scale;applyView();requestSceneRender();select(root);}
+function focusEquipment(root){if(!root)return;document.getElementById('categoryDrawer').hidden=true;document.getElementById('search').value='';document.getElementById('filter').value='全部設備';const b=root.userData.region;view.scale=Math.max(fitScale,Math.min(1.6,viewport.clientWidth/(b[2]+150)));view.x=viewport.clientWidth/2-(b[0]+b[2]/2)*view.scale;view.y=viewport.clientHeight*.40-(b[1]+b[3]/2)*view.scale;applyView();requestSceneRender();select(root);if(document.body.classList.contains('view-3d'))focusFactoryMachine(root);}
 for(const row of instances){const [name,type,kind,x,y,z,level,id,rotation]=row;const rect=regions.find(r=>r[0]===id).slice(1);const button=document.createElement('button');button.type='button';button.className='map-hotspot';button.dataset.equipmentId=id;button.style.cssText=`left:${rect[0]}px;top:${rect[1]}px;width:${rect[2]}px;height:${rect[3]}px`;button.setAttribute('aria-label',name);button.title=name;const label=document.createElement('span');label.className='live-name';button.appendChild(label);document.getElementById('hotspots').appendChild(button);
  const root={userData:{id,name,originalName:name,type,kind,level,status:'正常',visualScale:1,cleaningLastDate:'',cleaningCycleDays:30,maintenanceLastDate:'',maintenanceCycleDays:180,commissionedDate:'',notes:'',vendor:'',repairs:[],hotspot:button,region:rect},position:{x,y,z},rotation:{y:rotation||0},visible:true,children:[{isCSS2DObject:true,element:label}]};groups.set(id,root);button.addEventListener('click',e=>{if(e.detail===0)select(root);});}
 let nasReadState={status:'尚未讀取 NAS',ok:false,positions:[],at:''};
@@ -281,7 +284,7 @@ function setSyncBadge(text,ok=false){
  el.style.borderColor=ok?'#1bd58d':'#245b88';
  el.style.color=ok?'#8ff1c6':'#a9c9df';
  const version=document.getElementById('modelVersion');
- if(version)version.textContent='設備地圖 V19 · 查檢清單 V6 · 同步 R4｜'+text;
+ if(version)version.textContent='設備地圖 V19 · 3D 預設 · 查檢清單 V6 · 同步 R4｜'+text;
 }
 function shortMapName(name){return String(name).replace(/^直式洗衣機\s*#/,"洗衣機 #").replace(/（L 型 (後段|末段)）/,"（L 型）");}
 function applyEquipmentName(root,name){
@@ -425,7 +428,7 @@ async function loadRemoteLayout(){
  nasReadState.positions=positions;const byId=new Map(positions.map(v=>[String(v.id).trim(),v]));
  const qrReadOnly=!canManage()&&(()=>{try{return /^[a-f0-9]{64}$/i.test(JSON.parse(localStorage.getItem('baiqiPushMemberV2')||'null')?.deviceToken||'');}catch{return false;}})();
  if(qrReadOnly&&dirtyMetadataIds.size)localStorage.setItem('factoryFixedReadOnlyRecovery',JSON.stringify({at:new Date().toISOString(),positions:getPositionData()}));
- groups.forEach(r=>{const v=byId.get(r.userData.id);if(v&&(qrReadOnly||!dirtyMetadataIds.has(r.userData.id)))applyMetadata(r,v);});
+ groups.forEach(r=>{const v=byId.get(r.userData.id);if(v&&(qrReadOnly||!dirtyMetadataIds.has(r.userData.id)))applyMetadata(r,v);if(v)rememberScenePose(r,v);});
  // QR-enrolled read-only devices must not keep obsolete pending-edit markers
  // that suppress future NAS refreshes. Preserve local data in storage for recovery.
  if(qrReadOnly&&dirtyMetadataIds.size){dirtyMetadataIds.clear();localStorage.removeItem('factoryFixedPendingIds');hasUnsyncedLayoutChanges=false;}
@@ -507,13 +510,13 @@ function savePositions(){
 }
 function restoreSavedPositions(){
  try{const saved=JSON.parse(localStorage.getItem(SYNC_KEY)||localStorage.getItem('factory3dPositions')||'[]');
- const byId=new Map(saved.map(v=>[String(v.id),v]));groups.forEach(r=>{const v=byId.get(r.userData.id);if(v)applyMetadata(r,v);});return true;}catch(err){return false;}
+ const byId=new Map(saved.map(v=>[String(v.id),v]));groups.forEach(r=>{const v=byId.get(r.userData.id);if(v){applyMetadata(r,v);rememberScenePose(r,v);}});return true;}catch(err){return false;}
 }
 
 
 const equipmentCategories=[['全部設備','all','OFFICE-01'],['洗衣機','washers','VERT-01'],['烘乾機','dryers','DRY-03'],['折疊機','folders','30K-01'],['燙床／整燙','finishing','N5-01'],['周邊設備','utilities','COMP-01']];let activeCategory='all';
 function inCategory(r,key){const k=r.userData.kind;if(key==='all')return true;if(key==='washers')return ['washer','vertical','dryclean'].includes(k);if(key==='dryers')return k==='dryer';if(key==='folders')return k==='folding';if(key==='finishing')return ['lineN5','lineIRT','lineICC','lineSMF','shirt','longPress','pressZone'].includes(k);return !inCategory(r,'washers')&&!inCategory(r,'dryers')&&!inCategory(r,'folders')&&!inCategory(r,'finishing');}
-function addPalette(){const wrap=document.getElementById('items');wrap.replaceChildren();for(const [index,[name,key,id]]of equipmentCategories.entries()){const b=document.createElement('button');b.className='item';b.dataset.category=key;const icon=document.createElement('span');icon.className='equipment-category-icon';icon.style.backgroundPosition=`${index%3*50}% ${Math.floor(index/3)*100}%`;icon.setAttribute('aria-hidden','true');const text=document.createElement('span');text.textContent=name;b.append(icon,text);b.onclick=()=>{activeCategory=key;renderCategoryList();document.getElementById('categoryDrawer').hidden=false;};wrap.appendChild(b);}}
+function addPalette(){const wrap=document.getElementById('items');wrap.replaceChildren();const icons={all:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></svg>',washers:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4"/></svg>',dryers:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1.8 2.6 1.6 4.4-.2 6.4 2.6-.6 5.2 1.2 5.2 4.2a5 5 0 0 1-10 0c0-3 2.6-4.8 5.2-4.2C10.4 7.4 10.2 5.6 12 3Z"/></svg>',folders:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v4H5zM4 10h16v10H4zM8 14h8M8 17h5"/></svg>',finishing:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18h16M6 18V9h12v9M9 9V5h6v4"/></svg>',utilities:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V10l4-3v13M13 20V6l6-3v17"/></svg>'};for(const [, [name,key]] of equipmentCategories.entries()){const b=document.createElement('button');b.className='item';b.dataset.category=key;const count=[...groups.values()].filter(r=>inCategory(r,key)).length;const icon=document.createElement('span');icon.className='equipment-category-icon';icon.innerHTML=icons[key]||icons.all;icon.setAttribute('aria-hidden','true');const text=document.createElement('span');text.textContent=name;const countEl=document.createElement('small');countEl.textContent=count+' 台';b.append(icon,text,countEl);b.onclick=()=>{activeCategory=key;renderCategoryList();document.getElementById('categoryDrawer').hidden=false;};wrap.appendChild(b);}}
 
 function renderCategoryList(){const wrap=document.getElementById('categoryRows');wrap.replaceChildren();const list=[...groups.values()].filter(r=>inCategory(r,activeCategory));document.getElementById('categoryTitle').textContent=equipmentCategories.find(c=>c[1]===activeCategory)[0]+' · '+list.length+' 台';for(const root of list){const b=document.createElement('button');b.className='category-row';b.dataset.equipmentId=root.userData.id;const n=document.createElement('strong');n.textContent=root.userData.name;const info=document.createElement('span');info.textContent=(root.userData.status||'正常')+' · '+root.userData.id;b.append(n,info);b.onclick=()=>focusEquipment(root);wrap.appendChild(b);}}
 document.getElementById('categoryClose').onclick=()=>document.getElementById('categoryDrawer').hidden=true;
@@ -542,7 +545,8 @@ viewport.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefa
 viewport.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;e.preventDefault();if(tap&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>7)tap.moved=true;pointers.set(e.pointerId,{clientX:e.clientX,clientY:e.clientY});const next=metrics();if(previous&&next){if(previous.distance>8&&next.distance>8){zoomMap(next.distance/previous.distance,previous);}view.x+=next.clientX-previous.clientX;view.y+=next.clientY-previous.clientY;applyView();}viewport.classList.add('dragging');previous=next;});
 function endPointer(e,cancel=false){if(!pointers.has(e.pointerId))return;e.preventDefault();if(tap&&tap.id===e.pointerId&&!tap.moved&&!multitouch&&!cancel)select(tap.root);pointers.delete(e.pointerId);if(tap?.id===e.pointerId)tap=null;previous=metrics();if(!pointers.size){multitouch=false;viewport.classList.remove('dragging');}}
 viewport.addEventListener('pointerup',e=>endPointer(e));viewport.addEventListener('pointercancel',e=>endPointer(e,true));viewport.addEventListener('wheel',e=>{e.preventDefault();zoomMap(Math.exp(-e.deltaY*.0015),e);},{passive:false});viewport.addEventListener('contextmenu',e=>e.preventDefault());addEventListener('blur',()=>{pointers.clear();previous=null;tap=null;viewport.classList.remove('dragging');});
-document.getElementById('mapZoomIn').onclick=()=>zoomMap(1.3);document.getElementById('mapZoomOut').onclick=()=>zoomMap(1/1.3);document.getElementById('mapHome').onclick=frameFactory;document.getElementById('resetBtn').onclick=frameFactory;document.getElementById('close').onclick=closePanel;document.getElementById('search').oninput=requestSceneRender;document.getElementById('filter').onchange=requestSceneRender;addEventListener('resize',frameFactory);
+document.getElementById('mapZoomIn').onclick=()=>zoomMap(1.3);document.getElementById('mapZoomOut').onclick=()=>zoomMap(1/1.3);document.getElementById('mapHome').onclick=frameFactory;document.getElementById('resetBtn').onclick=()=>{frameFactory();if(factory3d.ready&&document.body.classList.contains('view-3d'))setFactoryCamera(factory3d.mode==='top'?'top':'overview');};document.getElementById('view3dBtn').onclick=()=>setViewMode('3d');document.getElementById('viewTopBtn').onclick=()=>setViewMode('top');document.getElementById('viewFlatBtn').onclick=()=>setViewMode('flat');document.getElementById('orbitPanBtn').onclick=toggleFactoryPan;document.getElementById('close').onclick=closePanel;document.getElementById('search').oninput=requestSceneRender;document.getElementById('filter').onchange=requestSceneRender;addEventListener('resize',()=>{frameFactory();onFactoryResize();});
+const factory3d={ready:false,failed:false,mode:'3d',pan:false,mobile:false,pickables:[],loop:0,paused:false,center:{x:0,z:0},span:40};
 restoreSavedPositions();requestSceneRender();frameFactory();document.getElementById('flatImage').addEventListener('load',frameFactory);setTimeout(loadRemoteLayout,0);setInterval(()=>refreshEquipmentFromNas(),15000);
 // 查檢資料使用獨立儲存空間；不改動 NAS 版位 API。
 const INSPECTION_KEY='factory-inspection-v1';
@@ -592,6 +596,7 @@ function renderMapStatus(){
   const text=state==='issue'?'異常待處理':state==='overdue'?'查檢逾期':state==='due'?'今日查檢':state==='stopped'?'停用':'';
   el.title=root.userData.name+(text?'｜'+text:'');el.setAttribute('aria-label',el.title);
  }
+ syncFactory3DStatus();
 }
 function pendingIssues(m){return inspectionState.records.filter(r=>r.machineId===m.id).flatMap(r=>r.items.filter(i=>i.result==='abnormal'&&!i.resolvedAt).map(i=>({record:r,item:i})));}
 function machineSummary(m){let due=machineTasks(m).map(t=>taskDue(m,t)).filter(Boolean).sort();const last=inspectionState.records.filter(r=>r.machineId===m.id).sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt.localeCompare(b.createdAt)).at(-1);let cleaned=inspectionState.records.filter(r=>r.machineId===m.id&&r.items.some(i=>i.cleaning&&i.result==='normal')).sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt.localeCompare(b.createdAt)).at(-1);const legacy=m.cleaningLastDate||'';return {due:due[0]||'',last,clean:cleaned&&cleaned.date>=legacy?(cleaned.actualAt||cleaned.date):legacy,issues:pendingIssues(m).length};}
@@ -646,8 +651,8 @@ document.getElementById('photoViewerClose').onclick=()=>document.getElementById(
 inspectContent.addEventListener('click',async e=>{const open=e.target.closest('[data-photo-open]');if(open){e.preventDefault();return openInspectionPhoto(open.dataset.photoOpen);}const retry=e.target.closest('[data-photo-retry]');if(retry){e.preventDefault();if(photoBusy)return toast('正在處理照片，請稍候');photoBusy=true;retry.disabled=true;try{await uploadInspectionPhoto(retry.dataset.photoRetry);activatePhotoPreviews();}finally{photoBusy=false;if(retry.isConnected)retry.disabled=false;}return;}const remove=e.target.closest('[data-photo-remove]');if(remove){e.preventDefault();if(photoBusy)return toast('正在處理照片，請稍候');if(!saveInspectionDraft())return;const taskId=remove.dataset.photoTask,id=remove.dataset.photoRemove;if(editInspection(st=>{const a=st.drafts[inspectionMachineId]?.answers?.[taskId];if(a)a.photos=(a.photos||[]).filter(p=>p.id!==id);})){remove.closest('.ins-photo-tile').remove();}}});
 
 function inspectButton(label,action,cls=''){return `<button class="${cls}" data-ia="${action}">${label}</button>`;}
-function openInspection(id='',focus=''){inspectionFocus=document.activeElement;inspectEl.hidden=false;document.body.classList.add('inspection-open');inspectionMachineId=id;inspectionView=id?'machine':'list';inspectionPeriod=focus||'due';renderInspection();document.getElementById('inspectionBack').focus();}
-function hideInspection(){releasePhotoPreviews();document.getElementById("photoViewer").close();inspectEl.hidden=true;document.body.classList.remove('inspection-open');inspectionFocus?.focus?.();if(selected)renderInspectionMini(selected);}
+function openInspection(id='',focus=''){inspectionFocus=document.activeElement;inspectEl.hidden=false;document.body.classList.add('inspection-open');inspectionMachineId=id;inspectionView=id?'machine':'list';inspectionPeriod=focus||'due';renderInspection();document.getElementById('inspectionBack').focus();stopFactoryRender();}
+function hideInspection(){releasePhotoPreviews();document.getElementById("photoViewer").close();inspectEl.hidden=true;document.body.classList.remove('inspection-open');inspectionFocus?.focus?.();if(selected)renderInspectionMini(selected);if(document.body.classList.contains('view-3d'))kickFactoryRender();}
 function emptyInspection(text){return `<div class="ins-card ins-muted">${text}</div>`;}
 function renderInspection(){
  releasePhotoPreviews();
@@ -730,7 +735,7 @@ document.getElementById('inspectionSettingsBtn').onclick=()=>{if(!saveInspection
 document.getElementById('inspectionSubmit').onclick=submitInspection;
 document.getElementById('inspectionEntry').onclick=()=>openInspection();
 document.addEventListener('keydown',e=>{if(inspectEl.hidden)return;if(e.key==='Escape'){e.preventDefault();if(saveInspectionDraft())hideInspection();}if(e.key==='Tab'){const els=[...inspectEl.querySelectorAll('button,input,select,textarea,summary')].filter(el=>!el.disabled&&el.getClientRects().length),first=els[0],last=els.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}});
-function renderInspectionMini(root){const el=document.getElementById('inspectionMini');if(!el||typeof inspectionState==='undefined')return;const m={...root.userData,onMap:true},s=machineSummary(m);el.innerHTML=`<b>清潔與查檢</b><p>${I(equipmentServiceAge(m.commissionedDate))}<br>上次清潔：${I(s.clean||'尚無紀錄')}<br>下次查檢：${I(s.due||'待設定')}${s.issues?'<br><span class="ins-danger">'+s.issues+' 項異常待處理</span>':''}</p><button id="inspectionMachineEntry" style="width:100%;min-height:48px">開啟此機台查檢清單</button>`;document.getElementById('inspectionMachineEntry').onclick=()=>openInspection(root.userData.id);}
+function renderInspectionMini(root){const el=document.getElementById('inspectionMini');if(!el||typeof inspectionState==='undefined')return;const m={...root.userData,onMap:true},s=machineSummary(m);const cleanText=s.clean||'尚無紀錄',dueText=s.due||'待設定';const lastEl=document.getElementById('eqLastClean'),nextEl=document.getElementById('eqNextCheck');if(lastEl)lastEl.textContent=cleanText;if(nextEl)nextEl.textContent=dueText;paintPanelStatus(root);el.innerHTML=`<b>清潔與查檢</b><p>${I(equipmentServiceAge(m.commissionedDate))}<br>上次清潔：${I(s.clean||'尚無紀錄')}<br>下次查檢：${I(s.due||'待設定')}${s.issues?'<br><span class="ins-danger">'+s.issues+' 項異常待處理</span>':''}</p><button id="inspectionMachineEntry" style="width:100%;min-height:48px">開啟此機台查檢清單</button>`;document.getElementById('inspectionMachineEntry').onclick=()=>openInspection(root.userData.id);}
 document.querySelectorAll('.side button').forEach((b,index)=>{if(index===1)b.onclick=()=>{activeCategory='all';renderCategoryList();document.getElementById('categoryDrawer').hidden=false;};if(index===2||index===3)b.onclick=()=>openInspection();if(index===4)b.onclick=()=>{inspectionFilter='issue';openInspection();};});
 if(inspectionLoadError)toast('原查檢資料無法讀取，已暫停寫入；請在設定匯出原始備份');
 function inspectionCanonical(v){return JSON.stringify(v,(_,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);}
@@ -804,6 +809,435 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
   toast(ok?'設備資料已更新；查檢同步狀態請查看查檢清單':nasReadState.status);
  }finally{b.disabled=false;}
 };
+const LAYOUT_TO_SCENE=0.09;
+const PIXEL_TO_SCENE=LAYOUT_TO_SCENE/2.15*0.82;
+function layoutToScene(x,z,y,level){
+ const raised=/二層|上層|架高/.test(String(level||''));
+ const lift=raised?(Number(y)>1?Number(y):36):0;
+ return {x:Number(x)*LAYOUT_TO_SCENE,z:Number(z)*LAYOUT_TO_SCENE,y:lift*LAYOUT_TO_SCENE};
+}
+function rememberScenePose(root,v){
+ if(!root||!v||typeof v!=='object')return;
+ const x=Number(v.x),z=Number(v.z),rotationY=Number(v.rotation_y??v.rotationY);
+ if(Number.isFinite(x))root.userData.sceneX=x;
+ if(Number.isFinite(z))root.userData.sceneZ=z;
+ if(Number.isFinite(rotationY))root.userData.sceneRotationY=rotationY;
+ if(typeof v.level==='string'&&v.level)root.userData.level=v.level;
+}
+function scenePoint(root){
+ const x=Number.isFinite(root.userData.sceneX)?root.userData.sceneX:root.position.x;
+ const z=Number.isFinite(root.userData.sceneZ)?root.userData.sceneZ:root.position.z;
+ return layoutToScene(x,z,root.position.y,root.userData.level);
+}
+function sceneYaw(root){
+ return Number.isFinite(root.userData.sceneRotationY)?root.userData.sceneRotationY:(Number(root.rotation?.y)||0);
+}
+function equipmentVisual(root){
+ const status=root.userData.status||'正常';
+ const summary=machineSummary(root.userData);
+ const today=taipeiToday();
+ if(status==='停用')return {key:'stopped',label:'停用',color:0x94a3b8,mark:'停用'};
+ if(summary.issues)return {key:'issue',label:'異常',color:0xfb7185,mark:'異常'};
+ if(status==='維修中'||status==='待保養')return {key:'maint',label:status,color:0xf59e0b,mark:status};
+ if(summary.due&&summary.due<today)return {key:'overdue',label:'查檢逾期',color:0xf59e0b,mark:'查檢逾期'};
+ if(summary.due===today)return {key:'due',label:'今日查檢',color:0x38bdf8,mark:'今日查檢'};
+ return {key:'ok',label:'正常',color:0x34d399,mark:''};
+}
+function safeVisual(root){try{return equipmentVisual(root);}catch{return {key:'ok',label:'正常',color:0x34d399,mark:''};}}
+function paintPanelStatus(root){
+ const chip=document.getElementById('eqStatusChip');
+ if(!chip||!root)return;
+ const visual=safeVisual(root);
+ chip.dataset.status=visual.key;
+ const text=chip.querySelector('span');
+ if(text)text.textContent=visual.label;
+}
+function factory3dReady(){return factory3d.ready===true;}
+function factoryIsMobile(){return window.matchMedia('(pointer: coarse)').matches||window.matchMedia('(max-width:820px)').matches;}
+function markViewButtons(mode){
+ for(const [key,id] of [['3d','view3dBtn'],['top','viewTopBtn'],['flat','viewFlatBtn']]){
+  const el=document.getElementById(id);
+  if(el)el.classList.toggle('active',key===mode);
+ }
+}
+function setGestureHint(mode){
+ const hint=document.getElementById('hint'),help=document.querySelector('.touch-help');
+ if(mode==='flat'){
+  if(hint)hint.textContent='拖曳移動地圖 · 滾輪縮放 · 點設備查看資料';
+  if(help)help.textContent='單指拖曳 · 雙指縮放 · 點設備查看資料';
+ }else if(factory3d.pan){
+  if(hint)hint.textContent='單指平移 · 雙指捏合縮放 · 點設備查看資料';
+  if(help)help.textContent='單指平移 · 雙指捏合縮放 · 點設備開啟資料';
+ }else{
+  if(hint)hint.textContent='單指旋轉 · 可切換平移 · 雙指縮放 · 點設備查看資料';
+  if(help)help.textContent='單指旋轉 · 雙指捏合縮放 · 點設備開啟資料';
+ }
+}
+function stopFactoryRender(){if(factory3d.loop){cancelAnimationFrame(factory3d.loop);factory3d.loop=0;}}
+function kickFactoryRender(){
+ if(!factory3d.ready||factory3d.mode==='flat'||document.hidden||document.body.classList.contains('inspection-open'))return;
+ if(factory3d.loop)return;
+ factory3d.loop=requestAnimationFrame(()=>{
+  factory3d.loop=0;
+  if(!factory3d.ready||factory3d.mode==='flat'||document.hidden||document.body.classList.contains('inspection-open'))return;
+  if(factory3d.controls?.enableDamping)factory3d.controls.update();
+  factory3d.renderer.render(factory3d.scene,factory3d.camera);
+  projectFactoryLabels();
+ });
+}
+function onFactoryResize(){
+ if(!factory3d.ready)return;
+ const host=factory3d.host,w=host.clientWidth||window.innerWidth,h=host.clientHeight||window.innerHeight;
+ if(!w||!h)return;
+ factory3d.camera.aspect=w/h;
+ factory3d.camera.updateProjectionMatrix();
+ const cap=factory3d.mobile?1.15:1.6;
+ factory3d.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,cap));
+ factory3d.renderer.setSize(w,h,false);
+ kickFactoryRender();
+}
+function projectFactoryLabels(){
+ if(!factory3d.ready||factory3d.mode==='flat')return;
+ const cam=factory3d.camera,v=factory3d.proj,w=factory3d.host.clientWidth,h=factory3d.host.clientHeight;
+ if(!w||!h)return;
+ for(const root of groups.values()){
+  const el=root.userData.label3d,mesh=root.userData.mesh3d;
+  if(!el||!mesh)continue;
+  if(!root.visible||!mesh.visible){el.hidden=true;continue;}
+  v.set(mesh.position.x,mesh.position.y+(root.userData.labelHeight||2),mesh.position.z).project(cam);
+  if(v.z<-1||v.z>1||v.x<-1.15||v.x>1.15||v.y<-1.15||v.y>1.15){el.hidden=true;continue;}
+  el.hidden=false;
+  el.style.transform=`translate3d(${(v.x*.5+.5)*w}px,${(-v.y*.5+.5)*h}px,0) translate(-50%,-120%)`;
+ }
+}
+function syncFactory3DStatus(kick=true){
+ if(!factory3d.ready)return false;
+ let changed=false;
+ for(const root of groups.values()){
+  const visual=safeVisual(root);
+  const el=root.userData.label3d;
+  if(el){
+   if(el.dataset.status!==visual.key){el.dataset.status=visual.key;changed=true;}
+   const name=el.querySelector('.equip-name'),mark=el.querySelector('.equip-mark');
+   const nextName=shortMapName(root.userData.name);
+   if(name&&name.textContent!==nextName)name.textContent=nextName;
+   if(mark){mark.hidden=!visual.mark;if(visual.mark&&mark.textContent!==visual.mark)mark.textContent=visual.mark;}
+   el.classList.toggle('dimmed',root.visible===false);
+  }
+  if(root.userData.statusKey!==visual.key){
+   root.userData.statusKey=visual.key;
+   root.userData.statusMat?.color.setHex(visual.color);
+   root.userData.lightMat?.color.setHex(visual.color);
+   changed=true;
+  }
+ }
+ if(selected)paintPanelStatus(selected);
+ if(kick&&changed)kickFactoryRender();
+ return changed;
+}
+function syncFactory3DScene(){
+ if(!factory3d.ready)return;
+ let moved=false;
+ for(const root of groups.values()){
+  const g=root.userData.mesh3d;
+  if(!g)continue;
+  const p=scenePoint(root),yaw=sceneYaw(root),vis=root.visible!==false;
+  if(g.position.x!==p.x||g.position.y!==p.y||g.position.z!==p.z){g.position.set(p.x,p.y,p.z);moved=true;}
+  if(g.rotation.y!==yaw){g.rotation.y=yaw;moved=true;}
+  if(g.visible!==vis){g.visible=vis;moved=true;}
+ }
+ const colored=syncFactory3DStatus(false);
+ if(moved||colored)kickFactoryRender();
+}
+function setFactoryCamera(mode){
+ if(!factory3d.ready)return;
+ const host=factory3d.host,camera=factory3d.camera,controls=factory3d.controls,c=factory3d.center;
+ const w=host.clientWidth||window.innerWidth,h=host.clientHeight||window.innerHeight;
+ camera.aspect=w/Math.max(h,1);
+ camera.updateProjectionMatrix();
+ const floor=factory3d.floor||{w:factory3d.span,d:factory3d.span};
+ const vFov=camera.fov*Math.PI/180,hFov=2*Math.atan(Math.tan(vFov/2)*camera.aspect);
+ const dist=Math.max((floor.w/2)/Math.tan(hFov/2),(floor.d/2)/Math.tan(vFov/2))*(factory3d.mobile?1.55:1.22);
+ if(mode==='top'){
+  camera.position.set(c.x,dist,c.z+0.35);
+  controls.target.set(c.x,0,c.z);
+ }else{
+  camera.position.set(c.x,dist*0.78,c.z+dist*0.92);
+  controls.target.set(c.x,0,c.z);
+ }
+ controls.update();
+ kickFactoryRender();
+}
+function focusFactoryMachine(root){
+ if(!factory3d.ready||!root?.userData.mesh3d||!document.body.classList.contains('view-3d'))return;
+ const p=root.userData.mesh3d.position;
+ factory3d.controls.target.set(p.x,p.y+0.4,p.z);
+ factory3d.camera.position.set(p.x+6.5,p.y+7.5,p.z+8.5);
+ factory3d.controls.update();
+ kickFactoryRender();
+}
+function toggleFactoryPan(){
+ if(!factory3d.controls)return;
+ const THREE=globalThis.THREE;
+ factory3d.pan=!factory3d.pan;
+ factory3d.controls.mouseButtons.LEFT=factory3d.pan?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE;
+ factory3d.controls.touches.ONE=factory3d.pan?THREE.TOUCH.PAN:THREE.TOUCH.ROTATE;
+ factory3d.controls.touches.TWO=THREE.TOUCH.DOLLY_PAN;
+ const btn=document.getElementById('orbitPanBtn');
+ if(btn){btn.classList.toggle('active',factory3d.pan);btn.textContent=factory3d.pan?'單指旋轉':'單指平移';}
+ setGestureHint('3d');
+}
+function pickFactory(event){
+ if(!factory3d.ready)return;
+ const rect=factory3d.renderer.domElement.getBoundingClientRect();
+ if(!rect.width||!rect.height)return;
+ factory3d.pointer.x=((event.clientX-rect.left)/rect.width)*2-1;
+ factory3d.pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;
+ factory3d.raycaster.setFromCamera(factory3d.pointer,factory3d.camera);
+ const hits=factory3d.raycaster.intersectObjects(factory3d.pickables,false);
+ for(const hit of hits){
+  const id=hit.object.userData.equipmentId;
+  const root=id&&groups.get(id);
+  if(root&&root.visible!==false){select(root);return;}
+ }
+}
+function machineFootprint(root){
+ const rect=root.userData.region||[0,0,80,80];
+ const a=Math.max(1.05,rect[2]*PIXEL_TO_SCENE),b=Math.max(0.85,rect[3]*PIXEL_TO_SCENE);
+ return {length:Math.max(a,b),width:Math.min(a,b)};
+}
+function kindMaterial(kind,mats){
+ if(kind==='dryer')return mats.blue;
+ if(kind==='folding'||String(kind).startsWith('line'))return mats.blue;
+ if(kind==='shirt'||kind==='longPress'||kind==='pressZone')return mats.purple;
+ if(kind==='crane'||kind==='boiler')return mats.orange;
+ if(kind==='office')return mats.glass;
+ if(kind==='toilet')return mats.dark;
+ return mats.steel;
+}
+function buildMachineMesh(THREE,root,mats,shared){
+ const kind=root.userData.kind;
+ const {length,width}=machineFootprint(root);
+ const group=new THREE.Group();
+ const mat=kindMaterial(kind,mats);
+ let height=1.3;
+ const add=(mesh)=>{group.add(mesh);return mesh;};
+ if(kind==='washer'||kind==='vertical'||kind==='dryclean'){
+  height=Math.max(1.7,width*1.05);
+  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length,height,width),mat));
+  body.position.y=height/2;
+  const door=add(new THREE.Mesh(new THREE.CylinderGeometry(Math.min(width,length)*0.28,Math.min(width,length)*0.28,0.08,10),mats.cyan));
+  door.rotation.x=Math.PI/2;door.position.set(0,height*0.55,width/2);
+ }else if(kind==='dryer'){
+  height=Math.max(2.1,width*1.25);
+  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length*0.9,height,width),mats.blue));
+  body.position.y=height/2;
+  const door=add(new THREE.Mesh(new THREE.CylinderGeometry(width*0.32,width*0.32,0.1,10),mats.glass));
+  door.rotation.x=Math.PI/2;door.position.set(0,height*0.48,width/2);
+ }else if(kind==='folding'||String(kind).startsWith('line')){
+  height=Math.max(0.85,width*0.42);
+  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length,height,width),mats.blue));
+  body.position.y=height/2;
+ }else if(kind==='crane'){
+  height=0.45;
+  const beam=add(new THREE.Mesh(new THREE.BoxGeometry(length*2.1,0.22,0.28),mats.orange));
+  beam.position.y=0.35;
+ }else if(kind==='office'){
+  height=Math.max(2.6,width*0.72);
+  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length,height,width),mats.glass));
+  body.position.y=height/2;
+  const slab=add(new THREE.Mesh(new THREE.BoxGeometry(length*0.96,0.08,width*0.96),mats.steel));
+  slab.position.y=height*0.5;
+ }else if(kind==='tank'||kind==='water'||kind==='boiler'||kind==='manganese'){
+  height=Math.max(1.7,width*0.85);
+  const body=add(new THREE.Mesh(new THREE.CylinderGeometry(width*0.34,width*0.4,height,10),kind==='boiler'?mats.orange:kind==='manganese'?mats.cyan:mats.steel));
+  body.position.y=height/2;
+ }else if(kind==='pressZone'||kind==='fan'){
+  height=0.22;
+  const pad=add(new THREE.Mesh(new THREE.BoxGeometry(length,0.12,width),mats.zone));
+  pad.position.y=0.08;
+ }else if(kind==='worktable'){
+  height=0.7;
+  const top=add(new THREE.Mesh(new THREE.BoxGeometry(length,0.16,width),mats.steel));
+  top.position.y=0.62;
+ }else{
+  height=Math.max(1.05,width*0.65);
+  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length,height,width),mat));
+  body.position.y=height/2;
+ }
+ const point=scenePoint(root);
+ if(point.y>0.35){
+  const leg=add(new THREE.Mesh(new THREE.BoxGeometry(0.14,point.y,0.14),mats.steel));
+  leg.position.y=-point.y/2;
+ }
+ const pad=add(new THREE.Mesh(shared.pad,new THREE.MeshBasicMaterial({color:0x34d399,transparent:true,opacity:0.42,depthWrite:false})));
+ pad.rotation.x=-Math.PI/2;pad.position.y=0.04;pad.scale.set(Math.max(length,width)*1.15,Math.min(length,width)*1.2,1);
+ const light=add(new THREE.Mesh(shared.bulb,new THREE.MeshBasicMaterial({color:0x34d399})));
+ light.position.y=height+0.28;
+ root.userData.statusMat=pad.material;
+ root.userData.lightMat=light.material;
+ root.userData.labelHeight=height+0.62;
+ root.userData.mesh3d=group;
+ const visual=safeVisual(root);
+ root.userData.statusKey=visual.key;
+ pad.material.color.setHex(visual.color);
+ light.material.color.setHex(visual.color);
+ group.traverse(obj=>{if(obj.isMesh){obj.userData.equipmentId=root.userData.id;factory3d.pickables.push(obj);if(!factory3d.mobile)obj.castShadow=true;}});
+ group.position.set(point.x,point.y,point.z);
+ group.rotation.y=sceneYaw(root);
+ return group;
+}
+function bootFactory3D(){
+ if(factory3d.ready)return true;
+ if(factory3d.failed)return false;
+ const THREE=globalThis.THREE;
+ if(!THREE||typeof THREE.WebGLRenderer!=='function'||typeof THREE.OrbitControls!=='function'){factory3d.failed=true;return false;}
+ try{initFactory3D(THREE);factory3d.ready=true;return true;}catch(error){factory3d.failed=true;const host=document.getElementById('factory3d');if(host)host.replaceChildren();return false;}
+}
+function initFactory3D(THREE){
+ const host=document.getElementById('factory3d');
+ const labels=document.getElementById('factory3dLabels');
+ factory3d.mobile=factoryIsMobile();
+ factory3d.host=host;
+ factory3d.proj=new THREE.Vector3();
+ factory3d.pointer=new THREE.Vector2();
+ const scene=new THREE.Scene();
+ scene.fog=new THREE.FogExp2(0x07111d,factory3d.mobile?0.011:0.009);
+ const camera=new THREE.PerspectiveCamera(42,1,0.1,500);
+ const renderer=new THREE.WebGLRenderer({antialias:!factory3d.mobile,alpha:true,powerPreference:factory3d.mobile?'low-power':'high-performance',stencil:false});
+ renderer.setClearColor(0x000000,0);
+ renderer.shadowMap.enabled=!factory3d.mobile;
+ if(!factory3d.mobile&&THREE.PCFSoftShadowMap)renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ renderer.domElement.setAttribute('aria-hidden','true');
+ renderer.domElement.tabIndex=-1;
+ host.replaceChildren(renderer.domElement);
+ const controls=new THREE.OrbitControls(camera,renderer.domElement);
+ controls.enableDamping=!factory3d.mobile;
+ controls.dampingFactor=0.08;
+ controls.enablePan=true;
+ controls.screenSpacePanning=true;
+ controls.maxPolarAngle=Math.PI/2-0.06;
+ controls.minPolarAngle=0.02;
+ controls.zoomSpeed=factory3d.mobile?0.7:0.9;
+ controls.rotateSpeed=factory3d.mobile?0.65:0.85;
+ controls.panSpeed=factory3d.mobile?0.7:0.8;
+ controls.touches.ONE=THREE.TOUCH.ROTATE;
+ controls.touches.TWO=THREE.TOUCH.DOLLY_PAN;
+ controls.mouseButtons.LEFT=THREE.MOUSE.ROTATE;
+ controls.mouseButtons.RIGHT=THREE.MOUSE.PAN;
+ const mats={
+  steel:new THREE.MeshLambertMaterial({color:0xd5dee8}),
+  blue:new THREE.MeshLambertMaterial({color:0x0b8ec8}),
+  cyan:new THREE.MeshLambertMaterial({color:0x67e8f9}),
+  orange:new THREE.MeshLambertMaterial({color:0xf97316}),
+  purple:new THREE.MeshLambertMaterial({color:0x8b7cc9}),
+  glass:new THREE.MeshLambertMaterial({color:0x9bd7ff,transparent:true,opacity:0.4}),
+  dark:new THREE.MeshLambertMaterial({color:0x334155}),
+  floor:new THREE.MeshLambertMaterial({color:0x102033}),
+  curb:new THREE.MeshLambertMaterial({color:0x38bdf8,transparent:true,opacity:0.4}),
+  zone:new THREE.MeshLambertMaterial({color:0x38bdf8,transparent:true,opacity:0.28})
+ };
+ scene.add(new THREE.AmbientLight(0xdbeafe,factory3d.mobile?0.92:0.72));
+ const sun=new THREE.DirectionalLight(0xffffff,factory3d.mobile?0.45:0.85);
+ sun.position.set(18,42,14);
+ if(!factory3d.mobile){sun.castShadow=true;sun.shadow.mapSize.set(512,512);sun.shadow.camera.near=1;sun.shadow.camera.far=140;}
+ scene.add(sun);
+ const shared={pad:new THREE.PlaneGeometry(1,1),bulb:new THREE.SphereGeometry(0.13,8,6)};
+ let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+ labels.replaceChildren();
+ for(const root of groups.values()){
+  const group=buildMachineMesh(THREE,root,mats,shared);
+  scene.add(group);
+  const p=group.position;
+  minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minZ=Math.min(minZ,p.z);maxZ=Math.max(maxZ,p.z);
+  const el=document.createElement('button');
+  el.type='button';
+  el.className='equip-label';
+  el.style.transform='translate3d(-9999px,-9999px,0)';
+  el.dataset.equipmentId=root.userData.id;
+  const visual=safeVisual(root);
+  el.dataset.status=visual.key;
+  el.innerHTML='<i class="status-dot"></i><span class="equip-name"></span><em class="equip-mark"></em>';
+  el.querySelector('.equip-name').textContent=shortMapName(root.userData.name);
+  const mark=el.querySelector('.equip-mark');
+  mark.hidden=!visual.mark;
+  if(visual.mark)mark.textContent=visual.mark;
+  el.addEventListener('pointerdown',event=>event.stopPropagation());
+  el.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();select(root);});
+  labels.appendChild(el);
+  root.userData.label3d=el;
+ }
+ const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2,fw=Math.max(24,(maxX-minX)+16),fd=Math.max(24,(maxZ-minZ)+16);
+ const floor=new THREE.Mesh(new THREE.BoxGeometry(fw,0.4,fd),mats.floor);
+ floor.position.set(cx,-0.22,cz);
+ floor.receiveShadow=!factory3d.mobile;
+ scene.add(floor);
+ const grid=new THREE.GridHelper(Math.max(fw,fd),factory3d.mobile?18:28,0x38bdf8,0x1e3a5f);
+ grid.position.set(cx,0.02,cz);
+ const gridMat=Array.isArray(grid.material)?grid.material:[grid.material];
+ for(const material of gridMat){material.transparent=true;material.opacity=0.28;}
+ scene.add(grid);
+ const curbH=0.28,curbT=0.16;
+ for(const [w,d,x,z] of [[fw,curbT,cx,cz-fd/2],[fw,curbT,cx,cz+fd/2],[curbT,fd,cx-fw/2,cz],[curbT,fd,cx+fw/2,cz]]){
+  const curb=new THREE.Mesh(new THREE.BoxGeometry(w,curbH,d),mats.curb);
+  curb.position.set(x,curbH/2,z);
+  scene.add(curb);
+ }
+ if(!factory3d.mobile){
+  const span=Math.max(fw,fd);
+  sun.shadow.camera.left=-span;sun.shadow.camera.right=span;sun.shadow.camera.top=span;sun.shadow.camera.bottom=-span;
+  sun.target.position.set(cx,0,cz);scene.add(sun.target);
+ }
+ factory3d.scene=scene;factory3d.camera=camera;factory3d.renderer=renderer;factory3d.controls=controls;
+ factory3d.center={x:cx,z:cz};factory3d.span=Math.max(fw,fd);factory3d.floor={w:fw,d:fd};
+ factory3d.raycaster=new THREE.Raycaster();
+ controls.minDistance=6;controls.maxDistance=factory3d.span*2.4;
+ controls.addEventListener('change',kickFactoryRender);
+ let pointers=0,press=null;
+ renderer.domElement.addEventListener('pointerdown',event=>{
+  pointers+=1;
+  press=pointers===1&&event.button===0?{id:event.pointerId,x:event.clientX,y:event.clientY}:null;
+ });
+ renderer.domElement.addEventListener('pointerup',event=>{
+  pointers=Math.max(0,pointers-1);
+  if(!press||press.id!==event.pointerId)return;
+  const start=press;press=null;
+  if(Math.hypot(event.clientX-start.x,event.clientY-start.y)>8)return;
+  pickFactory(event);
+ });
+ renderer.domElement.addEventListener('pointercancel',()=>{pointers=Math.max(0,pointers-1);press=null;});
+ renderer.domElement.addEventListener('webglcontextlost',event=>{
+  event.preventDefault();
+  factory3d.ready=false;factory3d.failed=true;
+  document.body.classList.add('view-flat');document.body.classList.remove('view-3d');
+  factory3d.mode='flat';markViewButtons('flat');setGestureHint('flat');
+  toast('3D 視圖中斷，已改顯示平面地圖');
+ });
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopFactoryRender();else if(document.body.classList.contains('view-3d'))kickFactoryRender();});
+}
+function setViewMode(mode){
+ const loading=document.getElementById('factory3dLoading');
+ const showFlat=reason=>{
+  document.body.classList.add('view-flat');document.body.classList.remove('view-3d');
+  factory3d.mode='flat';stopFactoryRender();frameFactory();markViewButtons('flat');setGestureHint('flat');
+  if(loading)loading.hidden=true;
+  if(reason)toast(reason);
+  return 'flat';
+ };
+ if(mode==='flat')return showFlat();
+ if(!factory3d.ready&&!bootFactory3D())return showFlat('3D 視圖無法載入，已改顯示平面地圖');
+ document.body.classList.add('view-3d');document.body.classList.remove('view-flat');
+ factory3d.mode=mode==='top'?'top':'3d';
+ setFactoryCamera(factory3d.mode==='top'?'top':'overview');
+ markViewButtons(factory3d.mode);
+ setGestureHint('3d');
+ onFactoryResize();
+ syncFactory3DScene();
+ if(loading)loading.hidden=true;
+ return factory3d.mode;
+}
+
+try{setViewMode('3d');}catch(e){factory3d.failed=true;document.body.classList.add('view-flat');document.body.classList.remove('view-3d');const loading=document.getElementById('factory3dLoading');if(loading)loading.hidden=true;}
 
 </script></div>
 <style>
@@ -935,4 +1369,133 @@ document.getElementById('refreshAllBtn').onclick=async()=>{
  if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 })();
 </script>
+<style>
+/* Cyber factory theme. Plain CSS so existing form controls keep their behavior. */
+html,body{background:radial-gradient(circle at 50% 42%,#112236 0%,#07101c 68%,#03070e 100%)!important;color:#e2e8f0}
+#factory3d{position:absolute;inset:0;z-index:1;touch-action:none;background:radial-gradient(circle at 50% 45%,#112236 0%,#07101c 70%,#03070e 100%)}
+#factory3d canvas{display:block;width:100%!important;height:100%!important;touch-action:none}
+#factory3dLabels{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:hidden}
+#factory3dLoading{position:absolute;z-index:14;left:50%;top:46%;transform:translate(-50%,-50%);margin:0;padding:10px 14px;border-radius:999px;border:1px solid rgba(56,189,248,.35);background:rgba(9,20,36,.9);color:#a5f3fc;font-size:13px;pointer-events:none}
+#factory3dLoading[hidden]{display:none!important}
+body.view-3d #canvas{visibility:hidden;pointer-events:none}
+body.view-flat #factory3d,body.view-flat #factory3dLabels,body.view-flat #factory3dLoading{visibility:hidden;pointer-events:none}
+body.view-3d .map-tools{display:none!important}
+body.view-flat #orbitPanBtn{display:none!important}
+body.panel-open #inspectionEntry,body.panel-open #pushSetupBtn,body.panel-open #orbitPanBtn{display:none!important}
+.top,.palette,.panel,.map-tools,#categoryDrawer,#syncBadge,#toast,#orbitPanBtn{
+ background:rgba(9,20,36,.88)!important;
+ border:1px solid rgba(56,189,248,.35)!important;
+ box-shadow:0 8px 32px rgba(0,0,0,.45),0 0 16px rgba(56,189,248,.12)!important;
+ backdrop-filter:blur(12px);
+ color:#e2e8f0
+}
+.top{height:auto!important;min-height:58px;flex-wrap:wrap;align-items:center;border-radius:16px!important}
+.logo{display:flex;align-items:center;gap:8px;text-shadow:none;font-weight:700}
+.logo-mark{width:36px;height:36px;display:grid;place-items:center;flex:none;border-radius:10px;border:1px solid rgba(103,232,249,.45);background:rgba(8,47,73,.65);color:#67e8f9}
+.logo-mark svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+.logo-text{display:flex;flex-direction:column;line-height:1.15}
+.logo-text b{font-size:15px;letter-spacing:.04em;color:#f8fafc}
+.logo-text small{color:#94a3b8;font-size:11px;font-weight:650}
+.mode{display:flex;gap:6px;align-items:center;margin-left:auto;overflow-x:auto;max-width:100%}
+.mode button,.map-tools button,#orbitPanBtn,#categoryClose{display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.mode button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round;flex:none}
+button,select,input,textarea{border-color:rgba(56,189,248,.35);background:rgba(8,20,36,.92);color:#e2e8f0}
+button.active,.mode button.active{background:linear-gradient(180deg,rgba(14,116,144,.95),rgba(8,51,68,.95))!important;border-color:#22d3ee!important;color:#fff!important;box-shadow:0 0 14px rgba(34,211,238,.35)!important}
+.palette{border-radius:16px!important}
+.palette h3{color:#67e8f9!important}
+.palette .item{background:linear-gradient(160deg,rgba(15,31,56,.92),rgba(8,18,34,.95))!important;border:1px solid rgba(56,189,248,.3)!important;color:#e2e8f0}
+.palette .item small{color:#7dd3fc;font-size:10px;font-weight:700}
+.equipment-category-icon{background:none!important;width:28px!important;height:28px!important;display:grid!important;place-items:center;color:#bae6fd}
+.item[data-category="washers"] .equipment-category-icon{color:#7dd3fc}
+.item[data-category="dryers"] .equipment-category-icon{color:#67e8f9}
+.item[data-category="folders"] .equipment-category-icon{color:#a5b4fc}
+.item[data-category="finishing"] .equipment-category-icon{color:#c4b5fd}
+.item[data-category="utilities"] .equipment-category-icon{color:#fbbf24}
+.equipment-category-icon svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#categoryDrawer{background:rgba(9,20,36,.96)!important;border-color:rgba(56,189,248,.4)!important;color:#e2e8f0}
+.category-row{background:rgba(8,20,36,.8);border-color:rgba(56,189,248,.28)!important;color:#f8fafc}
+.category-row span{color:#94a3b8!important}
+#orbitPanBtn{position:fixed;z-index:34;left:12px;top:76px;min-height:36px;padding:7px 10px;font-size:12px;border-radius:12px}
+.panel{background:rgba(9,20,36,.94)!important;color:#e2e8f0}
+.panel h2,.panel h3{color:#f8fafc}
+.panel .card{background:rgba(7,16,30,.72)!important;border-color:rgba(56,189,248,.22)!important}
+.panel input,.panel select,.panel textarea{background:#071422!important;border-color:rgba(56,189,248,.35)!important;color:#f8fafc!important}
+.status-chip{display:inline-flex;align-items:center;gap:8px;margin:4px 0 8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(56,189,248,.28);background:rgba(2,6,23,.45);font-size:13px;font-weight:800}
+.status-chip i{width:10px;height:10px;border-radius:50%;background:var(--chip,#34d399);box-shadow:0 0 8px var(--chip,#34d399)}
+.status-chip[data-status="ok"]{--chip:#34d399;color:#6ee7b7}
+.status-chip[data-status="maint"],.status-chip[data-status="overdue"]{--chip:#f59e0b;color:#fcd34d}
+.status-chip[data-status="issue"]{--chip:#fb7185;color:#fecdd3}
+.status-chip[data-status="due"]{--chip:#38bdf8;color:#bae6fd}
+.status-chip[data-status="stopped"]{--chip:#94a3b8;color:#cbd5e1}
+.panel-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
+.panel-stats div{padding:8px 10px;border-radius:10px;border:1px solid rgba(51,65,85,.9);background:rgba(2,6,23,.45)}
+.panel-stats span{display:block;color:#94a3b8;font-size:11px}
+.panel-stats b{display:block;margin-top:3px;color:#67e8f9;font-size:14px}
+.panel-stats b:last-child{color:#fcd34d}
+.equip-label{position:absolute;left:0;top:0;z-index:1;display:inline-flex;align-items:center;gap:5px;max-width:148px;min-height:0!important;width:auto;padding:3px 8px!important;border-radius:999px!important;border:1px solid rgba(56,189,248,.75)!important;background:rgba(7,16,30,.92)!important;color:#fff!important;font-size:11px!important;font-weight:700;line-height:1.2;box-shadow:0 0 10px rgba(56,189,248,.28)!important;pointer-events:auto;cursor:pointer;white-space:nowrap}
+.equip-label .equip-name{overflow:hidden;text-overflow:ellipsis}
+.equip-label .equip-mark{font-style:normal;font-size:9px;color:#fde68a}
+.equip-label .status-dot{width:8px;height:8px;border-radius:50%;flex:none;background:currentColor;box-shadow:0 0 8px currentColor}
+.equip-label[data-status="ok"]{color:#d1fae5!important}.equip-label[data-status="ok"] .status-dot{color:#34d399}
+.equip-label[data-status="maint"],.equip-label[data-status="overdue"]{border-color:rgba(245,158,11,.85)!important}
+.equip-label[data-status="maint"] .status-dot,.equip-label[data-status="overdue"] .status-dot{color:#f59e0b}
+.equip-label[data-status="issue"]{border-color:rgba(251,113,133,.9)!important}
+.equip-label[data-status="issue"] .status-dot{color:#fb7185}
+.equip-label[data-status="due"]{border-color:rgba(56,189,248,.95)!important}
+.equip-label[data-status="due"] .status-dot{color:#38bdf8}
+.equip-label[data-status="stopped"]{border-color:rgba(148,163,184,.7)!important;color:#cbd5e1!important}
+.equip-label[data-status="stopped"] .status-dot{color:#94a3b8}
+.equip-label.selected{border-color:#fff!important;box-shadow:0 0 14px rgba(34,211,238,.7)!important;z-index:3}
+.equip-label.dimmed{opacity:.35}
+.map-hotspot .live-name{background:rgba(7,16,30,.92)!important;color:#fff!important;border:1px solid rgba(56,189,248,.75)!important;border-radius:999px!important;box-shadow:0 0 10px rgba(56,189,248,.35)!important}
+.map-hotspot[data-state="issue"]::after{background:#be123c}
+.map-hotspot[data-state="overdue"]::after{background:#b45309}
+.map-hotspot[data-state="due"]::after{background:#0369a1}
+.map-hotspot[data-state="stopped"]::after{background:#475569}
+#syncBadge{background:rgba(9,20,36,.88)!important;border-color:rgba(56,189,248,.35)!important;color:#a5f3fc}
+#toast{background:rgba(9,20,36,.94)!important;border-color:rgba(56,189,248,.4)!important;color:#e2e8f0}
+#inspectionEntry,#pushSetupBtn{border:1px solid rgba(56,189,248,.45)!important;background:rgba(8,47,73,.92)!important;color:#e0f2fe!important;box-shadow:0 0 12px rgba(56,189,248,.18)}
+#inspectionOverlay{background:#07101c;color:#e2e8f0}
+.ins-header,#inspectionSaveBar,.ins-card,.ins-stats div{background:rgba(9,20,36,.94)!important;color:#e2e8f0;border-color:rgba(56,189,248,.25)!important}
+.ins-header{border-bottom:1px solid rgba(56,189,248,.25)}
+.ins-intro span,.ins-muted,.ins-machine span,.ins-stats span,.ins-right,.category-row span{color:#94a3b8}
+#inspectionOverlay button{background:rgba(15,23,42,.9);color:#e2e8f0;border-color:rgba(56,189,248,.3)}
+#inspectionOverlay .ins-primary,.ins-tabs button.active{background:#0e7490!important;color:#fff!important;border-color:#22d3ee!important}
+#inspectionOverlay input,#inspectionOverlay select,#inspectionOverlay textarea{background:#0b1726!important;color:#f8fafc!important;border-color:rgba(56,189,248,.35)!important}
+#inspectionOverlay .chosen.normal{background:#064e3b!important;color:#a7f3d0!important;border:2px solid #34d399!important}
+#inspectionOverlay .chosen.abnormal{background:#7f1d1d!important;color:#fecaca!important;border:2px solid #fb7185!important}
+#inspectionOverlay .chosen.na{background:#1e293b!important;color:#e2e8f0!important;border:2px solid #94a3b8!important}
+.ins-sync{background:#3f2e12!important;color:#fde68a!important}
+.ins-machine,.ins-warning{background:rgba(15,23,42,.72)}
+.ins-danger{color:#fda4af!important}
+.ins-photo-tile{background:#0f172a!important;border-color:#1e3a4c!important}
+.ins-photo-pick{background:#0b2536!important;color:#dbeafe!important;border-color:#38bdf8!important}
+.push-card{background:rgba(9,20,36,.96)!important;color:#e2e8f0!important;border:1px solid rgba(56,189,248,.35)}
+.push-card input{background:#0b1726!important;color:#f8fafc!important;border-color:rgba(56,189,248,.35)!important}
+.push-card small,.push-status{color:#cbd5e1}
+.push-status{background:rgba(15,23,42,.8)!important}
+#pushQrCanvas{background:#fff;padding:12px;border-radius:12px}
+#pushScanner{background:#0b1726!important;border-color:rgba(56,189,248,.35)!important}
+@media(pointer:coarse){
+ .top,.palette,.panel,.map-tools,#categoryDrawer,#syncBadge,#toast,#orbitPanBtn{backdrop-filter:none;background:rgba(9,20,36,.96)!important}
+ .equip-label{font-size:10px!important;max-width:120px}
+}
+@media(max-width:1024px){
+ .logo-text small{display:none}
+ .logo-mark{width:28px;height:28px}
+ .logo-text b{font-size:13px}
+ .top{max-height:112px;overflow:hidden;padding-top:6px;padding-bottom:6px}
+ .mode{width:100%;flex-wrap:nowrap}
+ .mode button{flex:1 0 auto;min-height:34px;font-size:11px;padding:6px 8px}
+ #orbitPanBtn{top:116px;left:8px}
+ #inspectionEntry{top:116px!important;right:8px}
+ #pushSetupBtn{top:158px!important;right:8px}
+ .panel{left:auto!important;right:8px!important;top:72px!important;bottom:max(8px,env(safe-area-inset-bottom))!important;width:min(440px,calc(100% - 16px))!important;height:auto!important;max-height:none!important;transform:translateX(115%)!important}
+ .panel.open{transform:none!important}
+}
+@media(max-width:700px){
+ .panel h2{font-size:20px}
+ .equip-label{padding:2px 6px!important}
+}
+</style>
 </body></html>

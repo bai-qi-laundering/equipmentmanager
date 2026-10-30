@@ -26,7 +26,7 @@ async function setup(manager=false){
   throw Error('unexpected request '+path);
  };
  const context=dom.getInternalVMContext();
- const m=new vm.SourceTextModule(source+`\nglobalThis.hooks={groups,view,canManage,loadRemoteLayout,openPanel,openInspection,editInspection,syncInspectionNas,apiFetch,renderMapStatus,getState:()=>inspectionState};`,{context});
+ const m=new vm.SourceTextModule(source+`\nglobalThis.hooks={groups,view,canManage,loadRemoteLayout,openPanel,openInspection,editInspection,syncInspectionNas,apiFetch,renderMapStatus,getState:()=>inspectionState,getPositionData,rememberScenePose,layoutToScene,setViewMode,factory3dReady};`,{context});
  await m.link(()=>new vm.SourceTextModule(rules,{context}));await m.evaluate();
  return {dom,w,h:w.hooks,calls,remote};
 }
@@ -70,5 +70,43 @@ test('a QR editor uses scoped write routes and role refresh can remove edit acce
   const normalFetch=w.fetch;w.fetch=async(url,opts)=>{const r=await normalFetch(url,opts);const j=await r.json();return Response.json({...j,canEdit:false});};
   await h.loadRemoteLayout();assert.equal(h.canManage(),false);assert.equal(w.document.getElementById('eqName').disabled,true);
   assert.equal(w.document.querySelector('[data-management-access]'),null);
+ }finally{dom.window.close();}
+});
+
+test('3D is the default view and falls back to the flat map without three.js',async()=>{
+ const {dom,w,h}=await setup();
+ try{
+  assert.match(html,/vendor\/three-0\.128\.0\.min\.js/);
+  assert.match(html,/vendor\/OrbitControls-0\.128\.0\.js/);
+  assert.doesNotMatch(html,/cdn\.tailwindcss\.com/);
+  assert.equal(w.document.querySelectorAll('.map-hotspot').length,41);
+  assert.ok(w.document.getElementById('factory3d'));
+  assert.ok(w.document.getElementById('view3dBtn'));
+  assert.ok(w.document.getElementById('viewTopBtn'));
+  assert.ok(w.document.getElementById('viewFlatBtn'));
+  assert.equal(h.factory3dReady(),false);
+  assert.equal(w.document.body.classList.contains('view-flat'),true);
+  assert.equal(h.setViewMode('3d'),'flat');
+  assert.equal(h.setViewMode('top'),'flat');
+  assert.equal(h.setViewMode('flat'),'flat');
+  assert.equal(w.document.getElementById('flatImage').getAttribute('src'),'factory-map-clean-v13.svg');
+  const ground=h.layoutToScene(193,-101,0,'一樓');
+  const raised=h.layoutToScene(-75,76,36,'架高二層');
+  assert.equal(ground.y,0);
+  assert.ok(ground.x>0&&ground.z<0);
+  assert.equal(ground.x,h.layoutToScene(0,193,0,'一樓').z);
+  assert.ok(raised.y>0);
+  const root=h.groups.get('VERT-01');
+  const savedX=root.position.x;
+  h.rememberScenePose(root,{x:10,z:20,rotation_y:1.2,level:'架高二層'});
+  assert.equal(root.position.x,savedX);
+  assert.equal(root.userData.sceneX,10);
+  assert.equal(h.getPositionData().find(row=>row.id==='VERT-01').x,savedX);
+  h.openPanel(root);
+  assert.equal(w.document.getElementById('eqLastClean').textContent,'尚無紀錄');
+  assert.match(w.document.getElementById('eqNextCheck').textContent,/^\d{4}-\d{2}-\d{2}$|^待設定$/);
+  assert.equal(w.document.getElementById('eqStatusChip').dataset.status==='ok'||w.document.getElementById('eqStatusChip').textContent.includes('正常'),true);
+  assert.equal(w.document.body.textContent.includes('RPM'),false);
+  assert.equal(w.document.body.textContent.includes('核心溫度'),false);
  }finally{dom.window.close();}
 });
