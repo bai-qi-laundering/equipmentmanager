@@ -264,7 +264,7 @@ const regions=[["DESK-01", 56, 65, 60, 100], ["PACK-01", 132, 39, 65, 105], ["DE
 const viewport=document.getElementById('flatViewport'),flatMap=document.getElementById('flatMap');
 const view={scale:1,x:0,y:0};let fitScale=1;
 function setEquipmentScale(){}function syncEquipmentTools(){}function syncQuickRotate(){}function syncEquipmentSprite(){requestSceneRender();}
-function select(root){selected=root||null;groups.forEach(r=>{r.userData.hotspot.classList.toggle('selected',r===selected);r.userData.label3d?.classList.toggle('selected',r===selected);});if(root)openPanel(root);else closePanel();}
+function select(root){selected=root||null;groups.forEach(r=>{r.userData.hotspot.classList.toggle('selected',r===selected);r.userData.label3d?.classList.toggle('selected',r===selected);if(factory3d.ready&&r.userData.glowEdges)applyMachineGlow(r);});if(factory3d.ready)kickFactoryRender();if(root)openPanel(root);else closePanel();}
 function requestSceneRender(){applyFilters();groups.forEach(root=>{const el=root.userData.hotspot;el.setAttribute('aria-label',root.userData.name);const changed=root.userData.name!==root.userData.originalName;el.classList.toggle('renamed',changed);el.querySelector('.live-name').textContent=root.userData.name;});syncFactory3DScene();}
 function applyFilters(){const q=document.getElementById('search').value.trim().toLowerCase(),type=document.getElementById('filter').value;groups.forEach(r=>{r.visible=(!q||r.userData.name.toLowerCase().includes(q))&&(type==='全部設備'||r.userData.type===type);r.userData.hotspot.classList.toggle('dimmed',!r.visible);r.userData.hotspot.disabled=!r.visible;});}
 function applyView(){flatMap.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.scale})`;flatMap.style.setProperty('--map-scale',view.scale);}
@@ -925,13 +925,22 @@ function stopFactoryRender(){if(factory3d.loop){cancelAnimationFrame(factory3d.l
 function kickFactoryRender(){
  if(!factory3d.ready||factory3d.mode==='flat'||document.hidden||document.body.classList.contains('inspection-open'))return;
  if(factory3d.loop)return;
- factory3d.loop=requestAnimationFrame(()=>{
+ const frame=(now)=>{
   factory3d.loop=0;
   if(!factory3d.ready||factory3d.mode==='flat'||document.hidden||document.body.classList.contains('inspection-open'))return;
-  if(factory3d.controls?.enableDamping)factory3d.controls.update();
-  factory3d.renderer.render(factory3d.scene,factory3d.camera);
-  projectFactoryLabels();
- });
+  const issueEdge=factory3d.edgeMats?.issue,issueRim=factory3d.rimMats?.issue;
+  const pulse=!!(factory3d.hasIssue&&!factory3d.reduce&&issueEdge&&issueRim);
+  if(pulse){const t=(Math.sin(now/320)+1)/2;issueEdge.opacity=0.28+t*0.72;issueRim.opacity=0.34+t*0.66;}
+  const due=!factory3d.mobile||factory3d.busy||now-(factory3d.drawn||0)>90;
+  if(due){
+   if(factory3d.controls?.enableDamping)factory3d.controls.update();
+   factory3d.renderer.render(factory3d.scene,factory3d.camera);
+   projectFactoryLabels();
+   factory3d.drawn=now;
+  }
+  if((pulse||factory3d.busy)&&!factory3d.loop)factory3d.loop=requestAnimationFrame(frame);
+ };
+ factory3d.loop=requestAnimationFrame(frame);
 }
 function onFactoryResize(){
  if(!factory3d.ready)return;
@@ -944,18 +953,50 @@ function onFactoryResize(){
  factory3d.renderer.setSize(w,h,false);
  kickFactoryRender();
 }
+function briefMapName(name){
+ let s=shortMapName(name).replace(/\s+/g,'');
+ s=s.replace(/不鏽鋼工作台/,'工作台').replace(/洗衣機/,'洗').replace(/烘乾機/,'烘').replace(/（L型）/,'L').replace(/打包機/,'打包');
+ return s.length>8?s.slice(0,8):s;
+}
 function projectFactoryLabels(){
  if(!factory3d.ready||factory3d.mode==='flat')return;
  const cam=factory3d.camera,v=factory3d.proj,w=factory3d.host.clientWidth,h=factory3d.host.clientHeight;
  if(!w||!h)return;
+ const target=factory3d.controls?.target,dist=target?cam.position.distanceTo(target):factory3d.span;
+ const close=dist<(factory3d.span||40)*0.62;
+ const horizon=Math.min((factory3d.span||40)*0.48,Math.max(14,dist*0.62));
+ const items=[];
  for(const root of groups.values()){
   const el=root.userData.label3d,mesh=root.userData.mesh3d;
   if(!el||!mesh)continue;
   if(!root.visible||!mesh.visible){el.hidden=true;continue;}
+  if(target&&root!==selected){
+   const dx=mesh.position.x-target.x,dz=mesh.position.z-target.z;
+   if(dx*dx+dz*dz>horizon*horizon){el.hidden=true;continue;}
+  }
   v.set(mesh.position.x,mesh.position.y+(root.userData.labelHeight||2),mesh.position.z).project(cam);
-  if(v.z<-1||v.z>1||v.x<-1.15||v.x>1.15||v.y<-1.15||v.y>1.15){el.hidden=true;continue;}
-  el.hidden=false;
-  el.style.transform=`translate3d(${(v.x*.5+.5)*w}px,${(-v.y*.5+.5)*h}px,0) translate(-50%,-120%)`;
+  if(v.z<-1||v.z>1||v.x<-1.2||v.x>1.2||v.y<-1.2||v.y>1.2){el.hidden=true;continue;}
+  const full=el.dataset.fullName||shortMapName(root.userData.name);
+  const showFull=close||root===selected||root===factory3d.hover;
+  const text=showFull?full:briefMapName(full);
+  const name=el.querySelector('.equip-name');
+  if(name&&name.textContent!==text)name.textContent=text;
+  el.classList.toggle('is-brief',!showFull);
+  const mark=el.querySelector('.equip-mark');
+  if(mark)mark.hidden=!showFull||!mark.textContent;
+  items.push({el,root,x:(v.x*.5+.5)*w,y:(-v.y*.5+.5)*h,z:v.z,bw:Math.min(showFull?150:92,18+text.length*12),pri:root===selected?0:(root.userData.statusKey==='issue'?1:2)});
+ }
+ items.sort((a,b)=>a.pri-b.pri||a.z-b.z);
+ const boxes=[];
+ for(const item of items){
+  let y=item.y,tries=0;
+  const hit=()=>boxes.some(b=>Math.abs(b.x-item.x)<(b.w+item.bw)/2-6&&Math.abs(b.y-y)<18);
+  while(hit()&&tries<3){y-=16;tries++;}
+  if(hit()&&item.root!==selected&&item.root.userData.statusKey!=='issue'){item.el.hidden=true;continue;}
+  boxes.push({x:item.x,y,w:item.bw});
+  item.el.hidden=false;
+  item.el.style.setProperty('--stem',(8+tries*18)+'px');
+  item.el.style.transform=`translate3d(${item.x}px,${y}px,0) translate(-50%,-100%)`;
  }
 }
 function syncFactory3DStatus(kick=true){
@@ -966,21 +1007,19 @@ function syncFactory3DStatus(kick=true){
   const el=root.userData.label3d;
   if(el){
    if(el.dataset.status!==visual.key){el.dataset.status=visual.key;changed=true;}
-   const name=el.querySelector('.equip-name'),mark=el.querySelector('.equip-mark');
-   const nextName=shortMapName(root.userData.name);
-   if(name&&name.textContent!==nextName)name.textContent=nextName;
-   if(mark){mark.hidden=!visual.mark;if(visual.mark&&mark.textContent!==visual.mark)mark.textContent=visual.mark;}
+   el.dataset.fullName=shortMapName(root.userData.name);
+   const mark=el.querySelector('.equip-mark');
+   if(mark){if(visual.mark&&mark.textContent!==visual.mark)mark.textContent=visual.mark;if(!visual.mark){mark.textContent='';mark.hidden=true;}}
    el.classList.toggle('dimmed',root.visible===false);
   }
-  if(root.userData.statusKey!==visual.key){
-   root.userData.statusKey=visual.key;
-   root.userData.statusMat?.color.setHex(visual.color);
-   root.userData.lightMat?.color.setHex(visual.color);
-   changed=true;
-  }
+  if(root.userData.statusKey!==visual.key){root.userData.statusKey=visual.key;changed=true;}
+  if(factory3d.hud)applyMachineGlow(root);
  }
+ const issue=[...groups.values()].some(r=>r.userData.statusKey==='issue');
+ if(factory3d.hasIssue!==issue){factory3d.hasIssue=issue;changed=true;}
+ if(!issue&&factory3d.edgeMats?.issue){factory3d.edgeMats.issue.opacity=0.95;factory3d.rimMats.issue.opacity=0.9;}
  if(selected)paintPanelStatus(selected);
- if(kick&&changed)kickFactoryRender();
+ if(kick&&(changed||factory3d.hasIssue))kickFactoryRender();
  return changed;
 }
 function syncFactory3DScene(){
@@ -1054,86 +1093,179 @@ function machineFootprint(root){
  const a=Math.max(1.05,rect[2]*PIXEL_TO_SCENE),b=Math.max(0.85,rect[3]*PIXEL_TO_SCENE);
  return {length:Math.max(a,b),width:Math.min(a,b)};
 }
-function kindMaterial(kind,mats){
- if(kind==='dryer')return mats.blue;
- if(kind==='folding'||String(kind).startsWith('line'))return mats.blue;
- if(kind==='shirt'||kind==='longPress'||kind==='pressZone')return mats.purple;
- if(kind==='crane'||kind==='boiler')return mats.orange;
- if(kind==='office')return mats.glass;
- if(kind==='toilet')return mats.dark;
- return mats.steel;
+let hudLabelSerial=0;
+function ensureHudKit(THREE){
+ if(factory3d.hud)return factory3d.hud;
+ const box=new THREE.BoxGeometry(1,1,1);
+ const cyl=new THREE.CylinderGeometry(0.5,0.5,1,12);
+ const torus=new THREE.TorusGeometry(0.5,0.12,6,18);
+ const sphere=new THREE.SphereGeometry(0.5,10,8);
+ const cone=new THREE.ConeGeometry(0.5,1,10);
+ const edges={box:new THREE.EdgesGeometry(box),cyl:new THREE.EdgesGeometry(cyl),torus:new THREE.EdgesGeometry(torus),sphere:new THREE.EdgesGeometry(sphere),cone:new THREE.EdgesGeometry(cone)};
+ const body=new THREE.MeshBasicMaterial({color:0x0c2030,transparent:true,opacity:0.74,depthWrite:true,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+ const glass=new THREE.MeshBasicMaterial({color:0x102838,transparent:true,opacity:0.55,depthWrite:true});
+ const colors={ok:0x3ee0a0,due:0x3ec6ff,overdue:0xf5b942,maint:0xf5b942,issue:0xff4d6a,stopped:0x94a3b8,hover:0xe7fbff,selected:0xffffff};
+ const edgeMats={},rimMats={};
+ for(const [key,color] of Object.entries(colors)){
+  edgeMats[key]=new THREE.LineBasicMaterial({color,transparent:true,opacity:key==='stopped'?0.45:1});
+  rimMats[key]=new THREE.MeshBasicMaterial({color,transparent:true,opacity:key==='stopped'?0.35:key==='selected'?0.55:key==='hover'?0.75:0.92});
+ }
+ factory3d.reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ factory3d.edgeMats=edgeMats;
+ factory3d.rimMats=rimMats;
+ factory3d.hud={box,cyl,torus,sphere,cone,edges,body,glass,colors,edgeMats,rimMats};
+ return factory3d.hud;
+}
+function addHudPart(group,root,part){
+ const kit=factory3d.hud;
+ const [geoName,role,x,y,z,sx,sy,sz,rx,ry,rz]=part;
+ const mesh=new THREE.Mesh(kit[geoName],role==='glass'?kit.glass:role==='rim'?kit.rimMats.ok:kit.body);
+ mesh.position.set(x,y,z);
+ mesh.scale.set(sx||1,sy||1,sz||1);
+ if(rx||ry||rz)mesh.rotation.set(rx||0,ry||0,rz||0);
+ group.add(mesh);
+ if(role==='rim')root.userData.glowRims.push(mesh);
+ const lines=new THREE.LineSegments(kit.edges[geoName],kit.edgeMats.ok);
+ lines.position.copy(mesh.position);
+ lines.rotation.copy(mesh.rotation);
+ lines.scale.copy(mesh.scale);
+ group.add(lines);
+ root.userData.glowEdges.push(lines);
+}
+function hudMachineParts(kind,L,W){
+ const min=Math.min(L,W),max=Math.max(L,W);
+ if(kind==='washer'||kind==='vertical'||kind==='dryclean'){
+  const h=Math.min(3.15,Math.max(2.15,min*1.25));
+  const r=Math.min(min,h)*0.36;
+  const parts=[['box','body',0,h*0.48,0,L*0.88,h*0.86,W*0.8],['box','body',0,0.07,0,L,0.14,W*0.98],['cyl','glass',0,h*0.5,W*0.46,r*1.7,0.08,r*1.7,Math.PI/2,0,0],['cyl','rim',0,h*0.5,W*0.5,r*1.15,0.07,r*1.15,Math.PI/2,0,0],['torus','rim',0,h*0.5,W*0.52,r*2.05,r*2.05,r*2.05],['box','rim',L*0.3,h*0.78,W*0.44,L*0.22,h*0.22,0.1],['box','body',L*0.3,h*0.86,W*0.4,0.06,0.05,0.04],['box','body',L*0.3,h*0.74,W*0.4,0.06,0.05,0.04]];
+  if(kind==='dryclean')parts.push(['cyl','rim',-L*0.38,h*0.38,0,min*0.28,h*0.5,min*0.28]);
+  return {height:h,parts};
+ }
+ if(kind==='dryer'){
+  const h=Math.min(3.6,Math.max(2.55,min*1.45));
+  const r=Math.min(min,h)*0.32;
+  return {height:h+0.35,parts:[['box','body',0,h*0.44,0,L*0.78,h*0.76,W*0.82],['box','body',0,0.08,0,L*0.9,0.16,W],['cyl','glass',0,h*0.48,W*0.46,r*1.65,0.08,r*1.65,Math.PI/2,0,0],['cyl','rim',0,h*0.48,W*0.5,r*1.05,0.07,r*1.05,Math.PI/2,0,0],['torus','rim',0,h*0.48,W*0.52,r*2,r*2,r*2],['cyl','rim',0,h*0.98,0,min*0.16,h*0.42,min*0.16],['cone','rim',0,h*1.22,0,min*0.22,h*0.16,min*0.22],['box','rim',L*0.26,h*0.72,W*0.4,L*0.16,h*0.16,0.08]]};
+ }
+ if(kind==='folding'){
+  const h=Math.min(1.35,Math.max(0.9,min*0.42));
+  const roll=Math.max(0.28,h*0.34);
+  const parts=[['box','body',0,h*0.36,0,L*0.98,h*0.5,W*0.82],['box','body',0,0.06,0,L,0.12,W],['box','rim',0,h*0.55,W*0.46,L*0.7,0.05,W*0.18]];
+  for(const z of [-0.28,0,0.28])parts.push(['cyl','rim',0,h*0.72,z*W,roll*2,L*0.86,roll*2,0,0,Math.PI/2]);
+  return {height:h+roll,parts};
+ }
+ if(String(kind).startsWith('line')){
+  const h=Math.min(1.2,Math.max(0.72,min*0.34));
+  const roll=Math.max(0.42,h*0.85);
+  return {height:h+roll,parts:[['box','body',0,h*0.28,0,L,h*0.32,W*0.62],['box','body',0,0.08,0,L*1.04,0.12,W*0.78],['cyl','rim',0,h*0.62,0,roll,L*0.78,roll,0,0,Math.PI/2],['box','body',-L*0.34,h*0.7,0,0.1,h*0.9,0.1],['box','body',L*0.34,h*0.7,0,0.1,h*0.9,0.1],['box','rim',0,h*1.05,0,L*0.74,0.08,0.1]]};
+ }
+ if(kind==='shirt'){
+  const h=Math.min(2.5,Math.max(1.7,min*1.05));
+  return {height:h,parts:[['box','body',0,0.2,0,L*0.7,0.28,W*0.7],['sphere','body',0,h*0.58,0,L*0.55,h*0.42,W*0.48],['box','rim',L*0.2,h*0.72,W*0.1,L*0.16,h*0.34,0.08],['torus','rim',0,h*0.86,0,min*0.28,min*0.28,min*0.28,Math.PI/2,0,0],['box','body',0,h*0.34,W*0.22,L*0.46,0.08,W*0.2]]};
+ }
+ if(kind==='longPress'){
+  const h=Math.min(1.85,Math.max(1.25,min*0.75));
+  return {height:h,parts:[['box','body',0,0.16,0,L*0.9,0.22,W*0.8],['box','body',0,h*0.38,0,L*0.82,0.1,W*0.7],['box','rim',0,h*0.62,0,L*0.78,0.1,W*0.62],['cyl','body',-L*0.4,h*0.5,0,0.12,0.12,W*0.5,0,0,Math.PI/2],['box','rim',L*0.34,h*0.78,0,0.08,h*0.36,0.08]]};
+ }
+ if(kind==='pressZone'){
+  const h=1.05;
+  const parts=[['box','body',0,0.06,0,L*0.96,0.1,W*0.9]];
+  for(const x of [-0.28,0,0.28]){parts.push(['box','body',x*L,h*0.28,0,L*0.16,h*0.4,W*0.28]);parts.push(['torus','rim',x*L,h*0.55,0,min*0.16,min*0.16,min*0.16]);}
+  return {height:h,parts};
+ }
+ if(kind==='crane'){
+  const h=1.25;
+  return {height:h,parts:[['box','body',-L*0.42,h*0.4,0,0.1,h*0.8,0.1],['box','body',L*0.42,h*0.4,0,0.1,h*0.8,0.1],['box','rim',0,h*0.82,0,L*1.35,0.08,0.12],['box','rim',0,h*0.62,0,0.16,0.16,0.16],['box','body',0,h*0.4,0,0.03,h*0.4,0.03]]};
+ }
+ if(kind==='office'){
+  const h=Math.min(3.5,Math.max(2.45,min*0.8));
+  return {height:h,parts:[['box','glass',0,h*0.5,0,L*0.92,h*0.92,W*0.9],['box','body',0,h*0.5,0,L*0.96,0.06,W*0.94],['box','rim',0,0.06,0,L,0.1,W],['box','rim',0,h*0.97,0,L*0.7,0.06,W*0.7]]};
+ }
+ if(kind==='tank'){
+  const h=Math.min(3.5,Math.max(2.3,min*0.95)),d=min*0.62;
+  return {height:h,parts:[['cyl','body',0,h*0.42,0,d,h*0.7,d],['sphere','rim',0,h*0.78,0,d*0.92,d*0.55,d*0.92],['torus','rim',0,h*0.72,0,d*0.7,d*0.7,d*0.7,Math.PI/2,0,0],['box','body',0,0.12,0,d*0.7,0.16,d*0.18],['box','body',0,0.12,0,d*0.18,0.16,d*0.7]]};
+ }
+ if(kind==='water'){
+  const h=Math.min(2.55,Math.max(1.55,min*0.42)),d=min*0.28;
+  return {height:h+0.2,parts:[['box','body',0,0.1,0,L*0.92,0.16,W*0.8],['cyl','body',-L*0.22,h*0.48,0,d,h*0.85,d],['cyl','rim',L*0.18,h*0.62,0,d*0.85,h*1.05,d*0.85],['box','rim',0,h*0.35,0,L*0.5,0.08,0.08],['box','body',L*0.34,h*0.28,W*0.12,min*0.22,h*0.32,min*0.22]]};
+ }
+ if(kind==='boiler'){
+  const h=Math.min(3.45,Math.max(2.35,min*0.85)),d=min*0.7;
+  return {height:h+0.4,parts:[['cyl','body',0,h*0.38,0,d,h*0.62,d],['cyl','rim',0,h*0.78,0,d*0.18,h*0.28,d*0.18],['cone','rim',0,h*1.02,0,d*0.28,h*0.28,d*0.28],['box','rim',0,h*0.24,d*0.46,d*0.34,h*0.22,0.12],['torus','rim',0,h*0.46,0,d*0.86,d*0.86,d*0.86,Math.PI/2,0,0]]};
+ }
+ if(kind==='manganese'){
+  const h=Math.min(2.8,Math.max(1.8,min*0.7)),d=min*0.46;
+  return {height:h,parts:[['box','body',0,0.1,0,L*0.8,0.16,W*0.7],['cyl','body',-L*0.12,h*0.48,0,d,h*0.8,d],['cyl','rim',L*0.22,h*0.36,0,d*0.55,h*0.5,d*0.55],['box','rim',L*0.05,h*0.62,0,L*0.28,0.06,0.06],['torus','rim',L*0.22,h*0.66,0,d*0.28,d*0.28,d*0.28]]};
+ }
+ if(kind==='fan'){
+  const h=Math.min(1.35,Math.max(0.85,min*0.5)),r=min*0.34;
+  return {height:h,parts:[['box','body',0,h*0.28,0,L*0.7,h*0.4,W*0.55],['cyl','body',-L*0.05,h*0.48,0,r*1.7,r*1.1,r*1.7,0,0,Math.PI/2],['torus','rim',L*0.22,h*0.48,0,r*1.15,r*1.15,r*1.15,0,Math.PI/2,0],['box','rim',L*0.34,h*0.48,0,L*0.28,r*0.7,r*0.7]]};
+ }
+ if(kind==='worktable'){
+  const h=0.86;
+  const parts=[['box','body',0,h*0.92,0,L*0.96,0.08,W*0.92],['box','rim',0,h*0.84,0,L*0.7,0.03,W*0.55]];
+  for(const [x,z] of [[-0.38,-0.34],[0.38,-0.34],[-0.38,0.34],[0.38,0.34]])parts.push(['box','body',x*L,h*0.4,z*W,0.06,h*0.75,0.06]);
+  return {height:h,parts};
+ }
+ if(kind==='packer'){
+  const h=Math.min(1.75,Math.max(1.15,min*0.85));
+  return {height:h,parts:[['box','body',0,h*0.4,0,L*0.8,h*0.65,W*0.75],['torus','rim',0,h*0.78,0,min*0.42,min*0.55,min*0.42],['cyl','body',0,h*0.22,W*0.32,min*0.2,L*0.55,min*0.2,Math.PI/2,0,0],['box','rim',0,h*0.62,W*0.4,L*0.4,0.05,0.06]]};
+ }
+ if(kind==='compressor'){
+  const h=Math.min(1.65,Math.max(1.05,min*0.55)),d=min*0.36;
+  return {height:h,parts:[['cyl','body',0,d*0.55,0,d,L*0.78,d,0,0,Math.PI/2],['box','rim',L*0.22,h*0.48,0,L*0.28,h*0.4,W*0.4],['cyl','rim',-L*0.16,h*0.55,0,0.06,h*0.45,0.06],['torus','rim',L*0.22,h*0.78,0,min*0.16,min*0.16,min*0.16],['box','body',0,0.06,0,L*0.7,0.1,W*0.55]]};
+ }
+ if(kind==='toilet'){
+  const h=1.55;
+  return {height:h,parts:[['box','body',0,h*0.5,-W*0.42,L*0.9,h,0.06],['box','body',-L*0.45,h*0.5,0,0.06,h,W*0.86],['box','body',L*0.45,h*0.5,0,0.06,h,W*0.86],['box','rim',0,0.28,W*0.05,L*0.28,0.28,W*0.32],['box','body',0,0.04,0,L,0.08,W]]};
+ }
+ const h=Math.min(1.8,Math.max(1.05,min*0.7));
+ return {height:h,parts:[['box','body',0,h*0.48,0,L*0.88,h*0.8,W*0.84],['box','body',0,0.07,0,L,0.12,W],['box','rim',0,h*0.55,W*0.4,L*0.36,h*0.28,0.05],['torus','rim',0,h*0.95,0,min*0.18,min*0.18,min*0.18]]};
 }
 function buildMachineMesh(THREE,root,mats,shared){
- const kind=root.userData.kind;
+ ensureHudKit(THREE);
  const {length,width}=machineFootprint(root);
+ const spec=hudMachineParts(root.userData.kind,length,width);
  const group=new THREE.Group();
- const mat=kindMaterial(kind,mats);
- let height=1.3;
- const add=(mesh)=>{group.add(mesh);return mesh;};
- if(kind==='washer'||kind==='vertical'||kind==='dryclean'){
-  height=Math.max(1.7,width*1.05);
-  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length,height,width),mat));
-  body.position.y=height/2;
-  const door=add(new THREE.Mesh(new THREE.CylinderGeometry(Math.min(width,length)*0.28,Math.min(width,length)*0.28,0.08,10),mats.cyan));
-  door.rotation.x=Math.PI/2;door.position.set(0,height*0.55,width/2);
- }else if(kind==='dryer'){
-  height=Math.max(2.1,width*1.25);
-  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length*0.9,height,width),mats.blue));
-  body.position.y=height/2;
-  const door=add(new THREE.Mesh(new THREE.CylinderGeometry(width*0.32,width*0.32,0.1,10),mats.glass));
-  door.rotation.x=Math.PI/2;door.position.set(0,height*0.48,width/2);
- }else if(kind==='folding'||String(kind).startsWith('line')){
-  height=Math.max(0.85,width*0.42);
-  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length,height,width),mats.blue));
-  body.position.y=height/2;
- }else if(kind==='crane'){
-  height=0.45;
-  const beam=add(new THREE.Mesh(new THREE.BoxGeometry(length*2.1,0.22,0.28),mats.orange));
-  beam.position.y=0.35;
- }else if(kind==='office'){
-  height=Math.max(2.6,width*0.72);
-  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length,height,width),mats.glass));
-  body.position.y=height/2;
-  const slab=add(new THREE.Mesh(new THREE.BoxGeometry(length*0.96,0.08,width*0.96),mats.steel));
-  slab.position.y=height*0.5;
- }else if(kind==='tank'||kind==='water'||kind==='boiler'||kind==='manganese'){
-  height=Math.max(1.7,width*0.85);
-  const body=add(new THREE.Mesh(new THREE.CylinderGeometry(width*0.34,width*0.4,height,10),kind==='boiler'?mats.orange:kind==='manganese'?mats.cyan:mats.steel));
-  body.position.y=height/2;
- }else if(kind==='pressZone'||kind==='fan'){
-  height=0.22;
-  const pad=add(new THREE.Mesh(new THREE.BoxGeometry(length,0.12,width),mats.zone));
-  pad.position.y=0.08;
- }else if(kind==='worktable'){
-  height=0.7;
-  const top=add(new THREE.Mesh(new THREE.BoxGeometry(length,0.16,width),mats.steel));
-  top.position.y=0.62;
- }else{
-  height=Math.max(1.05,width*0.65);
-  const body=add(new THREE.Mesh(new THREE.BoxGeometry(length,height,width),mat));
-  body.position.y=height/2;
- }
+ root.userData.glowEdges=[];
+ root.userData.glowRims=[];
+ for(const part of spec.parts)addHudPart(group,root,part);
  const point=scenePoint(root);
- if(point.y>0.35){
-  const leg=add(new THREE.Mesh(new THREE.BoxGeometry(0.14,point.y,0.14),mats.steel));
-  leg.position.y=-point.y/2;
- }
- const pad=add(new THREE.Mesh(shared.pad,new THREE.MeshBasicMaterial({color:0x34d399,transparent:true,opacity:0.42,depthWrite:false})));
- pad.rotation.x=-Math.PI/2;pad.position.y=0.04;pad.scale.set(Math.max(length,width)*1.15,Math.min(length,width)*1.2,1);
- const light=add(new THREE.Mesh(shared.bulb,new THREE.MeshBasicMaterial({color:0x34d399})));
- light.position.y=height+0.28;
+ if(point.y>0.35)addHudPart(group,root,['box','body',0,-point.y/2,0,0.1,point.y,0.1]);
+ const pad=new THREE.Mesh(shared.pad,new THREE.MeshBasicMaterial({color:0x34d399,transparent:true,opacity:0.35,depthWrite:false}));
+ pad.rotation.x=-Math.PI/2;pad.position.y=0.03;pad.scale.set(Math.max(length,width)*0.42,Math.min(length,width)*0.42,1);
+ group.add(pad);
+ const light=new THREE.Mesh(shared.bulb,new THREE.MeshBasicMaterial({color:0x34d399}));
+ light.position.y=spec.height+0.22;
+ group.add(light);
  root.userData.statusMat=pad.material;
  root.userData.lightMat=light.material;
- root.userData.labelHeight=height+0.62;
+ root.userData.labelStagger=[0,0.62,1.15,0.34][hudLabelSerial++%4];
+ root.userData.labelHeight=spec.height+0.48+root.userData.labelStagger;
  root.userData.mesh3d=group;
  const visual=safeVisual(root);
  root.userData.statusKey=visual.key;
- pad.material.color.setHex(visual.color);
- light.material.color.setHex(visual.color);
- group.traverse(obj=>{if(obj.isMesh){obj.userData.equipmentId=root.userData.id;factory3d.pickables.push(obj);if(!factory3d.mobile)obj.castShadow=true;}});
+ group.traverse(obj=>{if(obj.isMesh){obj.userData.equipmentId=root.userData.id;obj.castShadow=false;obj.receiveShadow=false;factory3d.pickables.push(obj);}});
  group.position.set(point.x,point.y,point.z);
  group.rotation.y=sceneYaw(root);
+ applyMachineGlow(root);
  return group;
+}
+function glowKey(root){
+ if(root===selected)return 'selected';
+ if(root===factory3d.hover)return 'hover';
+ return root.userData.statusKey||'ok';
+}
+function applyMachineGlow(root){
+ const kit=factory3d.hud;
+ if(!kit||!root?.userData.glowEdges)return;
+ const key=glowKey(root);
+ const edge=kit.edgeMats[key]||kit.edgeMats.ok;
+ const rim=kit.rimMats[key]||kit.rimMats.ok;
+ for(const line of root.userData.glowEdges)if(line.material!==edge)line.material=edge;
+ for(const mesh of root.userData.glowRims)if(mesh.material!==rim)mesh.material=rim;
+ const tint=kit.colors[root.userData.statusKey]||kit.colors.ok;
+ root.userData.statusMat?.color.setHex(tint);
+ root.userData.lightMat?.color.setHex(tint);
 }
 function bootFactory3D(){
  if(factory3d.ready)return true;
@@ -1241,6 +1373,8 @@ function initFactory3D(THREE){
  factory3d.raycaster=new THREE.Raycaster();
  controls.minDistance=6;controls.maxDistance=factory3d.span*2.4;
  controls.addEventListener('change',kickFactoryRender);
+ controls.addEventListener('start',()=>{factory3d.busy=true;kickFactoryRender();});
+ controls.addEventListener('end',()=>{factory3d.busy=false;});
  let pointers=0,press=null;
  renderer.domElement.addEventListener('pointerdown',event=>{
   pointers+=1;
@@ -1254,6 +1388,43 @@ function initFactory3D(THREE){
   pickFactory(event);
  });
  renderer.domElement.addEventListener('pointercancel',()=>{pointers=Math.max(0,pointers-1);press=null;});
+ let hoverStamp=0;
+ const hoverFactory=event=>{
+  const rect=renderer.domElement.getBoundingClientRect();
+  if(!rect.width||!rect.height)return;
+  factory3d.pointer.x=((event.clientX-rect.left)/rect.width)*2-1;
+  factory3d.pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;
+  factory3d.raycaster.setFromCamera(factory3d.pointer,factory3d.camera);
+  const hits=factory3d.raycaster.intersectObjects(factory3d.pickables,false);
+  let next=null;
+  for(const hit of hits){
+   const id=hit.object.userData.equipmentId;
+   const root=id&&groups.get(id);
+   if(root&&root.visible!==false){next=root;break;}
+  }
+  if(next===factory3d.hover)return;
+  const prev=factory3d.hover;
+  factory3d.hover=next;
+  renderer.domElement.style.cursor=next?'pointer':'';
+  if(prev?.userData.glowEdges)applyMachineGlow(prev);
+  if(next)applyMachineGlow(next);
+  kickFactoryRender();
+ };
+ renderer.domElement.addEventListener('pointermove',event=>{
+  if(factory3d.mobile||event.pointerType!=='mouse'||pointers>0)return;
+  const now=performance.now();
+  if(now-hoverStamp<40)return;
+  hoverStamp=now;
+  hoverFactory(event);
+ });
+ renderer.domElement.addEventListener('pointerleave',()=>{
+  if(!factory3d.hover)return;
+  const prev=factory3d.hover;
+  factory3d.hover=null;
+  renderer.domElement.style.cursor='';
+  if(prev?.userData.glowEdges)applyMachineGlow(prev);
+  kickFactoryRender();
+ });
  renderer.domElement.addEventListener('webglcontextlost',event=>{
   event.preventDefault();
   factory3d.ready=false;factory3d.failed=true;
@@ -1653,7 +1824,10 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .category-row{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between;gap:12px!important;width:100%;min-height:52px!important;margin:0 0 8px!important;padding:10px 12px!important;text-align:left;background:rgba(5,16,28,.88)!important;border:1px solid rgba(126,232,255,.24)!important;color:#f4fbff!important;border-radius:0!important}
 .category-row strong{font-size:16px;font-weight:750}
 .category-row span{font-size:12px!important;color:#b7d4e4!important;text-align:right}
-.equip-label{display:inline-flex!important;align-items:center;gap:5px;max-width:160px;min-height:0!important;padding:3px 8px 3px 6px!important;border-radius:0!important;border:1px solid rgba(126,232,255,.78)!important;background:rgba(4,12,22,.9)!important;color:#f7fdff!important;font-size:12px!important;font-weight:700;line-height:1.25;letter-spacing:.02em;box-shadow:0 0 10px rgba(80,210,230,.2)!important;clip-path:polygon(7px 0,100% 0,100% 100%,0 100%,0 7px);white-space:nowrap}
+.equip-label{display:inline-flex!important;align-items:center;gap:5px;max-width:160px;min-height:0!important;padding:3px 8px 3px 6px!important;border-radius:0!important;border:1px solid rgba(126,232,255,.78)!important;background:rgba(4,12,22,.9)!important;color:#f7fdff!important;font-size:12px!important;font-weight:700;line-height:1.25;letter-spacing:.02em;box-shadow:0 0 10px rgba(80,210,230,.2)!important;clip-path:none!important;overflow:visible;white-space:nowrap}
+.equip-label[hidden]{display:none!important}
+.equip-label::after{content:"";position:absolute;left:8px;top:100%;width:1px;height:var(--stem,8px);background:currentColor;opacity:.75;pointer-events:none}
+.equip-label.is-brief{font-size:10px!important;padding:2px 5px!important}
 .equip-label .equip-name{overflow:hidden;text-overflow:ellipsis}
 .equip-label .equip-mark{font-style:normal;font-size:10px;color:#ffe3a3}
 .equip-label .status-dot{width:7px;height:7px;border-radius:50%;flex:none;background:currentColor;box-shadow:0 0 6px currentColor}
